@@ -82,14 +82,14 @@ type JSONParserSpec<T> = {
 
 /**
  * Creates a parser for a given domain object type based on parsing functions for each field.
- * @param spec A mapping from domain object keys to functions which can parse their values
+ * @param spec A mapping from domain object keys to functions which can parse their JSON-like values
  * @returns A function from a post-parsing JSON representation of the given object to the full TypeScript representation of the domain object
  */
 function createDomainObjectParser<T>(spec: JSONParserSpec<T>) {
   return (json: JSONDomainObject<T>): T => {
     const result = {} as T; // safe since "result" is never read until return
-    for (const key in json) {
-      if (!Object.hasOwn(json, key)) continue;
+    for (const key in spec) {
+      if (!Object.hasOwn(spec, key)) continue;
       result[key] = spec[key](json[key]);
     }
     return result;
