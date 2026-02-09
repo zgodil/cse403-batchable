@@ -5,7 +5,6 @@ import com.batchable.backend.client.GoogleRoutesClient;
 
 // DTOs used to build requests and return responses
 import com.batchable.backend.model.dto.*;
-import tools.jackson.databind.ObjectMapper;
 // Marks this class as a Spring service (business logic layer)
 import org.springframework.stereotype.Service;
 import java.util.ArrayList;

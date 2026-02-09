@@ -16,6 +16,11 @@ public class GoogleRoutesClient {
 
   public GoogleRoutesClient(@Qualifier("googleRoutesWebClient") WebClient webClient,
       @Value("${google.routes.api-key}") String apiKey) {
+    if (apiKey == null || apiKey.isBlank()) {
+      throw new IllegalStateException(
+          "Google Routes API key is not configured. Set GOOGLE_ROUTES_API_KEY."
+      );
+    }
     this.webClient = webClient;
     this.apiKey = apiKey;
   }

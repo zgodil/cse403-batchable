@@ -16,6 +16,9 @@ public class DistanceMatrixResponse {
   // Simplified 2D matrix view
   private int[][] matrix;
 
+
+  public DistanceMatrixResponse() {}
+
   /**
    * Constructs a DistanceMatrixResponse from Google response elements and converts to a 2D matrix
    * of weights.
