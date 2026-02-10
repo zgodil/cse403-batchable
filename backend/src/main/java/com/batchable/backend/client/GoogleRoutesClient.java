@@ -51,15 +51,6 @@ public class GoogleRoutesClient {
    */
   public DistanceMatrixResponse getDistanceMatrix(DistanceMatrixRequest request) {
     try {
-      String jsonString = webClient.post()
-          .uri(uriBuilder -> uriBuilder.path("/distanceMatrix/v2:computeRouteMatrix")
-              .queryParam("key", apiKey).build())
-          .header("X-Goog-FieldMask",
-              "originIndex,destinationIndex,duration,distanceMeters,status,condition")
-          .bodyValue(request).retrieve().bodyToMono(String.class).block();
-      System.out.println("matrix json: " + jsonString);
-      // return new DistanceMatrixResponse();
-
       // Get raw JSON as list of elements
       List<DistanceMatrixResponse.MatrixElement> elements = webClient.post()
           .uri(uriBuilder -> uriBuilder.path("/distanceMatrix/v2:computeRouteMatrix")
