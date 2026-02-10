@@ -69,7 +69,7 @@
 			<scope>test</scope>
 		</dependency>
 
-		<!-- ✅ PostgreSQL JDBC driver (needed for DriverManager.getConnection in tests) -->
+		<!-- PostgreSQL JDBC driver (needed for DriverManager.getConnection in tests) -->
 		<dependency>
 			<groupId>org.postgresql</groupId>
 			<artifactId>postgresql</artifactId>
