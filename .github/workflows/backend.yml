@@ -25,7 +25,7 @@ jobs:
       - name: Build project
         run: ./mvnw -B package -DskipTests
       - name: Upload build artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: backend-jar
           path: target/*.jar
@@ -47,7 +47,7 @@ jobs:
       - name: Run Unit Tests
         run: ./mvnw clean test -Dtest=*Test.java
       - name: Upload Unit Test Reports
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: unit-test-reports
           path: target/surefire-reports/
@@ -75,7 +75,7 @@ jobs:
       - name: Run CI Integration Tests
         run: ./mvnw clean verify -Dtest=*CI_IT.java
       - name: Upload CI Integration Test Reports
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: ci-integration-test-reports
           path: target/failsafe-reports/
