@@ -23,6 +23,8 @@ export const links: Route.LinksFunction = () => [
   },
 ];
 
+import { Auth0Provider } from '@auth0/auth0-react';
+
 export function Layout({children}: {children: React.ReactNode}) {
   return (
     <html lang="en">
@@ -33,7 +35,15 @@ export function Layout({children}: {children: React.ReactNode}) {
         <Links />
       </head>
       <body>
-        {children}
+      <Auth0Provider
+          domain="dev-3qj8cn8ady6wwlng.us.auth0.com"
+          clientId="WV9iiESgd8Uc56V35K5XZFEd7wbQYsoU"
+          authorizationParams={{
+            redirect_uri: "http://localhost:5173"
+          }}
+        >
+          {children}
+        </Auth0Provider>
         <ScrollRestoration />
         <Scripts />
       </body>
