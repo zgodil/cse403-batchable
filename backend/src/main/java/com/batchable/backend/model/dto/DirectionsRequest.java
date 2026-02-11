@@ -1,5 +1,7 @@
 package com.batchable.backend.model.dto;
 
+import com.batchable.backend.model.TravelMode;
+
 /**
  * DTO (Data Transfer Object) representing a request to the Google Directions API.
  * 
@@ -17,9 +19,8 @@ public class DirectionsRequest {
   // Represented as a Waypoint object (address or coordinates)
   private Waypoint destination;
 
-  // Travel mode for the route. Supported values include:
-  // "DRIVE", "WALK", "BICYCLE", "TRANSIT"
-  private String travelMode;
+  // Travel mode for the route.
+  private TravelMode travelMode;
 
   /**
    * Default constructor required for Spring / Jackson to deserialize JSON.
@@ -33,7 +34,7 @@ public class DirectionsRequest {
    * @param destination Ending location as a Waypoint
    * @param travelMode Mode of travel
    */
-  public DirectionsRequest(Waypoint origin, Waypoint destination, String travelMode) {
+  public DirectionsRequest(Waypoint origin, Waypoint destination, TravelMode travelMode) {
     this.origin = origin;
     this.destination = destination;
     this.travelMode = travelMode;
@@ -60,12 +61,12 @@ public class DirectionsRequest {
   }
 
   /** Getter for travelMode */
-  public String getTravelMode() {
+  public TravelMode getTravelMode() {
     return travelMode;
   }
 
   /** Setter for travelMode */
-  public void setTravelMode(String travelMode) {
+  public void setTravelMode(TravelMode travelMode) {
     this.travelMode = travelMode;
   }
 }

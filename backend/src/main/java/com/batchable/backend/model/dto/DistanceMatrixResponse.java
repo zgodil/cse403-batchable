@@ -27,9 +27,15 @@ public class DistanceMatrixResponse {
    * @param useDistance If true, matrix entries = duration in seconds; otherwise distance in meters
    */
   public DistanceMatrixResponse(List<MatrixElement> elements, boolean useTime) {
-    this.elements = elements;
+    this.elements = new ArrayList<MatrixElement>(elements);
 
     // Determine the size of the matrix
+    int minOrigin = elements.stream().mapToInt(MatrixElement::getOriginIndex).min().orElse(-1);
+    int minDest = elements.stream().mapToInt(MatrixElement::getDestinationIndex).min().orElse(-1);
+    if (minOrigin < 0 || minDest < 0) {
+      throw new IllegalArgumentException(
+          "An origin or destination has negative index, or there are none.");
+    }
     int maxOrigin = elements.stream().mapToInt(MatrixElement::getOriginIndex).max().orElse(-1);
     int maxDest = elements.stream().mapToInt(MatrixElement::getDestinationIndex).max().orElse(-1);
 
@@ -45,24 +51,28 @@ public class DistanceMatrixResponse {
         String durationString = e.getDuration().substring(0, e.getDuration().length() - 1);
         value = Integer.parseInt(durationString);
       }
+      if (value < 0) {
+        throw new IllegalArgumentException(
+            "Durations and distances between origins and destinations must be nonnegative");
+      }
       matrix[e.getOriginIndex()][e.getDestinationIndex()] = value;
     }
   }
 
   public int[][] getMatrix() {
-    return matrix;
+    return matrix.clone();
   }
 
   public List<MatrixElement> getElements() {
-    return elements;
+    return new ArrayList<MatrixElement>(elements);
   }
 
   public void setElements(List<MatrixElement> elements) {
-    this.elements = elements;
+    this.elements = new ArrayList<MatrixElement>(elements);
   }
 
   public void setMatrix(int[][] matrix) {
-    this.matrix = matrix;
+    this.matrix = matrix.clone();
   }
 
   /** Matches one element of the Google Route Matrix response */
@@ -80,6 +90,9 @@ public class DistanceMatrixResponse {
     }
 
     public void setOriginIndex(int originIndex) {
+      if (originIndex < 0) {
+        throw new IllegalArgumentException("Indices must be nonnegative.");
+      }
       this.originIndex = originIndex;
     }
 
@@ -88,6 +101,9 @@ public class DistanceMatrixResponse {
     }
 
     public void setDestinationIndex(int destinationIndex) {
+      if (destinationIndex < 0) {
+        throw new IllegalArgumentException("Indices must be nonnegative.");
+      }
       this.destinationIndex = destinationIndex;
     }
 
@@ -96,6 +112,9 @@ public class DistanceMatrixResponse {
     }
 
     public void setDistanceMeters(int distanceMeters) {
+      if (distanceMeters < 0) {
+        throw new IllegalArgumentException("Distance must be nonnegative.");
+      }
       this.distanceMeters = distanceMeters;
     }
 

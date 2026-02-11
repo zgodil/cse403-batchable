@@ -2,7 +2,7 @@ package com.batchable.backend.service;
 
 // Client responsible for talking to Google Routes API
 import com.batchable.backend.client.GoogleRoutesClient;
-
+import com.batchable.backend.model.TravelMode;
 // DTOs used to build requests and return responses
 import com.batchable.backend.model.dto.*;
 // Marks this class as a Spring service (business logic layer)
@@ -41,7 +41,7 @@ public class RouteService {
 
         // Business decision:
         // We currently only support driving directions
-        req.setTravelMode("DRIVE");
+        req.setTravelMode(TravelMode.DRIVE);
 
         // Delegate the external API call to the client
         return routesClient.getDirections(req);
@@ -60,8 +60,8 @@ public class RouteService {
         req.setOrigins(addressListDistanceMatrixLocationList(origins));
         req.setDestinations(addressListDistanceMatrixLocationList(destinations));
 
-        // Centralized business rule for travel mode
-        req.setTravelMode("DRIVE");
+        // Centralized business rule for travel mode: default to drive for now
+        req.setTravelMode(TravelMode.DRIVE);
 
         // Delegate the API call
         return routesClient.getDistanceMatrix(req);

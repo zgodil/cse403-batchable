@@ -36,6 +36,9 @@ public class DirectionsResponse {
       String durationString = firstRoute.getDuration(); // always of the form "<seconds>s"
       this.durationSeconds =
           Integer.parseInt(durationString.substring(0, durationString.length() - 1));
+      if (this.distanceMeters < 0 || this.durationSeconds < 0) {
+        throw new IllegalStateException("Parsed distance or duration from google API was negative.");
+      }
     }
   }
 
@@ -46,6 +49,9 @@ public class DirectionsResponse {
 
   /** Setter for distance in meters */
   public void setDistanceMeters(int distanceMeters) {
+    if (distanceMeters < 0) {
+      throw new IllegalArgumentException("Distance must be nonnegative.");
+    }
     this.distanceMeters = distanceMeters;
   }
 
@@ -56,6 +62,9 @@ public class DirectionsResponse {
 
   /** Setter for duration in seconds */
   public void setDurationSeconds(int durationSeconds) {
+    if (durationSeconds < 0) {
+      throw new IllegalArgumentException("Duration must be nonnegative.");
+    }
     this.durationSeconds = durationSeconds;
   }
 
@@ -80,6 +89,9 @@ public class DirectionsResponse {
       }
 
       public void setDistanceMeters(int distanceMeters) {
+        if (distanceMeters < 0) {
+          throw new IllegalArgumentException("Distance must be nonnegative.");
+        }
         this.distanceMeters = distanceMeters;
       }
 

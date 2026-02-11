@@ -1,6 +1,9 @@
 package com.batchable.backend.model.dto;
 
+import java.util.ArrayList;
 import java.util.List;
+import org.springframework.beans.factory.annotation.Autowired;
+import com.batchable.backend.model.TravelMode;
 
 /**
  * DTO (Data Transfer Object) representing a request to the Google Distance Matrix API.
@@ -21,9 +24,8 @@ public class DistanceMatrixRequest {
   // Represents ending points (addresses, cities, or coordinates).
   private List<DistanceMatrixLocation> destinations;
 
-  // Travel mode: "DRIVE", "WALK", "BICYCLE", "TRANSIT"
   // Determines how travel distances and times are calculated
-  private String travelMode;
+  private TravelMode travelMode;
 
   /** Default constructor required by Spring / Jackson for JSON deserialization. */
   public DistanceMatrixRequest() {}
@@ -36,39 +38,39 @@ public class DistanceMatrixRequest {
    * @param travelMode Mode of travel
    */
   public DistanceMatrixRequest(List<DistanceMatrixLocation> origins,
-      List<DistanceMatrixLocation> destinations, String travelMode) {
-    this.origins = origins;
-    this.destinations = destinations;
+      List<DistanceMatrixLocation> destinations, TravelMode travelMode) {
+    this.origins = new ArrayList<DistanceMatrixLocation>(origins);
+    this.destinations = new ArrayList<DistanceMatrixLocation>(destinations);
     this.travelMode = travelMode;
   }
 
   /** Getter for origins */
   public List<DistanceMatrixLocation> getOrigins() {
-    return origins;
+    return new ArrayList<DistanceMatrixLocation>(origins);
   }
 
   /** Setter for origins */
   public void setOrigins(List<DistanceMatrixLocation> origins) {
-    this.origins = origins;
+    this.origins = new ArrayList<DistanceMatrixLocation>(origins);
   }
 
   /** Getter for destinations */
   public List<DistanceMatrixLocation> getDestinations() {
-    return destinations;
+    return new ArrayList<DistanceMatrixLocation>(destinations);
   }
 
   /** Setter for destinations */
   public void setDestinations(List<DistanceMatrixLocation> destinations) {
-    this.destinations = destinations;
+    this.destinations = new ArrayList<DistanceMatrixLocation>(destinations);
   }
 
   /** Getter for travel mode */
-  public String getTravelMode() {
+  public TravelMode getTravelMode() {
     return travelMode;
   }
 
   /** Setter for travel mode */
-  public void setTravelMode(String travelMode) {
+  public void setTravelMode(TravelMode travelMode) {
     this.travelMode = travelMode;
   }
 }
