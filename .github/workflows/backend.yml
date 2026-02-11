@@ -21,6 +21,9 @@ jobs:
           java-version: '17'
           distribution: 'temurin'
           cache: maven
+      - name: Debug env
+        run: |
+          echo "KEY SET? -> ${GOOGLE_ROUTES_API_KEY:+yes}"
       - name: Build project
         run: ./mvnw -B package -DskipTests
 
