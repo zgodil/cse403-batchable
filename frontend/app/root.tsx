@@ -3,7 +3,6 @@ import {
   Links,
   Meta,
   Outlet,
-  redirect,
   Scripts,
   ScrollRestoration,
 } from 'react-router';
@@ -25,7 +24,7 @@ export const links: Route.LinksFunction = () => [
   },
 ];
 
-const redirectUri = typeof window !== "undefined" ? window.location.origin : "";
+const redirectUri = typeof window !== 'undefined' ? window.location.origin : '';
 
 export function Layout({children}: {children: React.ReactNode}) {
   return (
