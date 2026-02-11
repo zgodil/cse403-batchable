@@ -29,10 +29,10 @@ describe('Protected Route', () => {
         isLoading: false,
         loginWithRedirect: vi.fn(),
       }),
-      Auth0Provider: ({ children }: { children: React.ReactNode }) => children,
+      Auth0Provider: ({children}: {children: React.ReactNode}) => children,
     }));
 
-    const HomeStub = createRoutesStub([{ path: '/', Component: (await import('../../app/routes/home')).default }]);
+    const HomeStub = createRoutesStub([{path: '/', Component: (await import('../../app/routes/home')).default}]);
 
     render(<HomeStub />);
 
