@@ -5,11 +5,9 @@ import OrderList from '../components/OrderList';
 import DriverOverview from '../components/DriverOverview';
 import AddOrderModal from '../components/AddOrderModal';
 
-import { withAuthenticationRequired } from '@auth0/auth0-react';
-
 function Home() {
 
-  const {isAuthenticated, isLoading, user} = useAuth0();
+  const {isAuthenticated, isLoading} = useAuth0();
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   if (isLoading) {
