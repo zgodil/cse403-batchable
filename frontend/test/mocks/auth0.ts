@@ -1,4 +1,4 @@
-import { vi } from 'vitest';
+import {vi} from 'vitest';
 
 vi.mock('@auth0/auth0-react', () => ({
   useAuth0: () => ({
@@ -12,5 +12,5 @@ vi.mock('@auth0/auth0-react', () => ({
     logout: vi.fn(),
     getAccessTokenSilently: vi.fn(),
   }),
-  Auth0Provider: ({ children }: { children: React.ReactNode }) => children,
+  Auth0Provider: ({children}: {children: React.ReactNode}) => children,
 }));

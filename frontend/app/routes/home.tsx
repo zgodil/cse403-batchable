@@ -6,7 +6,6 @@ import DriverOverview from '../components/DriverOverview';
 import AddOrderModal from '../components/AddOrderModal';
 
 function Home() {
-
   const {isAuthenticated, isLoading} = useAuth0();
   const [isModalOpen, setIsModalOpen] = useState(false);
 

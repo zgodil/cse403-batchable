@@ -39,7 +39,7 @@ export function Layout({children}: {children: React.ReactNode}) {
           domain="dev-3qj8cn8ady6wwlng.us.auth0.com"
           clientId="WV9iiESgd8Uc56V35K5XZFEd7wbQYsoU"
           authorizationParams={{
-            redirect_uri: 'http://localhost:5173'
+            redirect_uri: 'http://localhost:5173',
           }}
           cacheLocation="localstorage"
           useRefreshTokens={false}
