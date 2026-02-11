@@ -50,9 +50,9 @@ const parseWorldLocation: JSONDomainFieldParser<WorldLocation> = address => ({
 const parseDate: JSONDomainFieldParser<Date> = utc => new Date(utc);
 
 /**
- * Converts a domain object Id from post-parsing JSON format to TypeScript format.
- * @param address The raw key value for the Id
- * @returns The TypeScript representation of the Id
+ * Creates a parser for converting domain object Ids from post-parsing JSON format to TypeScript format.
+ * @param type The type identifier for the id
+ * @returns A mapping from the JSON id to its TypeScript representation
  */
 const parseId =
   <T extends string>(type: T) =>
