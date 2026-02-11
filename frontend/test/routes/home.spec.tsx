@@ -33,8 +33,8 @@ describe('Protected Route', () => {
     }));
 
     const HomeStub = createRoutesStub([
-          {path: '/', Component: (await import('../../app/routes/home')).default},
-        ]);
+      {path: '/', Component: (await import('../../app/routes/home')).default},
+    ]);
 
     render(<HomeStub />);
 
