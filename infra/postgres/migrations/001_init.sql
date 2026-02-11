@@ -46,6 +46,8 @@ model MenuItem {
 }
 */
 
+CREATE DOMAIN short_string AS VARCHAR(100);
+
 -- order state requires new type
 CREATE TYPE order_state AS ENUM (
   'COOKING',
@@ -57,15 +59,15 @@ CREATE TYPE order_state AS ENUM (
 -- restaurant table
 CREATE TABLE Restaurant (
   id SERIAL PRIMARY KEY,
-  name VARCHAR(100) NOT NULL,
-  location VARCHAR(100) NOT NULL
+  name short_string NOT NULL,
+  location short_string NOT NULL
 );
 
 -- driver table
 CREATE TABLE Driver (
   id SERIAL PRIMARY KEY,
-  name VARCHAR(100) NOT NULL,
-  phone_number VARCHAR(100) NOT NULL,
+  name short_string NOT NULL,
+  phone_number short_string NOT NULL,
   on_shift BOOLEAN NOT NULL,
   restaurant_id INTEGER NOT NULL,
   FOREIGN KEY (restaurant_id) REFERENCES Restaurant(id)
@@ -87,7 +89,7 @@ CREATE TABLE Batch (
 CREATE TABLE "Order" (
   id SERIAL PRIMARY KEY,
   restaurant_id INTEGER NOT NULL,
-  destination VARCHAR(100) NOT NULL,
+  destination short_string NOT NULL,
   item_names JSON NOT NULL,
   initial_time TIMESTAMP NOT NULL,
   delivery_time TIMESTAMP,
@@ -102,6 +104,7 @@ CREATE TABLE "Order" (
 CREATE TABLE Menu_Item (
   id SERIAL PRIMARY KEY,
   restaurant_id INTEGER NOT NULL,
-  name VARCHAR(100) NOT NULL,
+  name short_string NOT NULL,
   FOREIGN KEY (restaurant_id) REFERENCES Restaurant(id)
 );
+
