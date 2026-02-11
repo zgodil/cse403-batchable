@@ -32,7 +32,9 @@ describe('Protected Route', () => {
       Auth0Provider: ({children}: {children: React.ReactNode}) => children,
     }));
 
-    const HomeStub = createRoutesStub([{path: '/', Component: (await import('../../app/routes/home')).default}]);
+    const HomeStub = createRoutesStub([
+          {path: '/', Component: (await import('../../app/routes/home')).default},
+        ]);
 
     render(<HomeStub />);
 
