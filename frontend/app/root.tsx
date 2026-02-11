@@ -3,12 +3,14 @@ import {
   Links,
   Meta,
   Outlet,
+  redirect,
   Scripts,
   ScrollRestoration,
 } from 'react-router';
 
 import type {Route} from './+types/root';
 import './app.css';
+import {Auth0Provider} from '@auth0/auth0-react';
 
 export const links: Route.LinksFunction = () => [
   {rel: 'preconnect', href: 'https://fonts.googleapis.com'},
@@ -23,7 +25,7 @@ export const links: Route.LinksFunction = () => [
   },
 ];
 
-import {Auth0Provider} from '@auth0/auth0-react';
+const redirectUri = typeof window !== "undefined" ? window.location.origin : "";
 
 export function Layout({children}: {children: React.ReactNode}) {
   return (
@@ -39,7 +41,7 @@ export function Layout({children}: {children: React.ReactNode}) {
           domain="dev-3qj8cn8ady6wwlng.us.auth0.com"
           clientId="WV9iiESgd8Uc56V35K5XZFEd7wbQYsoU"
           authorizationParams={{
-            redirect_uri: 'http://localhost:5173',
+            redirect_uri: redirectUri,
           }}
           cacheLocation="localstorage"
           useRefreshTokens={false}
