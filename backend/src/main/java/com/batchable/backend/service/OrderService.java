@@ -1,8 +1,7 @@
 package com.batchable.backend.service;
 
 import com.batchable.backend.db.models.Order;
-import com.batchable.backend.db.models.Order.State;
-import com.batchable.backend.model.dto.*;
+import com.batchable.backend.websocket.OrderWebSocketPublisher;
 import java.time.Instant;
 import org.springframework.stereotype.Service;
 
@@ -19,8 +18,11 @@ import org.springframework.stereotype.Service;
  */
 @Service
 public class OrderService {
+  private final OrderWebSocketPublisher publisher;
 
-  public OrderService() {}
+  public OrderService(OrderWebSocketPublisher publisher) {
+    this.publisher = publisher;
+  }
 
   /**
    * Creates a new order in the system.
@@ -39,6 +41,8 @@ public class OrderService {
   public void createOrder(Order order) {
     // TODO
     throw new UnsupportedOperationException("Not implemented yet");
+    // Push update to frontend via WebSocket
+    // publisher.refreshOrderData(); uncomment when implemented
   }
 
   /**
@@ -63,6 +67,8 @@ public class OrderService {
   public void advanceOrderState(long orderId) {
     // TODO
     throw new UnsupportedOperationException("Not implemented yet");
+    // Push update to frontend via WebSocket
+    // publisher.refreshOrderData(); uncomment when implemented
   }
 
   /**
@@ -91,6 +97,8 @@ public class OrderService {
   public void changeOrderCookedTime(long orderId, Instant cookedTime) {
     // TODO
     throw new UnsupportedOperationException("Not implemented yet");
+    // Push update to frontend via WebSocket
+    // publisher.refreshOrderData(); uncomment when implemented
   }
   
   /**
@@ -121,6 +129,8 @@ public class OrderService {
   public void remakeOrder(long orderId) {
     // TODO
     throw new UnsupportedOperationException("Not implemented yet");
+    // Push update to frontend via WebSocket
+    // publisher.refreshOrderData(); uncomment when implemented
   }
 
   /**
@@ -194,5 +204,7 @@ public class OrderService {
   public void removeOrder(long orderId) {
     // TODO
     throw new UnsupportedOperationException("Not implemented yet");
+    // Push update to frontend via WebSocket
+    // publisher.refreshOrderData(); uncomment when implemented
   }
 }
