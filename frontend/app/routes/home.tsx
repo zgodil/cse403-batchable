@@ -1,5 +1,6 @@
 import {useState} from 'react';
 import {useAuth0} from '@auth0/auth0-react';
+import {Link} from 'react-router';
 import LoginButton from '../components/LoginButton';
 import OrderList from '../components/OrderList';
 import DriverOverview from '../components/DriverOverview';
@@ -34,12 +35,20 @@ function Home() {
         <h1 className="text-3xl font-extrabold tracking-tight">
           Batchable Dashboard
         </h1>
-        <button
-          onClick={() => setIsModalOpen(true)}
-          className="px-5 py-2.5 bg-blue-600 text-white font-semibold rounded-lg shadow-md hover:bg-blue-700 transition-all active:scale-95"
-        >
-          + Add New Order
-        </button>
+        <div className="flex gap-3">
+          <Link
+            to="/restaurant"
+            className="px-5 py-2.5 bg-purple-600 text-white font-semibold rounded-lg shadow-md hover:bg-purple-700 transition-all active:scale-95"
+          >
+            ⚙️ Manage Restaurant
+          </Link>
+          <button
+            onClick={() => setIsModalOpen(true)}
+            className="px-5 py-2.5 bg-blue-600 text-white font-semibold rounded-lg shadow-md hover:bg-blue-700 transition-all active:scale-95"
+          >
+            + Add New Order
+          </button>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
