@@ -1,17 +1,22 @@
 package com.batchable.backend.service;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.Consumer;
 import org.springframework.stereotype.Service;
+import com.batchable.backend.db.models.Order;
 import com.batchable.backend.websocket.OrderWebSocketPublisher;
 
 @Service
 public class BatchingManager {
   private final OrderWebSocketPublisher publisher;
+  private final BatchingAlgorithm batchingAlgorithm;
+  
 
-  public BatchingManager(OrderWebSocketPublisher publisher) {
+  public BatchingManager(OrderWebSocketPublisher publisher, BatchingAlgorithm batchingAlgorithm) {
     this.publisher = publisher;
+    this.batchingAlgorithm = batchingAlgorithm;
   }
 
   // Thread-safe list

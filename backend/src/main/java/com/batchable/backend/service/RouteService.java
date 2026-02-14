@@ -47,6 +47,11 @@ public class RouteService {
         return routesClient.getDirections(req);
     }
 
+    // TODO comment
+    public int getSecondsBetween(String from, String to) {
+      return getDirections(from, to).getDurationSeconds();
+    }
+
     /**
      * Business-level method for computing a distance matrix between multiple origins and
      * destinations.
