@@ -4,7 +4,7 @@ export interface Id<T extends string> {
   id: number;
 }
 
-export interface DomainObject<T extends string> {
+export interface DomainObject<T extends string = string> {
   id: Id<T>;
 }
 
@@ -16,6 +16,10 @@ export interface Polyline {
   encoded: string;
 }
 
+export interface PhoneNumber {
+  compact: string;
+}
+
 // domain object schemas
 export interface Restaurant extends DomainObject<'Restaurant'> {
   location: WorldLocation;
@@ -23,7 +27,7 @@ export interface Restaurant extends DomainObject<'Restaurant'> {
 }
 
 export interface Driver extends DomainObject<'Driver'> {
-  phoneNumber: string;
+  phoneNumber: PhoneNumber;
   restaurant: Restaurant['id'];
   name: string;
   onShift: boolean;

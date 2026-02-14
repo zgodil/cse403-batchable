@@ -7,9 +7,14 @@ import type {
   Restaurant,
   Driver,
   Batch,
+  PhoneNumber,
 } from './objects';
 
-type JSONDomainField<T> = T extends Date | WorldLocation | Polyline
+type JSONDomainField<T> = T extends
+  | Date
+  | WorldLocation
+  | Polyline
+  | PhoneNumber
   ? string
   : T extends Id<infer I>
     ? Id<I>['id']
@@ -40,6 +45,15 @@ const parsePolyline: JSONDomainFieldParser<Polyline> = encoded => ({
  */
 const parseWorldLocation: JSONDomainFieldParser<WorldLocation> = address => ({
   address,
+});
+
+/**
+ * Converts a PhoneNumber from post-parsing JSON format to TypeScript format
+ * @param compact The compact (no punctuation or spaces) representation of the phone number
+ * @returns The TypeScript representation of the PhoneNumber
+ */
+const parsePhoneNumber: JSONDomainFieldParser<PhoneNumber> = compact => ({
+  compact,
 });
 
 /**
@@ -104,7 +118,7 @@ export const parseRestaurant = createDomainObjectParser<Restaurant>({
 
 export const parseDriver = createDomainObjectParser<Driver>({
   id: parseId('Driver'),
-  phoneNumber: identity,
+  phoneNumber: parsePhoneNumber,
   restaurant: parseId('Restaurant'),
   name: identity,
   onShift: identity,

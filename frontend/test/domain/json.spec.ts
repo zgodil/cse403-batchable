@@ -62,7 +62,9 @@ describe('Driver parsing', () => {
         type: 'Driver',
         id: 98712,
       },
-      phoneNumber: '9782372819',
+      phoneNumber: {
+        compact: '9782372819',
+      },
       restaurant: {
         type: 'Restaurant',
         id: 1238,
