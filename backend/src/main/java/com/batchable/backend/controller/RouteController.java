@@ -39,9 +39,9 @@ public class RouteController {
    *         Example request: GET /routes/directions?from=Seattle&to=Portland
    */
   @GetMapping("/directions")
-  public DirectionsResponse getDirections(@RequestParam String from, @RequestParam String to) {
+  public DirectDirectionsResponse getDirections(@RequestParam String from, @RequestParam String to) {
     // Delegates to service layer to handle business logic and Google API call
-    return routeService.getDirections(from, to);
+    return routeService.getDirectDirections(from, to);
   }
 
   /**

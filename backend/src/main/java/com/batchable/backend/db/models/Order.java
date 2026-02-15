@@ -19,7 +19,7 @@ public final class Order {
     public final Instant cookedTime;
     public final State state;
     public final boolean highPriority;
-    public final Long batchId; // nullable
+    public long batchId; // nullable
 
     public Order(
             long id,

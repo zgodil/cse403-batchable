@@ -14,33 +14,26 @@ import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.Cache;
 
 /**
- * BatchingAlgorithm is responsible for grouping orders into delivery batches
- * based on cooked times, delivery times, and estimated travel durations.
+ * BatchingAlgorithm is responsible for grouping orders into delivery batches based on cooked times,
+ * delivery times, and estimated travel durations.
  * 
- * Orders are added to the earliest possible batch where they fit according
- * to delivery constraints. Batches are internally sorted by latest allowed
- * cooked time in descending order to efficiently identify the next batch ready
- * for dispatch.
+ * Orders are added to the earliest possible batch where they fit according to delivery constraints.
+ * Batches are internally sorted by latest allowed cooked time in descending order to efficiently
+ * identify the next batch ready for dispatch.
  */
 @Service
 public class BatchingAlgorithm {
-
   private final RouteService routeService;
-  private final List<TentativeBatch> batches;
   private final int SECONDS_TO_HAND_DELIVER = 360; // seconds to park, walk up, walk back
-  private final String restaurantAddress;
 
   // Cache travel times between origins and destinations, expiring 15 minutes after write
   private final Cache<String, Integer> travelTimeCache =
-      CacheBuilder.newBuilder()
-          .expireAfterWrite(15, TimeUnit.MINUTES)
-          .maximumSize(1000)
-          .build();
+      CacheBuilder.newBuilder().expireAfterWrite(15, TimeUnit.MINUTES).maximumSize(1000).build();
 
   /**
    * Represents a tentative batch of orders.
    */
-  private class TentativeBatch {
+  public class TentativeBatch {
     private final List<Order> batch;
     private Instant latestAllowedCookedTime;
 
@@ -48,15 +41,23 @@ public class BatchingAlgorithm {
       this.batch = batch;
       this.latestAllowedCookedTime = latestAllowedCookedTime;
     }
+
+    public Instant getLastAllowedCookedTime() {
+      return this.latestAllowedCookedTime;
+    }
+
+    public List<Order> getBatch() {
+      return this.batch;
+    }
   }
 
   /** Comparator to sort orders by their delivery time in ascending order. */
   Comparator<Order> byDeliveryTime = Comparator.comparing(o -> o.deliveryTime);
 
   /**
-   * Comparator to sort TentativeBatches by latest allowed cooked time in descending order.
-   * This ensures batches that need to be dispatched sooner are at the back of the list for
-   * efficient retrieval.
+   * Comparator to sort TentativeBatches by latest allowed cooked time in descending order. This
+   * ensures batches that need to be dispatched sooner are at the back of the list for efficient
+   * retrieval.
    */
   Comparator<TentativeBatch> byLatestAllowedCookedTime =
       Comparator.comparing((TentativeBatch tb) -> tb.latestAllowedCookedTime).reversed();
@@ -68,17 +69,19 @@ public class BatchingAlgorithm {
    */
   public BatchingAlgorithm(RouteService routeService) {
     this.routeService = routeService;
-    this.batches = new ArrayList<>();
-    this.restaurantAddress = "dummy for now"; // TODO: configure real address
   }
 
   /**
    * Adds an order to the earliest batch where it can fit according to delivery and cook-time
    * constraints, or creates a new batch if necessary.
    * 
-   * @param order the order to add
+   * @param batches the current list of tentative batches for a single restaurant,
+   *                sorted by latest allowed cooked time in descending order
+   * @param order the order to insert into the batching structure
+   * @param restaurantAddress the address of the restaurant associated with these batches
    */
-  public void addOrder(final Order order) {
+  public void addOrder(final List<TentativeBatch> batches, final Order order,
+      String restaurantAddress) {
     for (int i = 0; i < batches.size(); i++) {
       TentativeBatch tentativeBatch = batches.get(i);
 
@@ -93,15 +96,16 @@ public class BatchingAlgorithm {
 
       tentativeBatch.batch.add(insertionInd, order);
 
-      // Reinsert batch if first order changed to maintain descending order by latestAllowedCookedTime
+      // Reinsert batch if first order changed to maintain descending order by
+      // latestAllowedCookedTime
       if (insertionInd == 0) {
-        tentativeBatch.latestAllowedCookedTime = getLastAllowedCookedTime(order);
+        tentativeBatch.latestAllowedCookedTime = getLastAllowedCookedTime(order, restaurantAddress);
         batches.remove(i);
-        insertBatch(tentativeBatch);
+        insertBatch(batches, tentativeBatch);
       }
       return;
     }
-    insertBatch(createNewBatchWithOrder(order));
+    insertBatch(batches, createNewBatchWithOrder(order, restaurantAddress));
   }
 
   /**
@@ -117,24 +121,36 @@ public class BatchingAlgorithm {
   }
 
   /**
-   * Finds the insertion index for a batch in the list of batches.
-   * 
+   * Finds the insertion index for a tentative batch in the list of batches.
+   *
+   * @param batches the list of existing batches
    * @param newBatch the batch to insert
-   * @return index at which to insert the batch
+   * @return the index at which the batch should be inserted
    */
-  private int findBatchInsertionIndex(TentativeBatch newBatch) {
-    int idx = Collections.binarySearch(batches, newBatch, byLatestAllowedCookedTime);
+  private int findBatchInsertionIndex(final List<TentativeBatch> batches,
+      final TentativeBatch newBatch) {
+    final int idx = Collections.binarySearch(batches, newBatch, byLatestAllowedCookedTime);
     return idx >= 0 ? idx : -idx - 1;
   }
 
-  /** Inserts a batch into the list of batches in the correct order. */
-  private void insertBatch(TentativeBatch newBatch) {
-    batches.add(findBatchInsertionIndex(newBatch), newBatch);
+  /**
+   * Inserts a tentative batch into the batch list while preserving sort order.
+   *
+   * @param batches the list of existing batches
+   * @param newBatch the batch to insert
+   */
+  private void insertBatch(final List<TentativeBatch> batches, final TentativeBatch newBatch) {
+    batches.add(findBatchInsertionIndex(batches, newBatch), newBatch);
   }
 
   /**
-   * Checks if an order can be inserted at a specific index in a batch without violating
-   * delivery ordering constraints.
+   * Determines whether an order can be inserted at a specific position in a batch
+   * without violating delivery-time constraints with neighboring orders.
+   *
+   * @param batch the batch being modified
+   * @param order the order to insert
+   * @param ind the proposed insertion index
+   * @return true if the order can be safely inserted, false otherwise
    */
   private boolean canInsertAt(List<Order> batch, Order order, int ind) {
     boolean prevOkay = ind == 0 || canFollow(batch.get(ind - 1), order);
@@ -142,28 +158,44 @@ public class BatchingAlgorithm {
     return prevOkay && nextOkay;
   }
 
-  /** Creates a new batch containing a single order. */
-  private TentativeBatch createNewBatchWithOrder(Order order) {
+  /**
+   * Creates a new batch containing a single order.
+   *
+   * @param order the initial order in the batch
+   * @param restaurantAddress the address of the restaurant preparing the order
+   * @return a newly created tentative batch
+   */
+  private TentativeBatch createNewBatchWithOrder(Order order, String restaurantAddress) {
     List<Order> batch = new ArrayList<Order>();
     batch.add(order);
-    Instant latestAllowedCookedTime = getLastAllowedCookedTime(order);
+    final Instant latestAllowedCookedTime = getLastAllowedCookedTime(order, restaurantAddress);
     return new TentativeBatch(batch, latestAllowedCookedTime);
   }
 
   /**
-   * Computes the latest allowed cooked time for an order based on travel time from
-   * the restaurant to the delivery location.
+   * Computes the latest allowable cooked time for an order based on the travel
+   * time from the restaurant to the order’s first delivery destination.
+   *
+   * @param firstOrder the first order in a batch
+   * @param restaurantAddress the address of the restaurant
+   * @return the latest instant at which the order may be cooked
    */
-  private Instant getLastAllowedCookedTime(Order firstOrder) {
+  private Instant getLastAllowedCookedTime(Order firstOrder, String restaurantAddress) {
     int firstDeliveryTime = secondsToMakeDelivery(restaurantAddress, firstOrder.destination);
     return firstOrder.cookedTime.minus(Duration.ofSeconds(firstDeliveryTime));
   }
 
   /**
-   * Checks if one order can be delivered after another without violating time constraints.
+   * Determines whether one order can be delivered after another without
+   * violating delivery-time constraints.
+   *
+   * @param from the earlier order in the delivery sequence
+   * @param to the later order in the delivery sequence
+   * @return true if 'to' can follow 'from', false otherwise
    */
   private boolean canFollow(Order from, Order to) {
-    if (Duration.between(from.deliveryTime, to.deliveryTime).toSeconds() <= SECONDS_TO_HAND_DELIVER) {
+    if (Duration.between(from.deliveryTime, to.deliveryTime)
+        .toSeconds() <= SECONDS_TO_HAND_DELIVER) {
       return false;
     }
     int deliverySeconds = secondsToMakeDelivery(from.destination, to.destination);
@@ -172,18 +204,19 @@ public class BatchingAlgorithm {
   }
 
   /**
-   * Computes the travel time (in seconds) between two locations, using a cache to avoid
+   * Computes the travel time between two locations, using a cache to avoid
    * repeated calls to the RouteService.
-   * 
-   * @param from origin address
-   * @param to   destination address
-   * @return travel time in seconds
-   * @throws RuntimeException if the underlying Google API call fails
+   *
+   * @param from the origin address
+   * @param to the destination address
+   * @return time to make the delivery in seconds, including handoff overhead
+   * @throws RuntimeException if the underlying route service call fails
    */
   private int secondsToMakeDelivery(String from, String to) {
-    String key = from + "}" + to;
+    String key = from + "→" + to;
     try {
-      return travelTimeCache.get(key, () -> routeService.getSecondsBetween(from, to) + SECONDS_TO_HAND_DELIVER);
+      return travelTimeCache.get(key,
+          () -> routeService.getSecondsBetween(from, to) + SECONDS_TO_HAND_DELIVER);
     } catch (ExecutionException e) {
       throw new RuntimeException("Google API call failed for route: " + from + " → " + to,
           e.getCause());
