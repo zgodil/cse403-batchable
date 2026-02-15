@@ -1,68 +1,122 @@
-interface Props {
-  isOpen: boolean;
-  onClose: () => void;
+import type {Order} from '~/domain/objects';
+import Button from './Button';
+import Modal from './Modal';
+import {useContext} from 'react';
+import RestaurantContext from './RestaurantContext';
+
+type FieldProps = {
+  type: string;
+  name: string;
+  label: string;
+} & React.InputHTMLAttributes<HTMLInputElement>;
+
+function FormField(props: FieldProps) {
+  return (
+    <div>
+      <label
+        className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300"
+        htmlFor={props.name}
+      >
+        {props.label}
+      </label>
+      <input
+        className="w-full p-2 border rounded bg-transparent border-gray-300 dark:border-gray-700"
+        {...props}
+      />
+    </div>
+  );
 }
 
-export default function AddOrderModal({isOpen, onClose}: Props) {
-  if (!isOpen) return null;
+interface ModalProps {
+  open: boolean;
+  setOpen: (open: boolean) => void;
+}
+
+export default function AddOrderModal({open, setOpen}: ModalProps) {
+  const restaurant = useContext(RestaurantContext);
 
   const handleSubmit = (e: React.ChangeEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    const formData = new FormData(e.currentTarget);
-    const data = Object.fromEntries(formData);
+    if (!restaurant) {
+      alert("You aren't logged in");
+      return;
+    }
 
-    console.log('New Order Data:', data);
+    const formData = new FormData(e.currentTarget);
+    const data = Object.fromEntries(formData) as {
+      address: string;
+      items: string;
+      cookTime: string;
+      deliverTime: string;
+    };
+
+    const MS_PER_MINUTE = 60 * 1000;
+
+    const initialTime = new Date();
+    const cookedTime = new Date(
+      initialTime.getTime() + MS_PER_MINUTE * Number(data.cookTime),
+    );
+    const deliveryTime = new Date(
+      cookedTime.getTime() + MS_PER_MINUTE * Number(data.deliverTime),
+    );
+
+    const order: Omit<Order, 'id'> = {
+      restaurant,
+      destination: {
+        address: data.address,
+      },
+      initialTime,
+      cookedTime,
+      deliveryTime,
+      currentBatch: null,
+      highPriority: false,
+      itemNames: data.items.split(',').map(name => name.trim()),
+      state: 'cooking',
+    };
+
+    console.log('New Order Data:', order);
     // call Backend Web Server API
-    onClose();
   };
 
   return (
-    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-      <div className="bg-white dark:bg-gray-900 p-6 rounded-xl w-full max-w-md shadow-2xl border border-gray-200 dark:border-gray-800">
-        <h2 className="text-xl font-bold mb-4 text-gray-900 dark:text-white">
-          Create New Order
-        </h2>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">
-              Customer Address
-            </label>
-            <input
-              name="address"
-              type="text"
-              className="w-full p-2 border rounded bg-transparent border-gray-300 dark:border-gray-700"
-              placeholder="123 Batch St"
-              required
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">
-              Prep Time (min)
-            </label>
-            <input
-              name="prepTime"
-              type="number"
-              className="w-full p-2 border rounded bg-transparent border-gray-300 dark:border-gray-700"
-              defaultValue="15"
-            />
-          </div>
-          <div className="mt-6 flex gap-3">
-            <button
-              type="button"
-              onClick={onClose}
-              className="flex-1 py-2 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition"
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              className="flex-1 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
-            >
-              Submit Order
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
+    <Modal open={open} setOpen={setOpen} title="Create New Order">
+      <form onSubmit={handleSubmit} className="space-y-4" method="dialog">
+        <FormField
+          type="text"
+          name="address"
+          label="Customer Address"
+          placeholder="123 Batch St"
+          required
+        />
+        <FormField
+          type="text"
+          name="items"
+          label="Item Name(s)"
+          placeholder="Tiramisu, Shrimp Fried Rice, ..."
+          required
+        />
+        <FormField
+          type="number"
+          name="cookTime"
+          label="Prep Time (min)"
+          defaultValue="15"
+          required
+        />
+        <FormField
+          type="number"
+          name="deliverTime"
+          label="Delivery Time (min)"
+          defaultValue="30"
+          required
+        />
+        <div className="mt-6 flex gap-3 w-full">
+          <Button style="secondary" onClick={() => setOpen(false)} tw="grow">
+            Cancel
+          </Button>
+          <Button style="primary" submit tw="grow">
+            Submit Order
+          </Button>
+        </div>
+      </form>
+    </Modal>
   );
 }
