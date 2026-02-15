@@ -34,7 +34,7 @@ export default function Modal({
       <h2 className="text-xl font-bold mb-4 text-gray-900 dark:text-white">
         {title}
       </h2>
-      {children}
+      {open && children}
     </dialog>
   );
 }
