@@ -3,6 +3,7 @@ interface Props {
   submit?: true;
   onClick?: () => void;
   href?: string;
+  tw?: string;
 }
 
 export default function Button({
@@ -11,13 +12,15 @@ export default function Button({
   children,
   onClick,
   href,
+  tw,
 }: React.PropsWithChildren<Props>) {
-  const styles = {
-    primary:
-      'p-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition text-center',
-    secondary:
-      'p-2 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg text-center',
-  }[style];
+  const styles =
+    {
+      primary:
+        'p-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition text-center',
+      secondary:
+        'p-2 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg text-center',
+    }[style] + (tw ? ` ${tw}` : '');
 
   if (href) {
     return (
