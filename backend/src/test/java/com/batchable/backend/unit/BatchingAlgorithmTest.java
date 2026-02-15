@@ -16,15 +16,20 @@ import org.junit.jupiter.api.Test;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 class BatchingAlgorithmTest {
   private RouteService mockRouteService;
   private BatchingAlgorithm batchingAlgorithm;
   private int SECONDS_TO_HAND_DELIVER;
   private int CEIL_MINS_TO_HAND_DELIVER;
+  private long ORDER_ID;
+  private String restaurantAddress;
 
   @BeforeEach
   void setUp() {
@@ -32,27 +37,83 @@ class BatchingAlgorithmTest {
     batchingAlgorithm = new BatchingAlgorithm(mockRouteService);
     SECONDS_TO_HAND_DELIVER = batchingAlgorithm.getSecondsToHandDeliver();
     CEIL_MINS_TO_HAND_DELIVER = (SECONDS_TO_HAND_DELIVER + 59) / 60;
+    ORDER_ID = 1;
+    restaurantAddress = "Restaurant A";
   }
 
   private Order getOrder(Instant initialTime, Instant cookedTime, Instant deliveryTime) {
-    return new Order(-1L, -1L, "", "", initialTime, deliveryTime, cookedTime, State.COOKING, false,
-        -1L);
+    return new Order(ORDER_ID++, -1L, "", "", initialTime, deliveryTime, cookedTime, State.COOKING,
+        false, -1L);
   }
 
   private Instant futureMinutes(int min) {
     return Instant.now().plus(Duration.ofMinutes(min));
   }
 
+  // Helper
+  private Instant getLastAllowedCookedTime(Order firstOrder, String restaurantAddress) {
+    int firstDeliverySeconds =
+        mockRouteService.getSecondsBetween(restaurantAddress, firstOrder.destination)
+            + SECONDS_TO_HAND_DELIVER;
+    Instant lastAllowedCookTime =
+        firstOrder.deliveryTime.minus(Duration.ofSeconds(firstDeliverySeconds - 1));
+    assertFalse(lastAllowedCookTime.isBefore(firstOrder.cookedTime));
+    return lastAllowedCookTime;
+  }
+
+  // Helper
+  void checkInvariants(List<TentativeBatch> batches, boolean checkEdges) {
+    Set<Long> orderIds = new HashSet<Long>();
+    int size = 0;
+    Instant nextCt = null;
+    for (int i = batches.size() - 1; i >= 0; i--) {
+      TentativeBatch tb = batches.get(i);
+      List<Order> batch = tb.getBatch();
+      Instant ct = tb.getLastAllowedCookedTime();
+      size += batch.size();
+      assertNotEquals(0, batch.size(), "No batch can be empty");
+      for (int j = 0; j < batch.size(); j++) {
+        Order o = batch.get(j);
+        orderIds.add(o.id);
+        if (j == 0) {
+          assertTrue(Duration.between(getLastAllowedCookedTime(o, restaurantAddress), ct).abs()
+              .toMillis() <= 1000);
+          // assertEquals(getLastAllowedCookedTime(o, restaurantAddress), ct);
+          assert (o.cookedTime.isBefore(ct));
+          if (i != batches.size() - 1) {
+            assertFalse(nextCt.isAfter(ct));
+          }
+          nextCt = ct;
+        } else if (checkEdges) {
+          Order prev = batch.get(j - 1);
+          int deliverySeconds = mockRouteService.getSecondsBetween(prev.destination, o.destination)
+              + SECONDS_TO_HAND_DELIVER - 1;
+          Instant earliestArrival = prev.deliveryTime.plus(Duration.ofSeconds(deliverySeconds - 1));
+          assertTrue(earliestArrival.isBefore(o.deliveryTime));
+        }
+      }
+    }
+    assertEquals(size, orderIds.size());
+  }
+
   @Test
   void testAddSingleOrderCreatesNewBatch() throws Exception {
     when(mockRouteService.getSecondsBetween(anyString(), anyString())).thenReturn(120);
-    Order order = getOrder(futureMinutes(0), futureMinutes(5), futureMinutes(5 + 2 + CEIL_MINS_TO_HAND_DELIVER));
+    Order order = getOrder(futureMinutes(0), futureMinutes(5),
+        futureMinutes(5 + 2 + CEIL_MINS_TO_HAND_DELIVER));
     List<TentativeBatch> batches = new ArrayList<>();
 
-    batchingAlgorithm.addOrder(batches, order, "Restaurant A");
+    batchingAlgorithm.addOrder(batches, order, restaurantAddress);
 
     assertEquals(1, batches.size(), "Should create one batch");
     TentativeBatch batch = batches.get(0);
+    assertEquals(1, batch.getBatch().size(), "Batch should contain one order");
+    assertEquals(order, batch.getBatch().get(0));
+
+    assertDoesNotThrow(() -> batchingAlgorithm.updateOrder(batches, order, restaurantAddress));
+
+    assertEquals(1, batches.size(), "Should create one batch");
+    batch = batches.get(0);
     assertEquals(1, batch.getBatch().size(), "Batch should contain one order");
     assertEquals(order, batch.getBatch().get(0));
   }
@@ -79,7 +140,8 @@ class BatchingAlgorithmTest {
       Order order = getOrder(futureMinutes(initialTimes.get(i)), futureMinutes(cookedTimes.get(i)),
           futureMinutes(deliveredTimes.get(i)));
       orders.add(order);
-      batchingAlgorithm.addOrder(batches, order, "Restaurant A");
+      batchingAlgorithm.addOrder(batches, order, restaurantAddress);
+      checkInvariants(batches, true);
     }
 
     assertEquals(expectedAnswerInds.size(), batches.size(),
@@ -105,13 +167,31 @@ class BatchingAlgorithmTest {
             + j + ": expected order index " + expectedInd);
       }
     }
+
+    Collections.shuffle(orders);
+    int size = orders.size();
+    for (Order order : orders) {
+      int newSize = 0;
+      assertDoesNotThrow(
+          () -> batchingAlgorithm.removeOrder(batches, order.id, restaurantAddress));
+      checkInvariants(batches, true);
+      for (TentativeBatch tb : batches) {
+        assertNotEquals(0, tb.getBatch().size());
+        newSize += tb.getBatch().size();
+        for (Order o : tb.getBatch()) {
+          assertNotEquals(order, o);
+        }
+      }
+      assertEquals(size - 1, newSize);
+      size--;
+    }
   }
 
 
   @Test
   void twoOrders() throws Exception {
     int uniformTravelTime = 2 * 60; // 2 minutes in seconds
-    int t = uniformTravelTime/60 + CEIL_MINS_TO_HAND_DELIVER;
+    int t = uniformTravelTime / 60 + CEIL_MINS_TO_HAND_DELIVER;
     List<Integer> initialTimes;
     List<Integer> cookedTimes;
     List<Integer> deliveredTimes;
@@ -145,9 +225,9 @@ class BatchingAlgorithmTest {
   @Test
   void threeOrders() throws Exception {
     int uniformTravelTime = 2 * 60; // 2 minutes in seconds
-    int t = uniformTravelTime/60 + CEIL_MINS_TO_HAND_DELIVER; // minutes per leg
-                                                                           // (including
-                                                                           // hand‑deliver)
+    int t = uniformTravelTime / 60 + CEIL_MINS_TO_HAND_DELIVER; // minutes per leg
+                                                                // (including
+                                                                // hand‑deliver)
 
     List<Integer> initialTimes; // not used by algorithm, set to 0 for all orders
     List<Integer> cookedTimes;
@@ -216,13 +296,16 @@ class BatchingAlgorithmTest {
     when(mockRouteService.getSecondsBetween(anyString(), anyString())).thenReturn(360);
 
     List<TentativeBatch> batches = new ArrayList<>();
-    Order order1 = getOrder(futureMinutes(0), futureMinutes(1), futureMinutes(1 + 6 + CEIL_MINS_TO_HAND_DELIVER));
-    Order order2 = getOrder(futureMinutes(5), futureMinutes(6), futureMinutes(6 + 6 + CEIL_MINS_TO_HAND_DELIVER));
-    Order order3 = getOrder(futureMinutes(10), futureMinutes(11), futureMinutes(11 + 6 + CEIL_MINS_TO_HAND_DELIVER));
+    Order order1 = getOrder(futureMinutes(0), futureMinutes(1),
+        futureMinutes(1 + 6 + CEIL_MINS_TO_HAND_DELIVER));
+    Order order2 = getOrder(futureMinutes(5), futureMinutes(6),
+        futureMinutes(6 + 6 + CEIL_MINS_TO_HAND_DELIVER));
+    Order order3 = getOrder(futureMinutes(10), futureMinutes(11),
+        futureMinutes(11 + 6 + CEIL_MINS_TO_HAND_DELIVER));
 
-    batchingAlgorithm.addOrder(batches, order1, "Restaurant A");
-    batchingAlgorithm.addOrder(batches, order2, "Restaurant A");
-    batchingAlgorithm.addOrder(batches, order3, "Restaurant A");
+    batchingAlgorithm.addOrder(batches, order1, restaurantAddress);
+    batchingAlgorithm.addOrder(batches, order2, restaurantAddress);
+    batchingAlgorithm.addOrder(batches, order3, restaurantAddress);
 
     assertEquals(3, batches.size());
   }
@@ -232,12 +315,15 @@ class BatchingAlgorithmTest {
     when(mockRouteService.getSecondsBetween(anyString(), anyString())).thenReturn(10);
 
     List<TentativeBatch> batches = new ArrayList<>();
-    Order order1 = getOrder(futureMinutes(0), futureMinutes(0), futureMinutes(1 + CEIL_MINS_TO_HAND_DELIVER));
-    Order order2 = getOrder(futureMinutes(0), futureMinutes(0), futureMinutes(1 + CEIL_MINS_TO_HAND_DELIVER)); // same delivery
-                                                                                   // time
+    Order order1 =
+        getOrder(futureMinutes(0), futureMinutes(0), futureMinutes(1 + CEIL_MINS_TO_HAND_DELIVER));
+    Order order2 =
+        getOrder(futureMinutes(0), futureMinutes(0), futureMinutes(1 + CEIL_MINS_TO_HAND_DELIVER)); // same
+                                                                                                    // delivery
+    // time
 
-    batchingAlgorithm.addOrder(batches, order1, "Restaurant A");
-    batchingAlgorithm.addOrder(batches, order2, "Restaurant A");
+    batchingAlgorithm.addOrder(batches, order1, restaurantAddress);
+    batchingAlgorithm.addOrder(batches, order2, restaurantAddress);
 
     assertEquals(2, batches.size(),
         "Orders with conflicting delivery times should be in separate batches");
@@ -247,7 +333,7 @@ class BatchingAlgorithmTest {
   @Test
   void tenOrdersAllInOneBatch() throws Exception {
     int uniformTravelTime = 2 * 60; // 2 minutes in seconds
-    int t = uniformTravelTime/60 + CEIL_MINS_TO_HAND_DELIVER; // ≈7 minutes
+    int t = uniformTravelTime / 60 + CEIL_MINS_TO_HAND_DELIVER; // ≈7 minutes
 
     List<Integer> initialTimes = List.of(0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
     List<Integer> cookedTimes = List.of(5, 6, 7, 8, 9, 10, 11, 12, 13, 14);
@@ -275,7 +361,7 @@ class BatchingAlgorithmTest {
   @Test
   void tenOrdersTwoBatchesEvenOdd() throws Exception {
     int uniformTravelTime = 2 * 60;
-    int t = uniformTravelTime/60 + CEIL_MINS_TO_HAND_DELIVER; // ≈7
+    int t = uniformTravelTime / 60 + CEIL_MINS_TO_HAND_DELIVER; // ≈7
 
     // Even indices: 0,2,4,6,8 (cooked 5‑9, deliveries 10+t … 10+5t)
     // Odd indices: 1,3,5,7,9 (cooked 11‑15, deliveries 16+t … 16+5t)
@@ -296,7 +382,7 @@ class BatchingAlgorithmTest {
   @Test
   void tenOrdersThreeBatchesByCookedTime() throws Exception {
     int uniformTravelTime = 2 * 60;
-    int t = uniformTravelTime/60 + CEIL_MINS_TO_HAND_DELIVER; // ≈7
+    int t = uniformTravelTime / 60 + CEIL_MINS_TO_HAND_DELIVER; // ≈7
 
     // Group A (indices 0‑1): cooked 5‑6, deliveries 7+t, 7+2t
     // Group B (indices 2‑4): cooked 8‑10, deliveries 11+t, 11+2t, 11+3t
@@ -318,7 +404,7 @@ class BatchingAlgorithmTest {
   @Test
   void fiftyOrdersTenBatchesReordered() throws Exception {
     int uniformTravelTime = 2 * 60; // 2 minutes in seconds
-    int t = uniformTravelTime/60 + CEIL_MINS_TO_HAND_DELIVER; // minutes per leg (≈7)
+    int t = uniformTravelTime / 60 + CEIL_MINS_TO_HAND_DELIVER; // minutes per leg (≈7)
 
     List<Integer> initialTimes = new ArrayList<>();
     List<Integer> cookedTimes = new ArrayList<>();
@@ -357,11 +443,8 @@ class BatchingAlgorithmTest {
   // Helper to create an order with a specific destination
   private Order getOrder(Instant initialTime, Instant cookedTime, Instant deliveryTime,
       String destination) {
-    Order order = new Order(-1L, -1L, destination, "", initialTime, deliveryTime, cookedTime,
+    Order order = new Order(ORDER_ID++, -1L, destination, "", initialTime, deliveryTime, cookedTime,
         State.COOKING, false, -1L);
-
-    // If the above constructor doesn't set destination, add a setter call:
-    // order.setDestination(destination);
     return order;
   }
 
@@ -406,7 +489,8 @@ class BatchingAlgorithmTest {
       Order order = getOrder(futureMinutes(initialTimes.get(i)), futureMinutes(cookedTimes.get(i)),
           futureMinutes(deliveredTimes.get(i)), destinations.get(i));
       orders.add(order);
-      batchingAlgorithm.addOrder(batches, order, "Restaurant A");
+      batchingAlgorithm.addOrder(batches, order, restaurantAddress);
+      checkInvariants(batches, false);
     }
     assertEquals(expectedAnswerInds.size(), batches.size(),
         "Number of batches does not match expected");
@@ -429,6 +513,23 @@ class BatchingAlgorithmTest {
             + j + ": expected order index " + expectedInd);
       }
     }
+    Collections.shuffle(orders);
+    int size = orders.size();
+    for (Order order : orders) {
+      int newSize = 0;
+      assertDoesNotThrow(
+          () -> batchingAlgorithm.removeOrder(batches, order.id, restaurantAddress));
+      checkInvariants(batches, false);
+      for (TentativeBatch tb : batches) {
+        assertNotEquals(0, tb.getBatch().size());
+        newSize += tb.getBatch().size();
+        for (Order o : tb.getBatch()) {
+          assertNotEquals(order, o);
+        }
+      }
+      assertEquals(size - 1, newSize);
+      size--;
+    }
   }
 
   // ---------------------------------------------------------------------
@@ -443,18 +544,19 @@ class BatchingAlgorithmTest {
     int tA = 2 * 60; // 120 s
     int tB = 3 * 60; // 180 s
     Map<String, Integer> travelTimes = new HashMap<>();
-    travelTimes.put("Restaurant A→DestA", tA);
-    travelTimes.put("Restaurant A→DestB", tB);
+    travelTimes.put(restaurantAddress + "→DestA", tA);
+    travelTimes.put(restaurantAddress + "→DestB", tB);
     travelTimes.put("DestA→DestB", 1 * 60); // 1 min between destinations
 
     List<Integer> initialTimes = List.of(0, 0);
     List<Integer> cookedTimes = List.of(5, 5);
-    List<Integer> deliveredTimes = List.of(5 + tA/60 + CEIL_MINS_TO_HAND_DELIVER, // delivery
-                                                                                         // A =
-                                                                                         // cooked +
-                                                                                         // travelA+hand
-                                                                                         // + buffer
-        5 + tA/60 + CEIL_MINS_TO_HAND_DELIVER + 1 + CEIL_MINS_TO_HAND_DELIVER // delivery B = later
+    List<Integer> deliveredTimes = List.of(5 + tA / 60 + CEIL_MINS_TO_HAND_DELIVER, // delivery
+                                                                                    // A =
+                                                                                    // cooked +
+                                                                                    // travelA+hand
+                                                                                    // + buffer
+        5 + tA / 60 + CEIL_MINS_TO_HAND_DELIVER + 1 + CEIL_MINS_TO_HAND_DELIVER // delivery B =
+                                                                                // later
     );
     List<String> destinations = List.of("DestA", "DestB");
     List<List<Integer>> expected = List.of(List.of(0, 1)); // both in one batch
@@ -470,17 +572,17 @@ class BatchingAlgorithmTest {
     int tA = 2 * 60;
     int tB = 15 * 60; // 15 minutes
     Map<String, Integer> travelTimes = new HashMap<>();
-    travelTimes.put("Restaurant A→DestA", tA);
-    travelTimes.put("Restaurant A→DestB", tB);
+    travelTimes.put(restaurantAddress + "→DestA", tA);
+    travelTimes.put(restaurantAddress + "→DestB", tB);
     // Not needed for this scenario because they won't be in same batch.
 
     List<Integer> initialTimes = List.of(0, 0);
     List<Integer> cookedTimes = List.of(5, 7);
-    List<Integer> deliveredTimes = List.of(5 + tA/60 + CEIL_MINS_TO_HAND_DELIVER, // delivery A
+    List<Integer> deliveredTimes = List.of(5 + tA / 60 + CEIL_MINS_TO_HAND_DELIVER, // delivery A
                                                                                     // exactly at
                                                                                     // earliest
                                                                                     // possible
-        7 + tB/60 + CEIL_MINS_TO_HAND_DELIVER  // delivery B exactly at earliest possible
+        7 + tB / 60 + CEIL_MINS_TO_HAND_DELIVER // delivery B exactly at earliest possible
     );
     List<String> destinations = List.of("DestA", "DestB");
     List<List<Integer>> expected = List.of(List.of(1), List.of(0)); // separate batches
@@ -501,9 +603,9 @@ class BatchingAlgorithmTest {
     // But after adding order2, if travel times cause constraints, may split.
     // We'll design so they fit together.
     Map<String, Integer> travelTimes = new HashMap<>();
-    travelTimes.put("Restaurant A→DestA", 2 * 60);
-    travelTimes.put("Restaurant A→DestB", 5 * 60);
-    travelTimes.put("Restaurant A→DestC", 10 * 60);
+    travelTimes.put(restaurantAddress + "→DestA", 2 * 60);
+    travelTimes.put(restaurantAddress + "→DestB", 5 * 60);
+    travelTimes.put(restaurantAddress + "→DestC", 10 * 60);
     // Inter-destination times for the sequence A→B, B→C
     travelTimes.put("DestA→DestB", 1 * 60);
     travelTimes.put("DestB→DestC", 2 * 60);
@@ -530,9 +632,9 @@ class BatchingAlgorithmTest {
     // But after adding order2, if travel times cause constraints, may split.
     // We'll design so they fit together.
     Map<String, Integer> travelTimes = new HashMap<>();
-    travelTimes.put("Restaurant A→DestA", 2 * 60);
-    travelTimes.put("Restaurant A→DestB", 10 * 60);
-    travelTimes.put("Restaurant A→DestC", 5 * 60);
+    travelTimes.put(restaurantAddress + "→DestA", 2 * 60);
+    travelTimes.put(restaurantAddress + "→DestC", 10 * 60);
+    travelTimes.put(restaurantAddress + "→DestB", 5 * 60);
     // Inter-destination times for the sequence A→B, B→C
     travelTimes.put("DestA→DestC", 3 * 60);
     travelTimes.put("DestA→DestB", 1 * 60);
@@ -552,9 +654,9 @@ class BatchingAlgorithmTest {
   void threeOrdersTravelTimesCauseSplit() throws Exception {
     // Similar but order2 has too tight delivery, cannot follow order1.
     Map<String, Integer> travelTimes = new HashMap<>();
-    travelTimes.put("Restaurant A→DestA", 2 * 60);
-    travelTimes.put("Restaurant A→DestB", 5 * 60);
-    travelTimes.put("Restaurant A→DestC", 10 * 60);
+    travelTimes.put(restaurantAddress + "→DestA", 2 * 60);
+    travelTimes.put(restaurantAddress + "→DestB", 5 * 60);
+    travelTimes.put(restaurantAddress + "→DestC", 10 * 60);
     travelTimes.put("DestA→DestB", 1 * 60);
     travelTimes.put("DestB→DestC", 2 * 60);
 
@@ -573,9 +675,9 @@ class BatchingAlgorithmTest {
   void threeOrdersTravelTimesCauseSplit2() throws Exception {
     // Similar but order2 has too tight delivery, cannot follow order1.
     Map<String, Integer> travelTimes = new HashMap<>();
-    travelTimes.put("Restaurant A→DestA", 2 * 60);
-    travelTimes.put("Restaurant A→DestB", 5 * 60);
-    travelTimes.put("Restaurant A→DestC", 20 * 60);
+    travelTimes.put(restaurantAddress + "→DestA", 2 * 60);
+    travelTimes.put(restaurantAddress + "→DestB", 5 * 60);
+    travelTimes.put(restaurantAddress + "→DestC", 20 * 60);
     travelTimes.put("DestA→DestB", 1 * 60);
     travelTimes.put("DestB→DestC", 2 * 60);
 
@@ -584,7 +686,7 @@ class BatchingAlgorithmTest {
     List<Integer> deliveredTimes = List.of(18, 30, 34); // too early for after B
     List<String> destinations = List.of("DestA", "DestB", "DestC");
     // Expected: order0 and order1 together, order2 separate
-    List<List<Integer>> expected = List.of(List.of(0,1), List.of(2));
+    List<List<Integer>> expected = List.of(List.of(0, 1), List.of(2));
 
     ordersNonUniform(initialTimes, cookedTimes, deliveredTimes, destinations, travelTimes,
         expected);
