@@ -14,9 +14,9 @@ export default function Button({
 }: React.PropsWithChildren<Props>) {
   const styles = {
     primary:
-      'flex-1 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition text-center',
+      'p-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition text-center',
     secondary:
-      'flex-1 py-2 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg text-center',
+      'p-2 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg text-center',
   }[style];
 
   if (href) {
