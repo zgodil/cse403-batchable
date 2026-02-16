@@ -1,7 +1,7 @@
 import OverviewSection from './Overview';
 import * as json from '~/domain/json';
 import type {Driver} from '~/domain/objects';
-import {formatPhoneNumber} from '~/util/format';
+import DriverCard from './DriverCard';
 
 export default function DriverOverview() {
   const jsonDrivers: json.JSONDomainObject<Driver>[] = [
@@ -28,26 +28,7 @@ export default function DriverOverview() {
       title="🚗 Driver Status"
       items={drivers}
       onClick={() => {}}
-      renderItem={driver => (
-        <>
-          <div className="flex justify-between items-startr flex-col">
-            <h2 className="font-bold text-gray-900 dark:text-gray-100">
-              {driver.name}
-            </h2>
-
-            <p className="text-xs font-medium text-blue-500">
-              {formatPhoneNumber(driver.phoneNumber)}
-            </p>
-          </div>
-          <p
-            className={`text-sm text-gray-500 ${
-              driver.onShift ? 'text-green-200' : 'text-red-600'
-            }`}
-          >
-            Status: {driver.onShift ? 'ON' : 'OFF'} SHIFT
-          </p>
-        </>
-      )}
+      renderItem={driver => <DriverCard driver={driver} />}
     />
   );
 }
