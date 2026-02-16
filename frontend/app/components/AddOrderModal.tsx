@@ -1,55 +1,29 @@
 import {fakeId, type Order} from '~/domain/objects';
 import * as json from '~/domain/json';
-import Modal, {type ModalState} from './Modal';
+import {type ModalState} from './Modal';
 import {useContext} from 'react';
 import RestaurantContext from './RestaurantContext';
-import EditControls from './EditControls';
+import FormField from './FormField';
+import FormModal from './FormModal';
+import {MS_PER_MINUTE} from '~/util/time';
 
-type FieldProps = {
-  type: string;
-  name: string;
-  label: string;
-} & React.InputHTMLAttributes<HTMLInputElement>;
-
-function FormField(props: FieldProps) {
-  return (
-    <div>
-      <label
-        className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300"
-        htmlFor={props.name}
-      >
-        {props.label}
-      </label>
-      <input
-        className="w-full p-2 border rounded bg-transparent border-gray-300 dark:border-gray-700"
-        {...props}
-      />
-    </div>
-  );
-}
-
-interface ModalProps {
+interface Props {
   modal: ModalState;
 }
 
-export default function AddOrderModal({modal}: ModalProps) {
+export default function AddOrderModal({modal}: Props) {
   const restaurant = useContext(RestaurantContext);
 
-  const handleSubmit = (e: React.ChangeEvent<HTMLFormElement>) => {
+  const addOrder = (data: {
+    address: string;
+    items: string;
+    cookTime: string;
+    deliverTime: string;
+  }) => {
     if (!restaurant) {
       alert("You aren't logged in");
       return;
     }
-
-    const formData = new FormData(e.currentTarget);
-    const data = Object.fromEntries(formData) as {
-      address: string;
-      items: string;
-      cookTime: string;
-      deliverTime: string;
-    };
-
-    const MS_PER_MINUTE = 60 * 1000;
 
     const initialTime = new Date();
     const cookedTime = new Date(
@@ -79,38 +53,40 @@ export default function AddOrderModal({modal}: ModalProps) {
   };
 
   return (
-    <Modal title="Create New Order" state={modal}>
-      <form onSubmit={handleSubmit} className="space-y-4" method="dialog">
-        <FormField
-          type="text"
-          name="address"
-          label="Customer Address"
-          placeholder="123 Batch St"
-          required
-        />
-        <FormField
-          type="text"
-          name="items"
-          label="Item Name(s)"
-          placeholder="Tiramisu, Shrimp Fried Rice, ..."
-          required
-        />
-        <FormField
-          type="number"
-          name="cookTime"
-          label="Prep Time (min)"
-          defaultValue="15"
-          required
-        />
-        <FormField
-          type="number"
-          name="deliverTime"
-          label="Delivery Time (min)"
-          defaultValue="30"
-          required
-        />
-        <EditControls confirm="Submit Order" state={modal} />
-      </form>
-    </Modal>
+    <FormModal
+      title="Create New Order"
+      state={modal}
+      apply={addOrder}
+      confirm="Create New Order"
+    >
+      <FormField
+        label="Customer Address"
+        type="text"
+        name="address"
+        placeholder="123 Batch St"
+        required
+      />
+      <FormField
+        label="Item Name(s)"
+        type="text"
+        name="items"
+        placeholder="Tiramisu, Shrimp Fried Rice, ..."
+        required
+      />
+      <FormField
+        label="Prep Time (min)"
+        type="number"
+        name="cookTime"
+        defaultValue="15"
+        required
+      />
+      <FormField
+        label="Delivery Time (min)"
+        type="number"
+        name="deliverTime"
+        defaultValue="30"
+        required
+      />
+    </FormModal>
   );
 }

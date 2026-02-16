@@ -33,6 +33,13 @@ export interface Driver extends DomainObject<'Driver'> {
   onShift: boolean;
 }
 
+export const ORDER_STATES = [
+  'cooking',
+  'cooked',
+  'driving',
+  'delivered',
+] as const;
+
 export interface Order extends DomainObject<'Order'> {
   restaurant: Restaurant['id'];
   destination: WorldLocation;
@@ -40,9 +47,31 @@ export interface Order extends DomainObject<'Order'> {
   initialTime: Date;
   deliveryTime: Date; // estimated promised time (changes when state >= delivered)
   cookedTime: Date; // estimated prep time (changes when state >= cooked)
-  state: 'cooking' | 'cooked' | 'driving' | 'delivered';
+  state: (typeof ORDER_STATES)[number];
   highPriority: boolean;
   currentBatch: Batch['id'] | null;
+}
+
+type OrderStateBefore<
+  T extends Order['state'],
+  S = typeof ORDER_STATES,
+> = S extends readonly [...infer Head, infer Tail]
+  ? T extends Tail
+    ? Head[number]
+    : OrderStateBefore<T, Head>
+  : never;
+
+export function isStateBefore(
+  a: Order['state'],
+  b: Order['state'],
+): a is OrderStateBefore<typeof b> {
+  return ORDER_STATES.indexOf(a) < ORDER_STATES.indexOf(b);
+}
+
+export function nextStateAfter(
+  a: OrderStateBefore<'delivered'>,
+): Order['state'] {
+  return ORDER_STATES[ORDER_STATES.indexOf(a) + 1];
 }
 
 export interface Batch extends DomainObject<'Batch'> {

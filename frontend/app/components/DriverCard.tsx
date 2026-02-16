@@ -1,5 +1,5 @@
 import type {Driver} from '~/domain/objects';
-import {formatPhoneNumber} from '~/util/format';
+import {formatDriverName, formatPhoneNumber} from '~/util/format';
 import {useModal} from './Modal';
 import EditDriverModal from './EditDriverModal';
 import Card from './Card';
@@ -15,7 +15,7 @@ export default function DriverCard({driver}: Props) {
       <Card onClick={() => editDriverModal.setOpen(true)}>
         <div className="flex justify-between items-startr flex-col">
           <h2 className="font-bold text-gray-900 dark:text-gray-100">
-            {driver.name}
+            {formatDriverName(driver)}
           </h2>
 
           <p className="text-xs font-medium text-blue-500">

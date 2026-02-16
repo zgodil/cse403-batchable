@@ -1,4 +1,5 @@
-import type {PhoneNumber} from '~/domain/objects';
+import type {Driver, Order, PhoneNumber} from '~/domain/objects';
+import {MS_PER_MINUTE} from './time';
 
 /**
  * Formats a phone number for display in the UI.
@@ -27,8 +28,26 @@ export function formatDateTime(dateTime: Date): string {
  * @returns A human-readable version of the interval
  */
 export function formatTimeInterval(intervalMs: number): string {
-  const MS_PER_MINUTE = 60 * 1000;
-  const minutes = Math.floor(intervalMs / MS_PER_MINUTE);
-  const magnitude = `${Math.round(Math.abs(minutes))} min`;
-  return minutes < 0 ? `${magnitude} ago` : magnitude;
+  return new Intl.RelativeTimeFormat(undefined, {style: 'short'}).format(
+    Math.floor(intervalMs / MS_PER_MINUTE),
+    'minute',
+  );
+}
+
+/**
+ * Formats the string name of an order for display in the UI
+ * @param order The order to find the name of
+ * @returns A human-readable short name summary of the order
+ */
+export function formatOrderName(order: Order): string {
+  return `Order #${order.id.id}${order.highPriority ? ' ❗' : ''}`;
+}
+
+/**
+ * Formats the string name of an driver for display in the UI
+ * @param driver The driver to find the name of
+ * @returns A human-readable short name summary of the driver
+ */
+export function formatDriverName(driver: Driver): string {
+  return `${driver.name} (Driver)`;
 }

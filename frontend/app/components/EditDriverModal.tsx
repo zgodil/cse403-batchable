@@ -1,7 +1,9 @@
 import type {Driver} from '~/domain/objects';
 import type {ModalState} from './Modal';
-import Modal from './Modal';
-import EditControls from './EditControls';
+import FormModal from './FormModal';
+import FormField from './FormField';
+import {formatDriverName} from '~/util/format';
+import * as json from '~/domain/json';
 
 interface Props {
   driver: Driver;
@@ -9,16 +11,46 @@ interface Props {
 }
 
 export default function EditDriverModal({driver, state}: Props) {
-  const applyChanges = () => {
-    console.log('Edited Driver');
+  const applyChanges = (data: {
+    name: string;
+    phoneNumber: string;
+    onShift?: 'on';
+  }) => {
+    const newDriver: Driver = {
+      ...driver,
+      name: data.name,
+      phoneNumber: {compact: data.phoneNumber},
+      onShift: !!data.onShift,
+    };
+    console.log('Edited Driver:', json.driver.unparse(newDriver));
+    // call back-end API
   };
 
   return (
-    <Modal title={`Edit Driver '${driver.name}'`} state={state}>
-      <form method="dialog" onSubmit={applyChanges}>
-        <pre>{JSON.stringify(driver, undefined, 4)}</pre>
-        <EditControls state={state} />
-      </form>
-    </Modal>
+    <FormModal
+      title={`Edit ${formatDriverName(driver)}`}
+      state={state}
+      apply={applyChanges}
+    >
+      <FormField
+        label="Name"
+        type="text"
+        name="name"
+        defaultValue={driver.name}
+      />
+      <FormField
+        label="Phone Number (digits only)"
+        type="text"
+        name="phoneNumber"
+        pattern="\d{10,}"
+        defaultValue={driver.phoneNumber.compact}
+      />
+      <FormField
+        label="On Shift"
+        type="checkbox"
+        name="onShift"
+        defaultChecked={driver.onShift}
+      />
+    </FormModal>
   );
 }

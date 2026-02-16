@@ -1,8 +1,9 @@
 import type {Order} from '~/domain/objects';
-import {formatTimeInterval} from '~/util/format';
+import {formatOrderName, formatTimeInterval} from '~/util/format';
 import EditOrderModal from './EditOrderModal';
 import Card from './Card';
 import {useModal} from './Modal';
+import OrderState from './OrderState';
 
 interface Props {
   order: Order;
@@ -10,39 +11,26 @@ interface Props {
 
 export default function OrderCard({order}: Props) {
   const editOrderModal = useModal();
-  const prepTime = formatTimeInterval(
-    order.cookedTime.getTime() - order.initialTime.getTime(),
-  );
+  const prepTime = formatTimeInterval(order.cookedTime.getTime() - Date.now());
   const deliverTime = formatTimeInterval(
-    order.deliveryTime.getTime() - order.initialTime.getTime(),
+    order.deliveryTime.getTime() - Date.now(),
   );
   const items = order.itemNames.join(', ');
-  const stateStyle = {
-    cooking: 'bg-orange-100 text-orange-700',
-    cooked: 'bg-yellow-100 text-yellow-700',
-    driving: 'bg-blue-100 text-blue-700',
-    delivered: 'bg-green-100 text-green-700',
-  }[order.state];
 
   return (
     <>
       <Card onClick={() => editOrderModal.setOpen(true)}>
         <div>
           <p className="font-bold text-gray-900 dark:text-gray-100">
-            Order #{order.id.id}
-            {order.highPriority && ' ❗'}
+            {formatOrderName(order)}
           </p>
           <p className="text-sm text-white-500">{order.destination.address}</p>
           <p className="text-sm text-grey-500">{items}</p>
           <p className="text-sm text-gray-500">
-            Prepared: {prepTime} • Delivered: {deliverTime}
+            Prepared {prepTime} • Delivered {deliverTime}
           </p>
         </div>
-        <span
-          className={`px-3 py-1 text-xs font-semibold rounded-full ${stateStyle}`}
-        >
-          {order.state.toUpperCase()}
-        </span>
+        <OrderState state={order.state} />
       </Card>
       <EditOrderModal order={order} state={editOrderModal} />
     </>
