@@ -6,6 +6,11 @@ type Props = {
   label?: React.ReactNode;
 } & React.InputHTMLAttributes<HTMLInputElement>;
 
+/**
+ * Represents an opinionatedly-styled (is that a word) <input> box for use in a {@link FormModal}.
+ * It has the same properties as a normal <input>, with the addition of a 'label' prop.
+ * @param label Label text to display along with the input. Depending on the type of input, this will be formatted differently
+ */
 export default function FormField(props: Props) {
   const inputId = useId();
   const horizontal = props.type === 'checkbox' || props.type === 'radio';

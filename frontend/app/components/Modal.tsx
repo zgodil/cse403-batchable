@@ -10,11 +10,22 @@ interface Props {
   state: ModalState;
 }
 
+/**
+ * A custom hook for getting a ModalState object associated with a closed modal.
+ * This can be used to control one or more modal children.
+ * @returns The new modal state, closed
+ */
 export function useModal(): ModalState {
   const [open, setOpen] = useState(false);
   return {open, setOpen};
 }
 
+/**
+ * Represents a modal dialog box, implemented on top of the native HTML <dialog> element for maximal native support.
+ * @param state The state of the modal, and the ability to change it. The setter is required in this to facilitate the modal's inherent autoclosing abilities
+ * @param title The title of the modal, to display before all the other children
+ * @param children The content of the modal
+ */
 export default function Modal({
   state: {open, setOpen},
   title,

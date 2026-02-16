@@ -13,12 +13,22 @@ interface Props<T extends FormData> {
   apply: (data: T) => void;
 }
 
+/**
+ * Describes a modal which consists entirely of a form, and which closes upon having its changes realized.
+ * This may be updated to display a loading state while `apply` is resolving in the future.
+ * Examples on how to use this can be found in {@link EditOrderModal}, {@link EditDriverModal}, and {@link AddOrderModal}.
+ * @param title The header text for the modal
+ * @param state The ModalState associated with this modal
+ * @param confirm? The text in the 'confirm'-esque button. Default is 'Apply Changes'
+ * @param apply A function (possibly async) to call when the 'confirm' button is pressed. It is passed the data from the form as a Record<string, string>
+ * @param children The form fields and other content to appear inside the modal
+ */
 export default function FormModal<T extends FormData>({
+  title,
   state,
   confirm = 'Apply Changes',
   apply,
   children,
-  title,
 }: React.PropsWithChildren<Props<T>>) {
   const handleSubmit = (e: React.SubmitEvent<HTMLFormElement>) => {
     const formData = new FormData(e.currentTarget);

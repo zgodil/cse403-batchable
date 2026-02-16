@@ -6,6 +6,12 @@ interface Props<T extends DomainObject> {
   renderItem: (item: T) => React.ReactElement;
 }
 
+/**
+ * Represents a list of {@link DomainObject}s.
+ * @param title The header for the entire list
+ * @param items An array of domain objects
+ * @param renderItem A function to convert a single domain object to JSX
+ */
 export default function OverviewSection<T extends DomainObject>({
   title,
   items,

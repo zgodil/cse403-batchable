@@ -2,6 +2,11 @@ interface Props {
   onClick: () => void;
 }
 
+/**
+ * Represents a clickable card for use in {@link OverviewSection}s (and maybe other places)
+ * @param onClick What to do when the card is clicked
+ * @param children The contents of the card
+ */
 export default function Card({
   onClick,
   children,

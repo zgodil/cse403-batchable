@@ -6,13 +6,22 @@ interface Props {
   tw?: string;
 }
 
+/**
+ * A lightly-customizable button component, which can be an <a> or <button> tag depending on props, while looking identical.
+ * @param style The kind of button. 'primary' is blue and white, 'secondary' is grey and black
+ * @param submit Whether this is a submission button for a form
+ * @param onClick What to do when the button is clicked
+ * @param href The link to visit when clicked. This will force the <Button> to become an <a>
+ * @param tw Additional Tailwind classes to add to the button, if intense customization is needed
+ * @param children The contents of the button. Hopefully not too much
+ */
 export default function Button({
   style = 'primary',
   submit,
-  children,
   onClick,
   href,
   tw,
+  children,
 }: React.PropsWithChildren<Props>) {
   const styles =
     {
