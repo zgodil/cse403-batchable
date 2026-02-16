@@ -1,10 +1,10 @@
 import OverviewSection from './Overview';
-import {parseDriver, type JSONDomainObject} from '~/domain/json';
+import * as json from '~/domain/json';
 import type {Driver} from '~/domain/objects';
 import {formatPhoneNumber} from '~/util/format';
 
 export default function DriverOverview() {
-  const jsonDrivers: JSONDomainObject<Driver>[] = [
+  const jsonDrivers: json.JSONDomainObject<Driver>[] = [
     {
       id: 982,
       name: 'Ben',
@@ -21,7 +21,7 @@ export default function DriverOverview() {
     },
   ];
 
-  const drivers = jsonDrivers.map(parseDriver);
+  const drivers = jsonDrivers.map(json.driver.parse);
 
   return (
     <OverviewSection

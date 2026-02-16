@@ -56,3 +56,7 @@ export interface MenuItem extends DomainObject<'MenuItem'> {
   restaurant: Restaurant['id'];
   name: string;
 }
+
+export function fakeId<I extends string>(type: I) {
+  return {type, id: -3141592653};
+}

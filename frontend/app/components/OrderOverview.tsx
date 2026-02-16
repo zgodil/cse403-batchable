@@ -1,10 +1,10 @@
 import type {Order} from '~/domain/objects';
 import OverviewSection from './Overview';
-import {parseOrder, type JSONDomainObject} from '~/domain/json';
+import * as json from '~/domain/json';
 import {formatTimeInterval} from '~/util/format';
 
 export default function OrderList() {
-  const jsonOrders: JSONDomainObject<Order>[] = [
+  const jsonOrders: json.JSONDomainObject<Order>[] = [
     {
       id: 5,
       cookedTime: 'Mon, 23 Feb 2026 21:30:00 GMT',
@@ -54,7 +54,7 @@ export default function OrderList() {
       state: 'driving',
     },
   ];
-  const orders = jsonOrders.map(parseOrder);
+  const orders = jsonOrders.map(json.order.parse);
 
   return (
     <OverviewSection

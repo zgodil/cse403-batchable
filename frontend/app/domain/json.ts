@@ -8,6 +8,7 @@ import type {
   Driver,
   Batch,
   PhoneNumber,
+  DomainObject,
 } from './objects';
 
 type JSONDomainField<T> = T extends
@@ -103,9 +104,9 @@ const identity = {
 /**
  * Represents a method of converting domain objects between a TypeScript domain object representation, and a post-parsing JSON representation. `parse` converts from JSON to TypeScript, and `unparse` vice-versa.
  */
-export interface JSONParserPair<T> {
-  parse(json: JSONDomainObject<T>): T;
-  unparse(domain: T): JSONDomainObject<T>;
+export interface JSONParserPair<T extends DomainObject> {
+  parse: (json: JSONDomainObject<T>) => T;
+  unparse: (domain: T) => JSONDomainObject<T>;
 }
 
 /**
@@ -113,7 +114,7 @@ export interface JSONParserPair<T> {
  * @param spec A mapping from domain object keys to parser pairs which can parse their JSON-like values
  * @returns A parser pair from a post-parsing JSON representation of the given object to the full TypeScript representation of the domain object
  */
-function createDomainObjectParserPair<T>(spec: {
+function createDomainObjectParserPair<T extends DomainObject>(spec: {
   [K in keyof T]: JSONFieldParserPair<T[K]>;
 }): JSONParserPair<T> {
   return {

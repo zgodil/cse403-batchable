@@ -1,4 +1,5 @@
-import type {Order} from '~/domain/objects';
+import {fakeId, type Order} from '~/domain/objects';
+import * as json from '~/domain/json';
 import Button from './Button';
 import Modal from './Modal';
 import {useContext} from 'react';
@@ -59,7 +60,8 @@ export default function AddOrderModal({open, setOpen}: ModalProps) {
       cookedTime.getTime() + MS_PER_MINUTE * Number(data.deliverTime),
     );
 
-    const order: Omit<Order, 'id'> = {
+    const order: Order = {
+      id: fakeId('Order'),
       restaurant,
       destination: {
         address: data.address,
@@ -73,7 +75,7 @@ export default function AddOrderModal({open, setOpen}: ModalProps) {
       state: 'cooking',
     };
 
-    console.log('New Order Data:', order);
+    console.log('New Order Data:', json.order.unparse(order));
     // call Backend Web Server API
   };
 
