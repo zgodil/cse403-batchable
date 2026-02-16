@@ -16,7 +16,7 @@ export default function FormField(props: Props) {
   const horizontal = props.type === 'checkbox' || props.type === 'radio';
   const label = props.label && (
     <label
-      className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300"
+      className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300 cursor-pointer"
       htmlFor={inputId}
     >
       {props.label}

@@ -5,6 +5,7 @@ import DriverOverview from '../components/DriverOverview';
 import AddOrderModal from '../components/AddOrderModal';
 import Button from '~/components/Button';
 import {useModal} from '~/components/Modal';
+import {Link} from 'react-router';
 
 function Home() {
   const {isAuthenticated, isLoading} = useAuth0();
@@ -40,9 +41,14 @@ function Home() {
             Adaptive Real-Time Delivery Batching System
           </p>
         </div>
-        <Button onClick={() => addOrderModal.setOpen(true)} style="primary">
-          + Add New Order
-        </Button>
+        <div className="flex gap-3">
+          <Button style="secondary" to="/restaurant">
+            ⚙️ Manage Restaurant
+          </Button>
+          <Button onClick={() => addOrderModal.setOpen(true)} style="primary">
+            + Add New Order
+          </Button>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">

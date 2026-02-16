@@ -41,7 +41,7 @@ export default function FormModal<T extends FormData>({
         {children}
         <div className="mt-6 flex gap-3 w-full">
           <Button
-            style="secondary"
+            style="blank"
             onClick={() => state.setOpen(false)}
             tw="flex-0 grow"
           >
