@@ -41,9 +41,15 @@ export default function Button({
 }: React.PropsWithChildren<Props>) {
   const styles = `${GLOBAL_STYLE} ${STYLES[style]} ${tw ? ` ${tw}` : ''}`;
 
+  const props = {
+    onClick,
+    className: styles,
+    role: 'button',
+  };
+
   if (to) {
     return (
-      <Link className={styles} onClick={onClick} to={to}>
+      <Link to={to} {...props}>
         {children}
       </Link>
     );
@@ -51,18 +57,14 @@ export default function Button({
 
   if (href) {
     return (
-      <a className={styles} onClick={onClick} href={href}>
+      <a href={href} {...props}>
         {children}
       </a>
     );
   }
 
   return (
-    <button
-      type={submit ? 'submit' : 'button'}
-      className={styles}
-      onClick={onClick}
-    >
+    <button type={submit ? 'submit' : 'button'} {...props}>
       {children}
     </button>
   );

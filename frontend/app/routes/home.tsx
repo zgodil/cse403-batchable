@@ -5,7 +5,6 @@ import DriverOverview from '../components/DriverOverview';
 import AddOrderModal from '../components/AddOrderModal';
 import Button from '~/components/Button';
 import {useModal} from '~/components/Modal';
-import {Link} from 'react-router';
 
 function Home() {
   const {isAuthenticated, isLoading} = useAuth0();
