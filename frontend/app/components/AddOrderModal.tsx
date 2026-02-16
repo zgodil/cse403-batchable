@@ -1,9 +1,9 @@
 import {fakeId, type Order} from '~/domain/objects';
 import * as json from '~/domain/json';
-import Button from './Button';
 import Modal, {type ModalState} from './Modal';
 import {useContext} from 'react';
 import RestaurantContext from './RestaurantContext';
+import EditControls from './EditControls';
 
 type FieldProps = {
   type: string;
@@ -109,18 +109,7 @@ export default function AddOrderModal({modal}: ModalProps) {
           defaultValue="30"
           required
         />
-        <div className="mt-6 flex gap-3 w-full">
-          <Button
-            style="secondary"
-            onClick={() => modal.setOpen(false)}
-            tw="grow"
-          >
-            Cancel
-          </Button>
-          <Button style="primary" submit tw="grow">
-            Submit Order
-          </Button>
-        </div>
+        <EditControls confirm="Submit Order" state={modal} />
       </form>
     </Modal>
   );

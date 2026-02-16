@@ -3,14 +3,12 @@ import type {DomainObject} from '~/domain/objects';
 interface Props<T extends DomainObject> {
   title: string;
   items: T[];
-  onClick: (item: T) => void;
   renderItem: (item: T) => React.ReactElement;
 }
 
 export default function OverviewSection<T extends DomainObject>({
   title,
   items,
-  onClick,
   renderItem,
 }: Props<T>) {
   return (
@@ -20,14 +18,7 @@ export default function OverviewSection<T extends DomainObject>({
       </h2>
       <ol className="space-y-4">
         {items.map(item => (
-          <li
-            key={item.id.id}
-            tabIndex={0}
-            onClick={() => onClick(item)}
-            className="p-4 cursor-pointer border rounded-lg flex justify-between items-center bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700"
-          >
-            {renderItem(item)}
-          </li>
+          <li key={item.id.id}>{renderItem(item)}</li>
         ))}
       </ol>
     </section>

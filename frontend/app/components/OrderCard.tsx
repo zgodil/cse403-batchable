@@ -1,11 +1,15 @@
 import type {Order} from '~/domain/objects';
 import {formatTimeInterval} from '~/util/format';
+import EditOrderModal from './EditOrderModal';
+import Card from './Card';
+import {useModal} from './Modal';
 
 interface Props {
   order: Order;
 }
 
 export default function OrderCard({order}: Props) {
+  const editOrderModal = useModal();
   const prepTime = formatTimeInterval(
     order.cookedTime.getTime() - order.initialTime.getTime(),
   );
@@ -19,24 +23,28 @@ export default function OrderCard({order}: Props) {
     driving: 'bg-blue-100 text-blue-700',
     delivered: 'bg-green-100 text-green-700',
   }[order.state];
+
   return (
     <>
-      <div>
-        <p className="font-bold text-gray-900 dark:text-gray-100">
-          Order #{order.id.id}
-          {order.highPriority && ' ❗'}
-        </p>
-        <p className="text-sm text-white-500">{order.destination.address}</p>
-        <p className="text-sm text-grey-500">{items}</p>
-        <p className="text-sm text-gray-500">
-          Prepared: {prepTime} • Delivered: {deliverTime}
-        </p>
-      </div>
-      <span
-        className={`px-3 py-1 text-xs font-semibold rounded-full ${stateStyle}`}
-      >
-        {order.state.toUpperCase()}
-      </span>
+      <Card onClick={() => editOrderModal.setOpen(true)}>
+        <div>
+          <p className="font-bold text-gray-900 dark:text-gray-100">
+            Order #{order.id.id}
+            {order.highPriority && ' ❗'}
+          </p>
+          <p className="text-sm text-white-500">{order.destination.address}</p>
+          <p className="text-sm text-grey-500">{items}</p>
+          <p className="text-sm text-gray-500">
+            Prepared: {prepTime} • Delivered: {deliverTime}
+          </p>
+        </div>
+        <span
+          className={`px-3 py-1 text-xs font-semibold rounded-full ${stateStyle}`}
+        >
+          {order.state.toUpperCase()}
+        </span>
+      </Card>
+      <EditOrderModal order={order} state={editOrderModal} />
     </>
   );
 }

@@ -17,9 +17,9 @@ export default function Button({
   const styles =
     {
       primary:
-        'py-2 px-4 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition text-center',
+        'cursor-pointer py-2 px-4 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition text-center',
       secondary:
-        'py-2 px-4 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg text-center',
+        'cursor-pointer py-2 px-4 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg text-center',
     }[style] + (tw ? ` ${tw}` : '');
 
   if (href) {

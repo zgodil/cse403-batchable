@@ -60,7 +60,6 @@ export default function OrderList() {
     <OverviewSection
       title="📦 Active Orders"
       items={orders}
-      onClick={() => {}}
       renderItem={order => <OrderCard order={order} />}
     />
   );

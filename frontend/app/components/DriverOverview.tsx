@@ -27,7 +27,6 @@ export default function DriverOverview() {
     <OverviewSection
       title="🚗 Driver Status"
       items={drivers}
-      onClick={() => {}}
       renderItem={driver => <DriverCard driver={driver} />}
     />
   );
