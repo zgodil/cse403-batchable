@@ -1,7 +1,7 @@
 import {fakeId, type Order} from '~/domain/objects';
 import * as json from '~/domain/json';
 import Button from './Button';
-import Modal from './Modal';
+import Modal, {type ModalState} from './Modal';
 import {useContext} from 'react';
 import RestaurantContext from './RestaurantContext';
 
@@ -29,11 +29,10 @@ function FormField(props: FieldProps) {
 }
 
 interface ModalProps {
-  open: boolean;
-  setOpen: (open: boolean) => void;
+  modal: ModalState;
 }
 
-export default function AddOrderModal({open, setOpen}: ModalProps) {
+export default function AddOrderModal({modal}: ModalProps) {
   const restaurant = useContext(RestaurantContext);
 
   const handleSubmit = (e: React.ChangeEvent<HTMLFormElement>) => {
@@ -80,7 +79,7 @@ export default function AddOrderModal({open, setOpen}: ModalProps) {
   };
 
   return (
-    <Modal open={open} setOpen={setOpen} title="Create New Order">
+    <Modal title="Create New Order" state={modal}>
       <form onSubmit={handleSubmit} className="space-y-4" method="dialog">
         <FormField
           type="text"
@@ -111,7 +110,11 @@ export default function AddOrderModal({open, setOpen}: ModalProps) {
           required
         />
         <div className="mt-6 flex gap-3 w-full">
-          <Button style="secondary" onClick={() => setOpen(false)} tw="grow">
+          <Button
+            style="secondary"
+            onClick={() => modal.setOpen(false)}
+            tw="grow"
+          >
             Cancel
           </Button>
           <Button style="primary" submit tw="grow">

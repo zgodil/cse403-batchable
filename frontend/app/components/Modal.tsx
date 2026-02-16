@@ -1,14 +1,22 @@
-import {useLayoutEffect, useRef} from 'react';
+import {useLayoutEffect, useRef, useState} from 'react';
 
-interface Props {
+export interface ModalState {
   open: boolean;
   setOpen: (open: boolean) => void;
+}
+
+interface Props {
   title: string;
+  state: ModalState;
+}
+
+export function useModal(): ModalState {
+  const [open, setOpen] = useState(false);
+  return {open, setOpen};
 }
 
 export default function Modal({
-  open,
-  setOpen,
+  state: {open, setOpen},
   title,
   children,
 }: React.PropsWithChildren<Props>) {

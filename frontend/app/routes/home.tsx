@@ -1,14 +1,14 @@
-import {useState} from 'react';
 import {useAuth0} from '@auth0/auth0-react';
 import LoginButton from '../components/LoginButton';
 import OrderOverview from '../components/OrderOverview';
 import DriverOverview from '../components/DriverOverview';
 import AddOrderModal from '../components/AddOrderModal';
 import Button from '~/components/Button';
+import {useModal} from '~/components/Modal';
 
 function Home() {
   const {isAuthenticated, isLoading} = useAuth0();
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  const addOrderModal = useModal();
 
   if (isLoading) {
     return (
@@ -40,7 +40,7 @@ function Home() {
             Adaptive Real-Time Delivery Batching System
           </p>
         </div>
-        <Button onClick={() => setIsModalOpen(true)} style="primary">
+        <Button onClick={() => addOrderModal.setOpen(true)} style="primary">
           + Add New Order
         </Button>
       </div>
@@ -50,7 +50,7 @@ function Home() {
         <DriverOverview />
       </div>
 
-      <AddOrderModal open={isModalOpen} setOpen={setIsModalOpen} />
+      <AddOrderModal modal={addOrderModal} />
     </div>
   );
 }
