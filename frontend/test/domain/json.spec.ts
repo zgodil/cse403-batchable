@@ -101,7 +101,7 @@ describe('Order parsing', () => {
         id: 8129387,
         restaurant: 124192,
         destination: '1600 Pennsylvania Avenue NW, Washington, DC 20500',
-        itemNames: ['Tragedy', 'Comedy'],
+        itemNames: '["Tragedy", "Comedy"]',
         initialTime: 'Fri, 29 Aug 2003 08:30:00 GMT',
         deliveryTime: 'Fri, 29 Aug 2003 08:30:00 GMT',
         cookedTime: 'Fri, 29 Aug 2003 08:30:00 GMT',
@@ -142,7 +142,7 @@ describe('Order parsing', () => {
         id: 8129387,
         restaurant: 124192,
         destination: '1600 Pennsylvania Avenue NW, Washington, DC 20500',
-        itemNames: [],
+        itemNames: '[]',
         initialTime: 'Fri, 29 Aug 2003 08:30:00 GMT',
         deliveryTime: 'Fri, 29 Aug 2003 08:30:00 GMT',
         cookedTime: 'Fri, 29 Aug 2003 08:30:00 GMT',
@@ -180,7 +180,7 @@ describe('Order parsing', () => {
         id: 8129387,
         restaurant: 124192,
         destination: '1600 Pennsylvania Avenue NW, Washington, DC 20500',
-        itemNames: ['Tragedy', 'Comedy'],
+        itemNames: '["Tragedy", "Comedy"]',
         initialTime: 'Hello!!!',
         deliveryTime: 'Fri, 29 Aug 2003 08:30:00 GMT',
         cookedTime: 'Fri, 29 Aug 2003 08:30:00 GMT',
@@ -202,6 +202,45 @@ describe('Order parsing', () => {
         },
         itemNames: ['Tragedy', 'Comedy'],
         initialTime: new Date(NaN),
+        deliveryTime: new Date('Fri, 29 Aug 2003 08:30:00 GMT'),
+        cookedTime: new Date('Fri, 29 Aug 2003 08:30:00 GMT'),
+        state: 'cooked',
+        highPriority: true,
+        currentBatch: null,
+      },
+      false,
+    );
+  });
+
+  it('survives invalid JSON items', () => {
+    testPair<Order>(
+      json.order,
+      {
+        id: 8129387,
+        restaurant: 124192,
+        destination: '1600 Pennsylvania Avenue NW, Washington, DC 20500',
+        itemNames: 'Woah %%]',
+        initialTime: 'Fri, 29 Aug 2003 08:30:00 GMT',
+        deliveryTime: 'Fri, 29 Aug 2003 08:30:00 GMT',
+        cookedTime: 'Fri, 29 Aug 2003 08:30:00 GMT',
+        state: 'cooked',
+        highPriority: true,
+        currentBatch: null,
+      },
+      {
+        id: {
+          type: 'Order',
+          id: 8129387,
+        },
+        restaurant: {
+          type: 'Restaurant',
+          id: 124192,
+        },
+        destination: {
+          address: '1600 Pennsylvania Avenue NW, Washington, DC 20500',
+        },
+        itemNames: [],
+        initialTime: new Date('Fri, 29 Aug 2003 08:30:00 GMT'),
         deliveryTime: new Date('Fri, 29 Aug 2003 08:30:00 GMT'),
         cookedTime: new Date('Fri, 29 Aug 2003 08:30:00 GMT'),
         state: 'cooked',
