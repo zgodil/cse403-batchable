@@ -58,18 +58,22 @@ export function makeCrudHandlers<T extends DomainObject>(
     read: http.get(endpoint(`/${resourceName}/:id`), async req => {
       const resource = table.get(asId<T>(req.params.id));
       if (!resource) {
-        return HttpResponse.text(`No such ${resourceName}!`, {
-          status: StatusCodes.NOT_FOUND,
-        });
+        return notFound(resourceName);
       }
       return HttpResponse.json(resource);
     }),
     update: http.put(endpoint(`/${resourceName}/:id`), async req => {
-      table.update((await req.request.json()) as json.JSONDomainObject<T>);
+      if (
+        !table.update((await req.request.json()) as json.JSONDomainObject<T>)
+      ) {
+        return notFound(resourceName);
+      }
       return noContent();
     }),
     delete: http.delete(endpoint(`/${resourceName}/:id`), async req => {
-      table.delete(asId<T>(req.params.id));
+      if (!table.delete(asId<T>(req.params.id))) {
+        return notFound(resourceName);
+      }
       return noContent();
     }),
   };
