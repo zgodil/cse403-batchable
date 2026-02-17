@@ -1,14 +1,14 @@
-import {useState} from 'react';
 import {useAuth0} from '@auth0/auth0-react';
-import {Link} from 'react-router';
 import LoginButton from '../components/LoginButton';
-import OrderList from '../components/OrderList';
+import OrderOverview from '../components/OrderOverview';
 import DriverOverview from '../components/DriverOverview';
 import AddOrderModal from '../components/AddOrderModal';
+import Button from '~/components/Button';
+import {useModal} from '~/components/Modal';
 
 function Home() {
   const {isAuthenticated, isLoading} = useAuth0();
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  const addOrderModal = useModal();
 
   if (isLoading) {
     return (
@@ -32,45 +32,30 @@ function Home() {
   return (
     <div className="p-8 max-w-7xl mx-auto min-h-screen bg-white dark:bg-gray-950 text-gray-900 dark:text-gray-100">
       <div className="flex justify-between items-center mb-8">
-        <h1 className="text-3xl font-extrabold tracking-tight">
-          Batchable Dashboard
-        </h1>
+        <div>
+          <h1 className="text-3xl font-extrabold tracking-tight">
+            Batchable Dashboard
+          </h1>
+          <p className="text-xs italic">
+            Adaptive Real-Time Delivery Batching System
+          </p>
+        </div>
         <div className="flex gap-3">
-          <Link
-            to="/restaurant"
-            className="px-5 py-2.5 bg-purple-600 text-white font-semibold rounded-lg shadow-md hover:bg-purple-700 transition-all active:scale-95"
-          >
+          <Button style="secondary" to="/restaurant">
             ⚙️ Manage Restaurant
-          </Link>
-          <button
-            onClick={() => setIsModalOpen(true)}
-            className="px-5 py-2.5 bg-blue-600 text-white font-semibold rounded-lg shadow-md hover:bg-blue-700 transition-all active:scale-95"
-          >
+          </Button>
+          <Button onClick={() => addOrderModal.setOpen(true)} style="primary">
             + Add New Order
-          </button>
+          </Button>
         </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        <section className="bg-white dark:bg-gray-900 p-6 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-800">
-          <h2 className="text-xl font-bold mb-6 flex items-center gap-2">
-            📦 Active Orders
-          </h2>
-          <OrderList />
-        </section>
-
-        <section className="bg-white dark:bg-gray-900 p-6 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-800">
-          <h2 className="text-xl font-bold mb-6 flex items-center gap-2">
-            🚗 Driver Status
-          </h2>
-          <DriverOverview />
-        </section>
+        <OrderOverview />
+        <DriverOverview />
       </div>
 
-      <AddOrderModal
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-      />
+      <AddOrderModal modal={addOrderModal} />
     </div>
   );
 }
