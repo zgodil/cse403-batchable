@@ -1,4 +1,4 @@
-import {endpoint} from 'test/mocks/handlers/common';
+import {endpoint} from 'test/mocks/api/common';
 import {describe, it, expect} from 'vitest';
 import * as json from '~/domain/json';
 import {fakeId, type Restaurant} from '~/domain/objects';
