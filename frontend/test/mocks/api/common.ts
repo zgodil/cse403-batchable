@@ -38,7 +38,7 @@ export function asId<T extends DomainObject>(
   return Number(id) as json.JSONDomainObject<T>['id'];
 }
 
-export function getCrudHandlers<T extends DomainObject>(
+export function makeCrudHandlers<T extends DomainObject>(
   resourceName: string,
   table: JSONTable<T>,
   operations = [
