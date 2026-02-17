@@ -9,7 +9,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import static org.junit.jupiter.api.Assertions.*;
 
 @SpringBootTest
-class RouteServiceDirectDirectionsTestIT_CI {
+class RouteServiceDirectDirectionsIT_CI {
 
   @Autowired
   private RouteService routeService;
