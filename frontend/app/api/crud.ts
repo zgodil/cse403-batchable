@@ -21,7 +21,7 @@ export class CrudApi<T extends DomainObject> {
       );
       return this.parserPair.field('id').parse(id);
     } catch (err) {
-      console.log(`Failed to create ${this.resource}`, domainObject, err);
+      console.error(`Failed to create ${this.resource}`, domainObject, err);
       return null;
     }
   }
@@ -32,7 +32,7 @@ export class CrudApi<T extends DomainObject> {
         await fetchJSON('GET', `${this.resource}/${id}`),
       );
     } catch (err) {
-      console.log(`Failed to read ${this.resource}; id=${id}`, err);
+      console.error(`Failed to read ${this.resource}; id=${id}`, err);
       return null;
     }
   }
@@ -46,7 +46,7 @@ export class CrudApi<T extends DomainObject> {
       );
       return true;
     } catch (err) {
-      console.log(
+      console.error(
         `Failed to update ${this.resource}; id=${domainObject.id.id}`,
         err,
       );
@@ -59,7 +59,7 @@ export class CrudApi<T extends DomainObject> {
       await fetchEndpoint('DELETE', `${this.resource}/${id}`);
       return true;
     } catch (err) {
-      console.log(`Failed to delete ${this.resource}; id=${id}`, err);
+      console.error(`Failed to delete ${this.resource}; id=${id}`, err);
       return false;
     }
   }
