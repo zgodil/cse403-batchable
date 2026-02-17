@@ -1,4 +1,4 @@
-import Button from './Button';
+import Button, {type Style} from './Button';
 import type {ModalState} from './Modal';
 import Modal from './Modal';
 
@@ -10,6 +10,7 @@ interface Props<T extends FormData> {
   title: string;
   state: ModalState;
   confirm?: string;
+  style?: Style;
   apply: (data: T) => void;
 }
 
@@ -20,6 +21,7 @@ interface Props<T extends FormData> {
  * @param title The header text for the modal
  * @param state The ModalState associated with this modal
  * @param confirm? The text in the 'confirm'-esque button. Default is 'Apply Changes'
+ * @param style? The button style of the 'confirm' button. Default is 'blue'
  * @param apply A function (possibly async) to call when the 'confirm' button is pressed. It is passed the data from the form as a Record<string, string>
  * @param children The form fields and other content to appear inside the modal
  */
@@ -27,6 +29,7 @@ export default function FormModal<T extends FormData>({
   title,
   state,
   confirm = 'Apply Changes',
+  style,
   apply,
   children,
 }: React.PropsWithChildren<Props<T>>) {
@@ -47,7 +50,7 @@ export default function FormModal<T extends FormData>({
           >
             Cancel
           </Button>
-          <Button style="primary" submit tw="flex-0 grow">
+          <Button style={style} submit tw="flex-0 grow">
             {confirm}
           </Button>
         </div>

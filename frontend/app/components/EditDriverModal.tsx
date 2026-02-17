@@ -40,7 +40,7 @@ export default function EditDriverModal({driver, state}: Props) {
       />
       <FormField
         label="Phone Number (digits only)"
-        type="text"
+        type="tel"
         name="phoneNumber"
         pattern="\d{10,}"
         defaultValue={driver.phoneNumber.compact}
