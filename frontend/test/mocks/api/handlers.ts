@@ -39,7 +39,7 @@ export const handlers = [
     });
     return noContent();
   }),
-  http.put(endpoint('driver/:id/batch'), req => {
+  http.put(endpoint('/driver/:id/batch'), req => {
     const batch =
       db.batches.findMatching('driver', asId<Driver>(req.params.id))[0] ?? null;
     return HttpResponse.json(batch);
