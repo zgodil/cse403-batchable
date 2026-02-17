@@ -181,7 +181,7 @@
 						</limit>
 						</limits>
 						<includes>
-							<include>**/controller/**</include>
+							<include>com.batachable.backend.controller.*</include>
 						</includes>
 					</rule>
 					<!-- Services should have 75% coverage -->
