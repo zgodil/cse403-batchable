@@ -9,6 +9,7 @@ import org.springframework.stereotype.Service;
 
 import com.batchable.backend.db.models.Batch;
 import com.batchable.backend.db.models.Order;
+import com.batchable.backend.db.models.Order.State;
 import com.batchable.backend.db.models.Restaurant;
 import com.batchable.backend.service.internal.RestaurantBatchingManager;
 import com.batchable.backend.service.internal.RestaurantBatchingManager.Batches;
@@ -17,16 +18,16 @@ import com.batchable.backend.websocket.OrderWebSocketPublisher;
 /**
  * Service that coordinates order batching for all restaurants.
  *
- * Responsibilities:
- * - Maintains a batching manager per restaurant.
- * - Routes incoming orders to the appropriate restaurant manager.
- * - Exposes listener registration APIs for batch updates and activation.
- * - Periodically checks all restaurants for expired tentative batches.
+ * Responsibilities: - Maintains a batching manager per restaurant. - Routes incoming orders to the
+ * appropriate restaurant manager. - Exposes listener registration APIs for batch updates and
+ * activation. - Periodically checks all restaurants for expired tentative batches.
  *
  * The actual batching logic is handled by RestaurantBatchingManager instances.
  */
 @Service
 public class BatchingManager {
+
+  private final OrderService orderService;
 
   // Publishes updates to clients when batches change
   private final OrderWebSocketPublisher publisher;
@@ -43,6 +44,8 @@ public class BatchingManager {
   // Map of restaurant ID to its batching manager
   private final Map<Long, RestaurantBatchingManager> restaurantManagers = new HashMap<>();
 
+  public static final long UPDATE_INCREMENTS_MILLIS = 5000;
+
   /**
    * Constructs the batching manager.
    *
@@ -50,13 +53,15 @@ public class BatchingManager {
    * @param batchingAlgorithm algorithm for batching orders
    * @param restaurantService service for restaurant data
    * @param routeService service for route calculations
+   * @param orderService service for order and batch operations
    */
   public BatchingManager(OrderWebSocketPublisher publisher, BatchingAlgorithm batchingAlgorithm,
-      RestaurantService restaurantService, RouteService routeService) {
+      RestaurantService restaurantService, RouteService routeService, OrderService orderService) {
     this.publisher = publisher;
     this.batchingAlgorithm = batchingAlgorithm;
     this.restaurantService = restaurantService;
     this.routeService = routeService;
+    this.orderService = orderService;
   }
 
   /**
@@ -69,22 +74,10 @@ public class BatchingManager {
     if (!restaurantManagers.containsKey(restaurantId)) {
       Restaurant restaurant = restaurantService.getRestaurant(restaurantId);
       String address = restaurant.location;
-      restaurantManagers.put(
-          restaurantId,
-          new RestaurantBatchingManager(
-              restaurantId, address, publisher, batchingAlgorithm, routeService));
+      restaurantManagers.put(restaurantId, new RestaurantBatchingManager(restaurantId, address,
+          publisher, batchingAlgorithm, routeService, orderService));
     }
     return restaurantManagers.get(restaurantId);
-  }
-
-  /**
-   * Adds an order to the appropriate restaurant batching manager.
-   *
-   * @param order the order to add
-   */
-  public void addOrder(Order order) {
-    long restaurantId = order.restaurantId;
-    getManager(restaurantId).addOrder(order);
   }
 
   /**
@@ -108,13 +101,62 @@ public class BatchingManager {
   }
 
   /**
-   * Scheduled task that checks for expired tentative batches in all restaurants.
-   * Delegates expiration handling to the restaurant-specific batching managers.
+   * Adds an order to the appropriate restaurant batching manager.
+   *
+   * @param order the order to add
    */
-  @Scheduled(fixedDelay = 1000)
+  public void addOrder(Order order) {
+    long restaurantId = order.restaurantId;
+    getManager(restaurantId).addOrder(order);
+  }
+
+  /**
+   * Removes an order from the appropriate restaurant batching manager by ID.
+   *
+   * @param orderId the order to add
+   * @throws IllegalArgumentException if the order id is not found
+   */
+  public void removeOrder(Long orderId) {
+    Order order = orderService.getOrder(orderId);
+    long restaurantId = order.restaurantId;
+    getManager(restaurantId).removeOrder(orderId);
+  }
+
+  /**
+   * Rebatches an existing order in the appropriate restaurant batching manager's structure.
+   *
+   * The order is updated by removing the existing instance (by id) and re-adding it, ensuring all
+   * batching and delivery constraints are re-evaluated.
+   *
+   * @param order the updated order
+   * @throws IllegalArgumentException if the order id is not found
+   */
+  public void rebatchOrder(Order order) {
+    long restaurantId = order.restaurantId;
+    getManager(restaurantId).rebatchOrder(order);
+  }
+
+  /**
+   * Updates the state of an existing order within the approrpaite restauarant batching manager.
+   *
+   * @param orderId the id of the order to update
+   * @param newState the new state to assign to the order
+   * @throws IllegalArgumentException if the order id is not found
+   */
+  public void updateOrderState(Long orderId, State newState) {
+    Order order = orderService.getOrder(orderId);
+    long restaurantId = order.restaurantId;
+    getManager(restaurantId).updateOrderState(orderId, newState);
+  }
+
+  /**
+   * Scheduled task that checks for expired tentative batches in all restaurants. Delegates
+   * expiration handling to the restaurant-specific batching managers.
+   */
+  @Scheduled(fixedDelay = UPDATE_INCREMENTS_MILLIS)
   public void checkExpiredBatches() {
     for (RestaurantBatchingManager manager : restaurantManagers.values()) {
-      manager.checkExpiredBatches();
+      manager.checkExpiredBatches(UPDATE_INCREMENTS_MILLIS);
     }
   }
 }

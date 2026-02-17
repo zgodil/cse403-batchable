@@ -110,7 +110,7 @@ class BatchingAlgorithmTest {
     assertEquals(1, batch.getBatch().size(), "Batch should contain one order");
     assertEquals(order, batch.getBatch().get(0));
 
-    assertDoesNotThrow(() -> batchingAlgorithm.updateOrder(batches, order, restaurantAddress));
+    assertDoesNotThrow(() -> batchingAlgorithm.rebatchOrder(batches, order, restaurantAddress));
 
     assertEquals(1, batches.size(), "Should create one batch");
     batch = batches.get(0);
@@ -173,7 +173,15 @@ class BatchingAlgorithmTest {
     for (Order order : orders) {
       int newSize = 0;
       assertDoesNotThrow(
+        () -> batchingAlgorithm.updateOrderState(batches, order.id, State.COOKED));
+      assertDoesNotThrow(
           () -> batchingAlgorithm.removeOrder(batches, order.id, restaurantAddress));
+      assertThrows(IllegalArgumentException.class, 
+        () -> batchingAlgorithm.removeOrder(batches, order.id, restaurantAddress));
+      assertThrows(IllegalArgumentException.class, 
+        () -> batchingAlgorithm.rebatchOrder(batches, order, restaurantAddress));
+      assertThrows(IllegalArgumentException.class,
+        () -> batchingAlgorithm.updateOrderState(batches, order.id, State.DELIVERED));
       checkInvariants(batches, true);
       for (TentativeBatch tb : batches) {
         assertNotEquals(0, tb.getBatch().size());
@@ -517,8 +525,7 @@ class BatchingAlgorithmTest {
     int size = orders.size();
     for (Order order : orders) {
       int newSize = 0;
-      assertDoesNotThrow(
-          () -> batchingAlgorithm.removeOrder(batches, order.id, restaurantAddress));
+      assertDoesNotThrow(() -> batchingAlgorithm.removeOrder(batches, order.id, restaurantAddress));
       checkInvariants(batches, false);
       for (TentativeBatch tb : batches) {
         assertNotEquals(0, tb.getBatch().size());

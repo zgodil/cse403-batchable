@@ -6,26 +6,25 @@ import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Queue;
-import java.util.UUID;
 import java.util.function.Consumer;
 
 import com.batchable.backend.db.models.Batch;
 import com.batchable.backend.db.models.Driver;
 import com.batchable.backend.db.models.Order;
+import com.batchable.backend.db.models.Order.State;
 import com.batchable.backend.model.dto.RouteDirectionsResponse;
 import com.batchable.backend.service.BatchingAlgorithm;
 import com.batchable.backend.service.RouteService;
 import com.batchable.backend.service.BatchingAlgorithm.TentativeBatch;
+import com.batchable.backend.service.OrderService;
 import com.batchable.backend.websocket.OrderWebSocketPublisher;
 
 /**
  * Manages order batching for a single restaurant.
  *
- * Responsibilities:
- * - Holds tentative, ready, and active batches for this restaurant.
- * - Assigns batches to drivers when ready and computes routes/duration.
- * - Emits events when batches change or become active.
- * - Periodically checks for expired tentative batches.
+ * Responsibilities: - Holds tentative, ready, and active batches for this restaurant. - Assigns
+ * batches to drivers when ready and computes routes/duration. - Emits events when batches change or
+ * become active. - Periodically checks for expired tentative batches.
  */
 public class RestaurantBatchingManager {
 
@@ -38,6 +37,9 @@ public class RestaurantBatchingManager {
   private final Batches batches = new Batches();
   private final Queue<Driver> readyDrivers = new LinkedList<Driver>();
   private final RouteService routeService;
+  private final OrderService orderService;
+  // time to add when an order isn't ready when it should be for batching
+  private static final long SECONDS_ADDITIONAL_COOK_TIME = 180;
 
   /**
    * Constructs a batching manager for a single restaurant.
@@ -50,12 +52,13 @@ public class RestaurantBatchingManager {
    */
   public RestaurantBatchingManager(long restaurantId, String restaurantAddress,
       OrderWebSocketPublisher publisher, BatchingAlgorithm batchingAlgorithm,
-      RouteService routeService) {
+      RouteService routeService, OrderService orderService) {
     this.restaurantId = restaurantId;
     this.restaurantAddress = restaurantAddress;
     this.publisher = publisher;
     this.batchingAlgorithm = batchingAlgorithm;
     this.routeService = routeService;
+    this.orderService = orderService;
   }
 
   /**
@@ -64,8 +67,8 @@ public class RestaurantBatchingManager {
   private static class ReadyBatch {
     private final List<Order> batch;
 
-    private ReadyBatch(TentativeBatch tentativeBatch) {
-      this.batch = new ArrayList<>(tentativeBatch.getBatch());
+    private ReadyBatch(List<Order> batch) {
+      this.batch = new ArrayList<Order>(batch);
     }
   }
 
@@ -130,59 +133,233 @@ public class RestaurantBatchingManager {
   }
 
   /**
-   * Checks for expired tentative batches and moves them to ready batches.
-   * Then assigns ready batches to available drivers, computing route polylines
-   * and expected completion times.
+   * Removes an order to the restaurant's tentative batches by ID.
+   *
+   * @param orderId the id of the order to remove
+   * @throws IllegalArgumentException if the order id is not found
    */
-  public void checkExpiredBatches() {
+  public void removeOrder(Long orderId) {
+    batchingAlgorithm.removeOrder(batches.tentativeBatches, orderId, restaurantAddress);
+  }
+
+  /**
+   * Rebatches an existing order in the batching structure.
+   *
+   * The order is updated by removing the existing instance (by id) and re-adding it, ensuring all
+   * batching and delivery constraints are re-evaluated.
+   *
+   * @param order the updated order
+   */
+  public void rebatchOrder(Order order) {
+    batchingAlgorithm.rebatchOrder(batches.tentativeBatches, order, restaurantAddress);
+  }
+
+  /**
+   * Updates the state of an existing order within the tentative batches.
+   *
+   * @param batches the list of tentative batches for a restaurant
+   * @param orderId the id of the order to update
+   * @param newState the new state to assign to the order
+   *
+   * @throws IllegalArgumentException if the order id is not found
+   */
+  public void updateOrderState(Long orderId, State newState) {
+    batchingAlgorithm.updateOrderState(batches.tentativeBatches, orderId, newState);
+  }
+
+  /**
+   * Periodic update entry point.
+   *
+   * High-level flow: 1. Move expired tentative batches into the ready queue. - Orders that are not
+   * yet cooked are delayed and re-added to tentative batches. 2. Re-add delayed orders back into
+   * tentative batching. 3. Assign as many ready batches as possible to available drivers. 4. Push
+   * remaining ready batches forward in time (update delivery times to reflect delay).
+   *
+   * @param updateMillis how much to delay delivery times for unassigned ready batches
+   */
+  public void checkExpiredBatches(final long updateMillis) {
     Instant now = Instant.now();
+
+    List<Order> toBeReAdded = moveExpiredTentativeBatches(now);
+    reAddDelayedOrders(toBeReAdded);
+
+    assignReadyBatchesToDrivers();
+    delayRemainingReadyBatches(updateMillis);
+  }
+
+  /**
+   * Moves expired tentative batches into the ready queue.
+   *
+   * Invariants: - tentativeBatches is sorted by lastAllowedCookedTime descending - expired batches
+   * appear at the end of the list
+   *
+   * For each expired batch: - Remove orders that are not yet cooked - Delay uncooked orders and
+   * collect them to be re-added later - If any cooked orders remain, enqueue them as a ReadyBatch
+   *
+   * @param now the current time
+   * @return orders that were delayed and must be re-added to tentative batches
+   */
+  private List<Order> moveExpiredTentativeBatches(Instant now) {
     List<TentativeBatch> tentativeBatches = batches.tentativeBatches;
     Queue<ReadyBatch> readyBatches = batches.readyBatches;
-
-    // Move expired tentative batches to ready batches
+    List<Order> toBeReAdded = new ArrayList<>();
     for (int i = tentativeBatches.size() - 1; i >= 0; i--) {
       TentativeBatch tentativeBatch = tentativeBatches.get(i);
       if (now.isBefore(tentativeBatch.getLastAllowedCookedTime())) {
-        break; // batches sorted by expiration, can stop early
+        break; // sorted by expiration
       }
       tentativeBatches.remove(i);
-      readyBatches.add(new ReadyBatch(tentativeBatch));
+      List<Order> orders = tentativeBatch.getBatch();
+      removeUncookedOrders(orders, toBeReAdded);
+      if (!orders.isEmpty()) {
+        readyBatches.add(new ReadyBatch(orders));
+      }
     }
+    return toBeReAdded;
+  }
 
-    // Assign ready batches to available drivers
-    int numReadyBatches = readyBatches.size();
-    int numReadyDrivers = readyDrivers.size();
+  /**
+   * Re-inserts delayed orders back into tentative batching.
+   *
+   * These orders had their cooked/delivery times pushed forward and must be reconsidered for future
+   * batching.
+   *
+   * @param orders delayed orders to re-add
+   */
+  private void reAddDelayedOrders(List<Order> orders) {
+    for (Order order : orders) {
+      batchingAlgorithm.addOrder(batches.tentativeBatches, order, restaurantAddress);
+    }
+  }
 
-    for (int i = 0; i < Math.min(numReadyBatches, numReadyDrivers); i++) {
+  /**
+   * Assigns ready batches to available drivers.
+   *
+   * Continues assigning while both: - There are ready batches waiting - There are available drivers
+   *
+   * For each assignment: - Compute route and expected completion time - Persist the batch - Update
+   * all orders to reference the new batch - Emit batch activation events
+   */
+  private void assignReadyBatchesToDrivers() {
+    Queue<ReadyBatch> readyBatches = batches.readyBatches;
+
+    while (!readyBatches.isEmpty() && !readyDrivers.isEmpty()) {
       ReadyBatch readyBatch = readyBatches.poll();
-      Driver readyDriver = readyDrivers.poll();
+      Driver driver = readyDrivers.poll();
 
-      List<String> stops = new ArrayList<>();
-      for (Order order : readyBatch.batch) {
-        stops.add(order.destination);
-      }
-
-      // Compute route and duration using RouteService
-      RouteDirectionsResponse resp = routeService.getRouteDirections(restaurantAddress, stops, false);
-      String polyline = resp.getPolyline();
-      int routeSeconds = resp.getDurationSeconds();
-
-      // TEMPORARY: generate batch ID using UUID
-      // TODO: figure out a way to get newBatchId using db
-      long newBatchId = UUID.randomUUID().getMostSignificantBits() & Long.MAX_VALUE;
-
-      Instant dispatchTime = Instant.now();
-      Instant expectedCompletionTime = dispatchTime.plus(Duration.ofSeconds(routeSeconds));
-
-      Batch newBatch = new Batch(newBatchId, readyDriver.id, polyline, dispatchTime, expectedCompletionTime);
-
-      for (Order order : readyBatch.batch) {
-        order.batchId = newBatchId;
-      }
-
-      // Add batch to active batches and emit event
-      batches.activeBatches.add(newBatch);
-      emitBatchBecomeActive(newBatch);
+      Batch batch = createAndPersistBatch(readyBatch, driver);
+      batches.activeBatches.add(batch);
+      emitBatchBecomeActive(batch);
     }
+  }
+
+  /**
+   * Pushes delivery times forward for ready batches that were not assigned to a driver during this
+   * update cycle.
+   *
+   * @param updateMillis amount of time to delay delivery for each order
+   */
+  private void delayRemainingReadyBatches(long updateMillis) {
+    for (ReadyBatch readyBatch : batches.readyBatches) {
+      List<Order> orders = readyBatch.batch;
+
+      for (int i = 0; i < orders.size(); i++) {
+        Order order = orders.get(i);
+
+        orderService.updateOrderDeliveryTime(order.id,
+            millisAfter(order.deliveryTime, updateMillis));
+
+        orders.set(i, orderService.getOrder(order.id));
+      }
+    }
+  }
+
+  /**
+   * Creates a persistent batch for a ready batch and assigned driver.
+   *
+   * - Computes the delivery route and total duration - Persists the batch - Updates all orders to
+   * reference the new batch
+   *
+   * @param readyBatch the batch of orders ready for dispatch
+   * @param driver the assigned driver
+   * @return the persisted Batch
+   */
+  private Batch createAndPersistBatch(ReadyBatch readyBatch, Driver driver) {
+    List<String> stops = new ArrayList<>();
+    for (Order order : readyBatch.batch) {
+      stops.add(order.destination);
+    }
+    RouteDirectionsResponse resp = routeService.getRouteDirections(restaurantAddress, stops, false);
+    Instant dispatchTime = Instant.now();
+    Instant expectedCompletionTime = dispatchTime.plusSeconds(resp.getDurationSeconds());
+    Long batchId = orderService.createBatch(
+        new Batch(-1, driver.id, resp.getPolyline(), dispatchTime, expectedCompletionTime));
+
+    updateOrdersWithBatchId(readyBatch.batch, batchId);
+    return orderService.getBatch(batchId);
+  }
+
+  /**
+   * Updates each order in the given list to reference the provided batch ID.
+   *
+   * This method persists the batch assignment via OrderService and then re-fetches each order from
+   * the database to ensure the in-memory list reflects the latest state after mutation.
+   *
+   * @param orders the orders to associate with the batch
+   * @param batchId the ID of the batch to assign to each order
+   */
+  private void updateOrdersWithBatchId(List<Order> orders, Long batchId) {
+    for (int i = 0; i < orders.size(); i++) {
+      Order order = orders.get(i);
+      orderService.setOrderBatchId(order.id, batchId);
+      orders.set(i, orderService.getOrder(order.id));
+    }
+  }
+
+  /**
+   * Removes orders that are not yet cooked from a batch.
+   *
+   * For each removed order: - Push cooked and delivery times forward - Re-fetch the updated order -
+   * Add it to the list of orders to be re-batched later
+   *
+   * Iterates in reverse to allow safe removal.
+   *
+   * @param orders current batch orders (mutated in-place)
+   * @param toBeReAdded accumulator for delayed orders
+   */
+  private void removeUncookedOrders(List<Order> orders, List<Order> toBeReAdded) {
+    for (int j = orders.size() - 1; j >= 0; j--) {
+      Order order = orders.get(j);
+      if (order.state != State.COOKING) {
+        orders.remove(j);
+        delayOrder(order);
+        // important to re-get the order after updating
+        toBeReAdded.add(orderService.getOrder(order.id));
+      }
+    }
+  }
+
+  /**
+   * Pushes both cooked time and delivery time forward for an order that was not ready when
+   * expected.
+   *
+   * @param order the order to delay
+   */
+  private void delayOrder(Order order) {
+    orderService.updateOrderDeliveryTime(order.id,
+        secondsAfter(order.deliveryTime, SECONDS_ADDITIONAL_COOK_TIME));
+
+    orderService.updateOrderCookedTime(order.id,
+        secondsAfter(order.cookedTime, SECONDS_ADDITIONAL_COOK_TIME));
+  }
+
+  // returns the Instant 'millis' milliseconds after the given time
+  private Instant millisAfter(Instant time, long millis) {
+    return time.plus(Duration.ofMillis(millis));
+  }
+
+  // returns the Instant 'seconds' seconds after the given time
+  private Instant secondsAfter(Instant time, long seconds) {
+    return millisAfter(time, seconds * 1000);
   }
 }

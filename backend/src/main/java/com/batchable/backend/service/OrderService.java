@@ -4,6 +4,7 @@ import com.batchable.backend.db.models.Batch;
 import com.batchable.backend.db.models.Order;
 import com.batchable.backend.websocket.OrderWebSocketPublisher;
 import java.time.Instant;
+import java.util.List;
 import org.springframework.stereotype.Service;
 
 /**
@@ -90,12 +91,80 @@ public class OrderService {
    *  - IllegalArgumentException if:
    *      • orderId does not exist
    *      • cookedTime is null
-   *      • cookedTime < order.initialTime
+   *      • cookedTime > order.initialTime
    *  - IllegalStateException if:
    *      • Order is already DELIVERED
    *  - RuntimeException if persistence fails
    */
   public void updateOrderCookedTime(long orderId, Instant cookedTime) {
+    // TODO
+    throw new UnsupportedOperationException("Not implemented yet");
+    // Push update to frontend via WebSocket
+    // publisher.refreshOrderData(); uncomment when implemented
+  }
+
+  /**
+   * Updates the cooked time of an order.
+   *
+   * Domain Invariants:
+   *  - deliveryTime must not be null
+   *  - deliveryTime must not be before order.initialTime
+   *  - deliveryTime must not be in the far past relative to now
+   *
+   * Responsibilities:
+   *  - Retrieve order
+   *  - Validate temporal constraints
+   *  - Persist update
+   *  - Potentially trigger batching recalculation if READY state depends on it
+   *
+   * Errors:
+   *  - IllegalArgumentException if:
+   *      • orderId does not exist
+   *      • deliveryTime is null
+   *      • deliveryTime > order.initialTime
+   *  - IllegalStateException if:
+   *      • Order is already DELIVERED
+   *  - RuntimeException if persistence fails
+   */
+  public void updateOrderDeliveryTime(long orderId, Instant deliveryTime) {
+    // TODO
+    throw new UnsupportedOperationException("Not implemented yet");
+    // Push update to frontend via WebSocket
+    // publisher.refreshOrderData(); uncomment when implemented
+  }
+
+  /**
+   * Assigns an order to a batch by setting its batchId.
+   *
+   * Domain Invariants:
+   *  - orderId must correspond to an existing order
+   *  - batchId must correspond to an existing batch
+   *  - An order may belong to at most one batch at a time
+   *
+   * Behavior:
+   *  - Updates the order’s batchId to the specified batch
+   *  - Overwrites any existing batch assignment
+   *
+   * Responsibilities:
+   *  - Retrieve the order
+   *  - Validate the target batch exists
+   *  - Update the order’s batch association
+   *  - Persist the change
+   *  - Notify downstream consumers (e.g., frontend, batching observers)
+   *
+   * Errors:
+   *  - IllegalArgumentException if:
+   *      • orderId does not exist
+   *      • batchId does not exist
+   *  - IllegalStateException if:
+   *      • Order is already DELIVERED
+   *      • Order is in a state that forbids reassignment
+   *  - RuntimeException if persistence fails
+   *
+   * @param orderId the id of the order to assign
+   * @param batchId the id of the batch to associate with the order
+   */
+  public void setOrderBatchId(long orderId, long batchId) {
     // TODO
     throw new UnsupportedOperationException("Not implemented yet");
     // Push update to frontend via WebSocket
@@ -146,6 +215,14 @@ public class OrderService {
   }
 
   /**
+   * Creates a Batch corresponding to batch and returns the batchId.
+   */
+  public Long createBatch(Batch batch) {
+    // TODO
+    throw new UnsupportedOperationException("Not implemented yet");
+  }
+
+  /**
    * Returns the Batch corresponding to the given batchId.
    *
    * Errors:
@@ -162,7 +239,7 @@ public class OrderService {
    * Errors:
    *  - IllegalArgumentException if batchId does not exist
    */
-  public Order[] getBatchOrders(long batchId) {
+  public List<Order> getBatchOrders(long batchId) {
     // TODO
     throw new UnsupportedOperationException("Not implemented yet");
   }

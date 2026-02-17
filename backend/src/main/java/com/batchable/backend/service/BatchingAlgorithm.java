@@ -10,6 +10,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import org.springframework.stereotype.Service;
 import com.batchable.backend.db.models.Order;
+import com.batchable.backend.db.models.Order.State;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.Cache;
 
@@ -56,8 +57,7 @@ public class BatchingAlgorithm {
 
   /**
    * Comparator to sort TentativeBatches by latest allowed cooked time in descending order. This
-   * ensures batches that need to be dispatched sooner are at the back of the list for efficient
-   * retrieval.
+   * ensures batches with earlier deadlines are at the back of the list for efficient retrieval.
    */
   Comparator<TentativeBatch> byLatestAllowedCookedTime =
       Comparator.comparing((TentativeBatch tb) -> tb.latestAllowedCookedTime).reversed();
@@ -69,6 +69,33 @@ public class BatchingAlgorithm {
    */
   public BatchingAlgorithm(RouteService routeService) {
     this.routeService = routeService;
+  }
+
+  /**
+   * Finds the index of an order in the batches.
+   *
+   * @param batches the list of tentative batches
+   * @param orderId the id of the order to find
+   * @param throwIfMissing whether to throw if order is not found
+   * @return an array [batchIndex, orderIndex] or null if not found and throwIfMissing=false
+   */
+  private int[] findOrder(final List<TentativeBatch> batches, final long orderId,
+      boolean throwIfMissing) {
+    for (int i = 0; i < batches.size(); i++) {
+      TentativeBatch tentativeBatch = batches.get(i);
+      List<Order> batch = tentativeBatch.batch;
+      for (int j = 0; j < batch.size(); j++) {
+        Order order = batch.get(j);
+        if (orderId == order.id) {
+          return new int[] {i, j};
+        }
+      }
+    }
+    if (throwIfMissing) {
+      throw new IllegalArgumentException(
+          "Given batches do not contain the order specified by id " + orderId + ".");
+    }
+    return null;
   }
 
   /**
@@ -87,33 +114,29 @@ public class BatchingAlgorithm {
    */
   public void removeOrder(final List<TentativeBatch> batches, final long orderId,
       String restaurantAddress) {
+    int[] inds = findOrder(batches, orderId, true);
+    int i = inds[0];
+    int j = inds[1];
+    TentativeBatch tentativeBatch = batches.get(i);
+    List<Order> batch = tentativeBatch.batch;
+    batch.remove(j); // remove the order from the batch
 
-    for (int i = 0; i < batches.size(); i++) {
-      TentativeBatch tentativeBatch = batches.get(i);
-      List<Order> batch = tentativeBatch.batch;
-      for (int j = 0; j < batch.size(); j++) {
-        Order order = batch.get(j);
+    if (batch.isEmpty()) {
+      // If removing this order empties the batch, remove the batch entirely
+      batches.remove(i);
+    } else if (j == 0) {
+      // If the removed order was the first in the batch, recompute latestAllowedCookedTime
+      tentativeBatch.latestAllowedCookedTime =
+          getLastAllowedCookedTime(batch.get(0), restaurantAddress);
 
-        if (orderId == order.id) {
-          batch.remove(j);
-          if (batch.isEmpty()) {
-            batches.remove(i);
-          } else if (j == 0) {
-            tentativeBatch.latestAllowedCookedTime =
-                getLastAllowedCookedTime(batch.get(0), restaurantAddress);
-            batches.remove(i);
-            insertBatch(batches, tentativeBatch);
-          }
-          return;
-        }
-        
-      }
+      // Remove and reinsert batch to maintain correct order in the batch list
+      batches.remove(i);
+      insertBatch(batches, tentativeBatch);
     }
-    throw new IllegalArgumentException("Order id not found: " + orderId);
   }
 
   /**
-   * Updates an existing order in the batching structure.
+   * Rebatches an existing order in the batching structure.
    *
    * The order is updated by removing the existing instance and re-adding it, ensuring all batching
    * and delivery constraints are re-evaluated.
@@ -121,11 +144,34 @@ public class BatchingAlgorithm {
    * @param batches the list of tentative batches for a restaurant
    * @param order the updated order
    * @param restaurantAddress the address of the restaurant
+   * @throws IllegalArgumentException if the order id is not found
    */
-  public void updateOrder(final List<TentativeBatch> batches, final Order order,
+  public void rebatchOrder(final List<TentativeBatch> batches, final Order order,
       String restaurantAddress) {
     removeOrder(batches, order.id, restaurantAddress);
     addOrder(batches, order, restaurantAddress);
+  }
+
+  /**
+   * Updates the state of an existing order within the tentative batches.
+   *
+   * @param batches the list of tentative batches for a restaurant
+   * @param orderId the id of the order to update
+   * @param newState the new state to assign to the order
+   *
+   * @throws IllegalArgumentException if the order id is not found
+   */
+  public void updateOrderState(final List<TentativeBatch> batches, final long orderId,
+      final State newState) {
+    int[] inds = findOrder(batches, orderId, true);
+    int i = inds[0];
+    int j = inds[1];
+    List<Order> batch = batches.get(i).batch;
+    Order oldOrder = batch.get(j);
+    Order newOrder = new Order(oldOrder.id, oldOrder.restaurantId, oldOrder.destination,
+        oldOrder.itemNamesJson, oldOrder.initialTime, oldOrder.deliveryTime, oldOrder.cookedTime,
+        newState, oldOrder.highPriority, oldOrder.batchId);
+    batch.set(j, newOrder);
   }
 
   /**
