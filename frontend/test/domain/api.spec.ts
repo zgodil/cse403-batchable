@@ -39,8 +39,7 @@ async function expectMissingDeleted<T extends DomainObject>(
   const id = await checkedCreate(api, domainObject);
   const deleted = await api.delete(id);
   expect(deleted).toBe(true);
-  const retrieved = await api.read(id);
-  expect(retrieved).toBe(null);
+  expect(await api.exists(id)).toBe(false);
 }
 
 async function expectUpdatedChanged<T extends DomainObject>(

@@ -37,6 +37,15 @@ export class CrudApi<T extends DomainObject> {
     }
   }
 
+  async exists({id}: T['id']) {
+    try {
+      await fetchJSON('GET', `${this.resource}/${id}`);
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
   async update(domainObject: T) {
     try {
       await fetchEndpoint(
