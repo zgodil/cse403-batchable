@@ -94,8 +94,14 @@ public class RestaurantService {
    *  - IllegalArgumentException if restaurantId does not exist
    */
   public Restaurant getRestaurant(long restaurantId) {
-    // TODO
-    throw new UnsupportedOperationException("Not implemented yet");
+    try (DatabaseManager db = new DatabaseManager()) {
+      return db.restaurants
+          .getRestaurant(restaurantId)
+          .orElseThrow(() ->
+              new IllegalArgumentException("Restaurant with id " + restaurantId + " does not exist"));
+    } catch (SQLException e) {
+      throw new RuntimeException("Failed to get restaurant", e);
+    }
   }
 
   /**
