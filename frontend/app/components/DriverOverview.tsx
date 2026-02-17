@@ -1,29 +1,33 @@
-import React from 'react';
+import OverviewSection from './Overview';
+import * as json from '~/domain/json';
+import type {Driver} from '~/domain/objects';
+import DriverCard from './DriverCard';
 
 export default function DriverOverview() {
-  const drivers = [
-    {name: 'Ben', status: 'ON SHIFT', location: 'Store'},
-    {name: 'Delano', status: 'DELIVERING', location: 'Store'},
+  const jsonDrivers: json.JSONDomainObject<Driver>[] = [
+    {
+      id: 982,
+      name: 'Ben',
+      onShift: true,
+      phoneNumber: '2069994273',
+      restaurant: 98123,
+    },
+    {
+      id: 129,
+      name: 'Delano',
+      onShift: false,
+      phoneNumber: '1978176237',
+      restaurant: 98123,
+    },
   ];
 
+  const drivers = jsonDrivers.map(json.driver.parse);
+
   return (
-    <div className="space-y-4">
-      {drivers.map(driver => (
-        <div
-          key={driver.name}
-          className="p-4 border rounded-lg bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700"
-        >
-          <p className="font-bold text-gray-900 dark:text-gray-100">
-            {driver.name}
-          </p>
-          <div className="flex justify-between items-center">
-            <p className="text-sm text-gray-500">Status: {driver.status}</p>
-            <p className="text-xs font-medium text-blue-500">
-              📍 {driver.location}
-            </p>
-          </div>
-        </div>
-      ))}
-    </div>
+    <OverviewSection
+      title="🚗 Driver Status"
+      items={drivers}
+      renderItem={driver => <DriverCard driver={driver} />}
+    />
   );
 }

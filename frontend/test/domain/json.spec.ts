@@ -1,17 +1,17 @@
 import {describe, expect, it} from 'vitest';
-import {
-  batch,
-  driver,
-  menuItem,
-  order,
-  restaurant,
-  type JSONDomainObject,
-  type JSONParserPair,
-} from '~/domain/json';
+import * as json from '~/domain/json';
+import type {
+  Restaurant,
+  DomainObject,
+  Batch,
+  Order,
+  MenuItem,
+  Driver,
+} from '~/domain/objects';
 
-function testPair<T>(
-  parserPair: JSONParserPair<T>,
-  json: JSONDomainObject<T>,
+function testPair<T extends DomainObject>(
+  parserPair: json.JSONParserPair<T>,
+  json: json.JSONDomainObject<T>,
   domainObject: T,
   reversable: boolean = true,
 ) {
@@ -21,8 +21,8 @@ function testPair<T>(
 
 describe('Restaurant parsing', () => {
   it('parses a valid Restaurant', () => {
-    testPair(
-      restaurant,
+    testPair<Restaurant>(
+      json.restaurant,
       {
         id: 5,
         location: '1600 Pennsylvania Avenue NW, Washington, DC 20500',
@@ -42,8 +42,8 @@ describe('Restaurant parsing', () => {
   });
 
   it('survives an invalid WorldLocation', () => {
-    testPair(
-      restaurant,
+    testPair<Restaurant>(
+      json.restaurant,
       {
         id: 173,
         location: '978164HKASDG&Q@^',
@@ -65,8 +65,8 @@ describe('Restaurant parsing', () => {
 
 describe('Driver parsing', () => {
   it('parses a valid Driver', () => {
-    testPair(
-      driver,
+    testPair<Driver>(
+      json.driver,
       {
         id: 98712,
         phoneNumber: '9782372819',
@@ -79,7 +79,9 @@ describe('Driver parsing', () => {
           type: 'Driver',
           id: 98712,
         },
-        phoneNumber: '9782372819',
+        phoneNumber: {
+          compact: '9782372819',
+        },
         restaurant: {
           type: 'Restaurant',
           id: 1238,
@@ -93,8 +95,8 @@ describe('Driver parsing', () => {
 
 describe('Order parsing', () => {
   it('parses a valid Order', () => {
-    testPair(
-      order,
+    testPair<Order>(
+      json.order,
       {
         id: 8129387,
         restaurant: 124192,
@@ -134,8 +136,8 @@ describe('Order parsing', () => {
   });
 
   it('survives a null batch', () => {
-    testPair(
-      order,
+    testPair<Order>(
+      json.order,
       {
         id: 8129387,
         restaurant: 124192,
@@ -172,8 +174,8 @@ describe('Order parsing', () => {
   });
 
   it('survives an invalid date', () => {
-    testPair(
-      order,
+    testPair<Order>(
+      json.order,
       {
         id: 8129387,
         restaurant: 124192,
@@ -213,8 +215,8 @@ describe('Order parsing', () => {
 
 describe('Batch parsing', () => {
   it('parses a valid Batch', () => {
-    testPair(
-      batch,
+    testPair<Batch>(
+      json.batch,
       {
         id: 871634,
         driver: 512387,
@@ -241,8 +243,8 @@ describe('Batch parsing', () => {
   });
 
   it('survives an invalid Polyline', () => {
-    testPair(
-      batch,
+    testPair<Batch>(
+      json.batch,
       {
         id: 871634,
         driver: 512387,
@@ -271,8 +273,8 @@ describe('Batch parsing', () => {
 
 describe('MenuItem parsing', () => {
   it('parses a valid MenuItem', () => {
-    testPair(
-      menuItem,
+    testPair<MenuItem>(
+      json.menuItem,
       {
         id: 5123,
         restaurant: 9123,
