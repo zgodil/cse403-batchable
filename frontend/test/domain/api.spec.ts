@@ -1,4 +1,3 @@
-import '../mocks/fetch';
 import {describe, it, expect} from 'vitest';
 import {CrudApi} from '~/api/crud';
 import {RestaurantApi} from '~/api/endpoints/restaurant';
