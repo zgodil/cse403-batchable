@@ -1,4 +1,4 @@
-import {http, HttpResponse} from 'msw';
+import {http} from 'msw';
 import {
   asId,
   db,
@@ -7,7 +7,7 @@ import {
   noContent,
   notFound,
 } from '../common';
-import {nextStateAfter, type Batch, type Order} from '~/domain/objects';
+import {nextStateAfter, type Order} from '~/domain/objects';
 import * as json from '~/domain/json';
 
 export const orderHandlers = [
@@ -55,17 +55,5 @@ export const orderHandlers = [
     );
 
     return noContent();
-  }),
-  ...makeCrudHandlers('/order/batch', db.batches, ['read']),
-  http.get(endpoint('/order/batch/:id'), req => {
-    const batch = db.batches.get(asId<Batch>(req.params.id));
-    if (!batch) return notFound('batch');
-    return HttpResponse.json(batch);
-  }),
-  http.get(endpoint('/order/batch/:id/orders'), req => {
-    const orders = db.orders.findAll(
-      order => order.currentBatch?.id === asId<Batch>(req.params.id),
-    );
-    return HttpResponse.json(orders);
   }),
 ];
