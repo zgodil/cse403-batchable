@@ -3,7 +3,7 @@ import {CrudApi} from '../crud';
 import type {Driver, MenuItem, Restaurant} from '~/domain/objects';
 import {fetchJSON} from '../common';
 
-export class RestaurantApi extends CrudApi<Restaurant> {
+class RestaurantApi extends CrudApi<Restaurant> {
   constructor() {
     super('/restaurant', json.restaurant);
   }
@@ -32,3 +32,5 @@ export class RestaurantApi extends CrudApi<Restaurant> {
     }
   }
 }
+
+export const restaurantApi = new RestaurantApi();

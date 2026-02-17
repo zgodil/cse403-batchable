@@ -1,6 +1,6 @@
 import {describe, it, expect} from 'vitest';
 import {CrudApi} from '~/api/crud';
-import {RestaurantApi} from '~/api/endpoints/restaurant';
+import {restaurantApi} from '~/api/endpoints/restaurant';
 import {fakeId, type DomainObject, type Restaurant} from '~/domain/objects';
 
 async function checkedCreate<T extends DomainObject>(
@@ -78,19 +78,17 @@ function getFakeRestaurant2(): Restaurant {
 }
 
 describe('/restaurant endpoint', () => {
-  const api = new RestaurantApi();
-
   it('can create and read back a restaurant', async () => {
-    await expectReadbackCreated<Restaurant>(api, getFakeRestaurant());
+    await expectReadbackCreated<Restaurant>(restaurantApi, getFakeRestaurant());
   });
 
   it('is gone after it is deleted', async () => {
-    await expectMissingDeleted<Restaurant>(api, getFakeRestaurant());
+    await expectMissingDeleted<Restaurant>(restaurantApi, getFakeRestaurant());
   });
 
   it('is changed after it is updated', async () => {
     await expectUpdatedChanged<Restaurant>(
-      api,
+      restaurantApi,
       getFakeRestaurant(),
       getFakeRestaurant2(),
     );

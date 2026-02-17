@@ -3,7 +3,7 @@ import {CrudApi} from '../crud';
 import type {Batch, Order} from '~/domain/objects';
 import {fetchJSON} from '../common';
 
-export class BatchApi extends CrudApi<Batch> {
+class BatchApi extends CrudApi<Batch> {
   constructor() {
     super('/order/batch', json.batch);
   }
@@ -19,3 +19,5 @@ export class BatchApi extends CrudApi<Batch> {
     }
   }
 }
+
+export const batchApi = new BatchApi();

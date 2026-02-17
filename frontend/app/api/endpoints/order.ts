@@ -3,7 +3,7 @@ import {CrudApi} from '../crud';
 import type {Order} from '~/domain/objects';
 import {fetchEndpoint} from '../common';
 
-export class OrderApi extends CrudApi<Order> {
+class OrderApi extends CrudApi<Order> {
   constructor() {
     super('/order', json.order);
   }
@@ -39,3 +39,5 @@ export class OrderApi extends CrudApi<Order> {
     }
   }
 }
+
+export const orderApi = new OrderApi();

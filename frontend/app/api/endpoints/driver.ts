@@ -3,7 +3,7 @@ import {CrudApi} from '../crud';
 import type {Batch, Driver} from '~/domain/objects';
 import {fetchEndpoint, fetchJSON} from '../common';
 
-export class DriverApi extends CrudApi<Driver> {
+class DriverApi extends CrudApi<Driver> {
   constructor() {
     super('/driver', json.driver);
   }
@@ -32,3 +32,5 @@ export class DriverApi extends CrudApi<Driver> {
     }
   }
 }
+
+export const driverApi = new DriverApi();
