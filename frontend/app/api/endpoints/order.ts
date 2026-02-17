@@ -9,7 +9,7 @@ class OrderApi extends CrudApi<Order> {
   }
   async advanceState({id}: Order['id']) {
     try {
-      await fetchEndpoint('PUT', `${this.resource}/${id}`);
+      await fetchEndpoint('PUT', `${this.resource}/${id}/advance`);
       return true;
     } catch (err) {
       console.error(`Failed to advance order state; id=${id}`, err);
