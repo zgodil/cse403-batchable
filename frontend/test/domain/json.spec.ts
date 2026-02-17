@@ -16,7 +16,12 @@ function testPair<T extends DomainObject>(
   reversable: boolean = true,
 ) {
   expect(parserPair.parse(json)).toEqual(domainObject);
-  if (reversable) expect(parserPair.unparse(domainObject)).toEqual(json);
+  if (reversable) {
+    expect(parserPair.unparse(domainObject)).toEqual(json);
+    expect(parserPair.parse(parserPair.unparse(domainObject))).toEqual(
+      domainObject,
+    );
+  }
 }
 
 describe('Restaurant parsing', () => {
@@ -95,6 +100,11 @@ describe('Driver parsing', () => {
 
 describe('Order parsing', () => {
   it('parses a valid Order', () => {
+    const now = Date.now();
+    const initialTime = new Date(now);
+    const deliveryTime = new Date(now + 1.5e3);
+    const cookedTime = new Date(now + 1e3);
+    expect(new Date(new Date(now).toISOString())).toEqual(new Date(now));
     testPair<Order>(
       json.order,
       {
@@ -102,9 +112,9 @@ describe('Order parsing', () => {
         restaurant: 124192,
         destination: '1600 Pennsylvania Avenue NW, Washington, DC 20500',
         itemNames: ['Tragedy', 'Comedy'],
-        initialTime: 'Fri, 29 Aug 2003 08:30:00 GMT',
-        deliveryTime: 'Fri, 29 Aug 2003 08:30:00 GMT',
-        cookedTime: 'Fri, 29 Aug 2003 08:30:00 GMT',
+        initialTime: initialTime.toISOString(),
+        deliveryTime: deliveryTime.toISOString(),
+        cookedTime: cookedTime.toISOString(),
         state: 'cooked',
         highPriority: true,
         currentBatch: 19237245,
@@ -122,9 +132,9 @@ describe('Order parsing', () => {
           address: '1600 Pennsylvania Avenue NW, Washington, DC 20500',
         },
         itemNames: ['Tragedy', 'Comedy'],
-        initialTime: new Date('Fri, 29 Aug 2003 08:30:00 GMT'),
-        deliveryTime: new Date('Fri, 29 Aug 2003 08:30:00 GMT'),
-        cookedTime: new Date('Fri, 29 Aug 2003 08:30:00 GMT'),
+        initialTime,
+        deliveryTime,
+        cookedTime,
         state: 'cooked',
         highPriority: true,
         currentBatch: {
@@ -143,9 +153,9 @@ describe('Order parsing', () => {
         restaurant: 124192,
         destination: '1600 Pennsylvania Avenue NW, Washington, DC 20500',
         itemNames: [],
-        initialTime: 'Fri, 29 Aug 2003 08:30:00 GMT',
-        deliveryTime: 'Fri, 29 Aug 2003 08:30:00 GMT',
-        cookedTime: 'Fri, 29 Aug 2003 08:30:00 GMT',
+        initialTime: '2003-08-29T08:30:00.000Z',
+        deliveryTime: '2003-08-29T08:30:00.000Z',
+        cookedTime: '2003-08-29T08:30:00.000Z',
         state: 'cooked',
         highPriority: true,
         currentBatch: null,
@@ -163,9 +173,9 @@ describe('Order parsing', () => {
           address: '1600 Pennsylvania Avenue NW, Washington, DC 20500',
         },
         itemNames: [],
-        initialTime: new Date('Fri, 29 Aug 2003 08:30:00 GMT'),
-        deliveryTime: new Date('Fri, 29 Aug 2003 08:30:00 GMT'),
-        cookedTime: new Date('Fri, 29 Aug 2003 08:30:00 GMT'),
+        initialTime: new Date('2003-08-29T08:30:00.000Z'),
+        deliveryTime: new Date('2003-08-29T08:30:00.000Z'),
+        cookedTime: new Date('2003-08-29T08:30:00.000Z'),
         state: 'cooked',
         highPriority: true,
         currentBatch: null,
@@ -182,8 +192,8 @@ describe('Order parsing', () => {
         destination: '1600 Pennsylvania Avenue NW, Washington, DC 20500',
         itemNames: ['Tragedy', 'Comedy'],
         initialTime: 'Hello!!!',
-        deliveryTime: 'Fri, 29 Aug 2003 08:30:00 GMT',
-        cookedTime: 'Fri, 29 Aug 2003 08:30:00 GMT',
+        deliveryTime: '2003-08-29T08:30:00.000Z',
+        cookedTime: '2003-08-29T08:30:00.000Z',
         state: 'cooked',
         highPriority: true,
         currentBatch: null,
@@ -202,8 +212,8 @@ describe('Order parsing', () => {
         },
         itemNames: ['Tragedy', 'Comedy'],
         initialTime: new Date(NaN),
-        deliveryTime: new Date('Fri, 29 Aug 2003 08:30:00 GMT'),
-        cookedTime: new Date('Fri, 29 Aug 2003 08:30:00 GMT'),
+        deliveryTime: new Date('2003-08-29T08:30:00.000Z'),
+        cookedTime: new Date('2003-08-29T08:30:00.000Z'),
         state: 'cooked',
         highPriority: true,
         currentBatch: null,
@@ -221,8 +231,8 @@ describe('Batch parsing', () => {
         id: 871634,
         driver: 512387,
         route: '_p~iF~ps|U_ulLnnqC_mqNvxq`@',
-        dispatchTime: 'Fri, 30 Jan 2026 01:30:00 GMT',
-        expectedCompletionTime: 'Fri, 30 Jan 2026 01:30:00 GMT',
+        dispatchTime: '2026-01-30T01:30:00.000Z',
+        expectedCompletionTime: '2026-01-30T01:30:00.000Z',
       },
       {
         id: {
@@ -236,8 +246,8 @@ describe('Batch parsing', () => {
         route: {
           encoded: '_p~iF~ps|U_ulLnnqC_mqNvxq`@',
         },
-        dispatchTime: new Date('Fri, 30 Jan 2026 01:30:00 GMT'),
-        expectedCompletionTime: new Date('Fri, 30 Jan 2026 01:30:00 GMT'),
+        dispatchTime: new Date('2026-01-30T01:30:00.000Z'),
+        expectedCompletionTime: new Date('2026-01-30T01:30:00.000Z'),
       },
     );
   });
@@ -249,8 +259,8 @@ describe('Batch parsing', () => {
         id: 871634,
         driver: 512387,
         route: 'Hello World! 1 2 3 4 5',
-        dispatchTime: 'Fri, 30 Jan 2026 01:30:00 GMT',
-        expectedCompletionTime: 'Fri, 30 Jan 2026 01:30:00 GMT',
+        dispatchTime: '2026-01-30T01:30:00.000Z',
+        expectedCompletionTime: '2026-01-30T01:30:00.000Z',
       },
       {
         id: {
@@ -264,8 +274,8 @@ describe('Batch parsing', () => {
         route: {
           encoded: 'Hello World! 1 2 3 4 5',
         },
-        dispatchTime: new Date('Fri, 30 Jan 2026 01:30:00 GMT'),
-        expectedCompletionTime: new Date('Fri, 30 Jan 2026 01:30:00 GMT'),
+        dispatchTime: new Date('2026-01-30T01:30:00.000Z'),
+        expectedCompletionTime: new Date('2026-01-30T01:30:00.000Z'),
       },
     );
   });

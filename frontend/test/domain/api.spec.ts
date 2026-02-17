@@ -1,7 +1,17 @@
 import {describe, it, expect} from 'vitest';
 import {CrudApi} from '~/api/crud';
+import {driverApi} from '~/api/endpoints/driver';
+import {menuApi} from '~/api/endpoints/menu';
+import {orderApi} from '~/api/endpoints/order';
 import {restaurantApi} from '~/api/endpoints/restaurant';
-import {fakeId, type DomainObject, type Restaurant} from '~/domain/objects';
+import {
+  fakeId,
+  type DomainObject,
+  type Driver,
+  type MenuItem,
+  type Order,
+  type Restaurant,
+} from '~/domain/objects';
 
 async function checkedCreate<T extends DomainObject>(
   api: CrudApi<T>,
@@ -79,18 +89,149 @@ function getFakeRestaurant2(): Restaurant {
 
 describe('/restaurant endpoint', () => {
   it('can create and read back a restaurant', async () => {
-    await expectReadbackCreated<Restaurant>(restaurantApi, getFakeRestaurant());
+    await expectReadbackCreated(restaurantApi, getFakeRestaurant());
   });
 
   it('is gone after it is deleted', async () => {
-    await expectMissingDeleted<Restaurant>(restaurantApi, getFakeRestaurant());
+    await expectMissingDeleted(restaurantApi, getFakeRestaurant());
   });
 
   it('is changed after it is updated', async () => {
-    await expectUpdatedChanged<Restaurant>(
+    await expectUpdatedChanged(
       restaurantApi,
       getFakeRestaurant(),
       getFakeRestaurant2(),
     );
+  });
+
+  it('can retrieve drivers', async () => {
+    const restaurant = await checkedCreate(restaurantApi, getFakeRestaurant());
+    const driver = await checkedCreate(driverApi, getFakeDriver(restaurant));
+    const restaurant2 = await checkedCreate(
+      restaurantApi,
+      getFakeRestaurant2(),
+    );
+    const driver2 = await checkedCreate(driverApi, getFakeDriver2(restaurant2));
+    const restaurantDrivers = [await driverApi.read(driver)];
+    const restaurant2Drivers = [await driverApi.read(driver2)];
+    const actualRestaurantDrivers = await restaurantApi.getDrivers(restaurant);
+    const actualRestaurant2Drivers =
+      await restaurantApi.getDrivers(restaurant2);
+
+    expect(actualRestaurant2Drivers).not.toBe(null);
+    expect(actualRestaurantDrivers).not.toBe(null);
+    expect(actualRestaurantDrivers).toEqual(restaurantDrivers);
+    expect(actualRestaurant2Drivers).toEqual(restaurant2Drivers);
+  });
+});
+
+function getFakeMenuItem(restaurant: Restaurant['id']): MenuItem {
+  return {
+    id: fakeId('MenuItem'),
+    restaurant,
+    name: 'Fake Cheeseburger',
+  };
+}
+
+describe('/menu endpoint', () => {
+  it('can create and read back a menu item', async () => {
+    const restaurant = await checkedCreate(restaurantApi, getFakeRestaurant());
+    await expectReadbackCreated(menuApi, getFakeMenuItem(restaurant));
+  });
+
+  it('is gone after it is deleted', async () => {
+    const restaurant = await checkedCreate(restaurantApi, getFakeRestaurant());
+    await expectMissingDeleted(menuApi, getFakeMenuItem(restaurant));
+  });
+});
+
+function getFakeDriver(restaurant: Restaurant['id']): Driver {
+  return {
+    id: fakeId('Driver'),
+    name: 'Delano',
+    onShift: true,
+    phoneNumber: {compact: '9817235273'},
+    restaurant,
+  };
+}
+
+function getFakeDriver2(restaurant: Restaurant['id']): Driver {
+  return {
+    id: fakeId('Driver'),
+    name: 'Qalid',
+    onShift: false,
+    phoneNumber: {compact: '9817237651'},
+    restaurant,
+  };
+}
+
+describe('/driver endpoint', () => {
+  it('can create and read back a driver', async () => {
+    const restaurant = await checkedCreate(restaurantApi, getFakeRestaurant());
+    await expectReadbackCreated(driverApi, getFakeDriver(restaurant));
+  });
+
+  it('is gone after it is deleted', async () => {
+    const restaurant = await checkedCreate(restaurantApi, getFakeRestaurant());
+    await expectMissingDeleted(driverApi, getFakeDriver(restaurant));
+  });
+
+  it('is changed after it is updated', async () => {
+    const restaurant = await checkedCreate(restaurantApi, getFakeRestaurant());
+    await expectUpdatedChanged(
+      driverApi,
+      getFakeDriver(restaurant),
+      getFakeDriver2(restaurant),
+    );
+  });
+
+  it('can toggle shift', async () => {
+    const restaurant = await checkedCreate(restaurantApi, getFakeRestaurant());
+    const driver = await checkedCreate(driverApi, getFakeDriver(restaurant));
+    for (const option of [false, true]) {
+      const shifted = await driverApi.setOnShift(driver, option);
+      expect(shifted).toBe(true);
+      const readback = await driverApi.read(driver);
+      expect(readback?.onShift).toBe(option);
+    }
+  });
+});
+
+function getFakeOrder(restaurant: Restaurant['id']): Order {
+  const now = Date.now();
+  return {
+    id: fakeId('Order'),
+    initialTime: new Date(now),
+    cookedTime: new Date(now + 1e3),
+    deliveryTime: new Date(now + 1e6),
+    currentBatch: null,
+    destination: {address: '1600 Pennsylvania Ave, WA DC'},
+    highPriority: false,
+    itemNames: ['Cheese Burger', 'Anti Burger'],
+    restaurant,
+    state: 'driving',
+  };
+}
+
+describe('/order endpoint', () => {
+  it('can create and read back an order', async () => {
+    const restaurant = await checkedCreate(restaurantApi, getFakeRestaurant());
+    await expectReadbackCreated(orderApi, getFakeOrder(restaurant));
+  });
+
+  it('is gone after it is deleted', async () => {
+    const restaurant = await checkedCreate(restaurantApi, getFakeRestaurant());
+    await expectMissingDeleted(orderApi, getFakeOrder(restaurant));
+  });
+
+  it('is high priority after being remade', async () => {
+    const restaurant = await checkedCreate(restaurantApi, getFakeRestaurant());
+    const order = await checkedCreate(orderApi, getFakeOrder(restaurant));
+    const original = await orderApi.read(order);
+    const remade = await orderApi.remake(order);
+    expect(remade).toBe(true);
+    const readback = await orderApi.read(order);
+    expect(readback?.highPriority).toBe(true);
+    expect(readback?.itemNames).toEqual(original?.itemNames);
   });
 });
