@@ -2,6 +2,7 @@ import type {Dispatch, SetStateAction} from 'react';
 import type {Driver} from '../../domain/objects';
 import {useModal} from '../Modal';
 import AddDriverModal from './AddDriverModal';
+import Button from '../Button';
 
 type DriversSectionProps = {
   drivers: Driver[];
@@ -22,18 +23,12 @@ function DriversSection({
       <div className="mb-4 flex items-center justify-between">
         <h2 className="text-xl font-bold">Drivers</h2>
         <div className="flex items-center gap-2">
-          <button
-            onClick={() => addDriverModal.setOpen(true)}
-            className="rounded-lg bg-indigo-600 px-4 py-2 font-semibold text-white transition hover:bg-indigo-700"
-          >
+          <Button style="indigo" onClick={() => addDriverModal.setOpen(true)}>
             + Add Driver
-          </button>
-          <button
-            onClick={() => setIsEditing(!isEditing)}
-            className="rounded-lg bg-blue-600 px-4 py-2 font-semibold text-white transition hover:bg-blue-700"
-          >
+          </Button>
+          <Button style="blue" onClick={() => setIsEditing(!isEditing)}>
             {isEditing ? 'Done Editing' : 'Edit Drivers'}
-          </button>
+          </Button>
         </div>
       </div>
 
@@ -131,16 +126,17 @@ function DriversSection({
                 </td>
                 {isEditing && (
                   <td className="px-3 py-3">
-                    <button
+                    <Button
+                      style="red"
+                      small
                       onClick={() =>
                         setDrivers(current =>
                           current.filter(item => item.id.id !== driver.id.id),
                         )
                       }
-                      className="rounded-md bg-red-600 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-red-700"
                     >
                       Delete
-                    </button>
+                    </Button>
                   </td>
                 )}
               </tr>

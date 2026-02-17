@@ -32,6 +32,7 @@ export default function AddMenuItemModal({state}: Props) {
       state={state}
       apply={submitNewMenuItem}
       confirm="Add Item"
+      style="amber"
     >
       <FormField
         label="Item Name"

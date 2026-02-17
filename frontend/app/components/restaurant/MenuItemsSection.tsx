@@ -2,6 +2,7 @@ import type {Dispatch, SetStateAction} from 'react';
 import type {MenuItem} from '../../domain/objects';
 import {useModal} from '../Modal';
 import AddMenuItemModal from './AddMenuItemModal';
+import Button from '../Button';
 
 type MenuItemsSectionProps = {
   menuItems: MenuItem[];
@@ -23,18 +24,12 @@ function MenuItemsSection({
       <div className="mb-4 flex items-center justify-between">
         <h2 className="text-xl font-bold">Menu Items</h2>
         <div className="flex items-center gap-2">
-          <button
-            onClick={() => addMenuItemModal.setOpen(true)}
-            className="rounded-lg bg-amber-600 px-4 py-2 font-semibold text-white transition hover:bg-amber-700"
-          >
+          <Button onClick={() => addMenuItemModal.setOpen(true)} style="amber">
             + Add Menu Item
-          </button>
-          <button
-            onClick={() => setIsEditing(!isEditing)}
-            className="rounded-lg bg-orange-600 px-4 py-2 font-semibold text-white transition hover:bg-orange-700"
-          >
+          </Button>
+          <Button onClick={() => setIsEditing(!isEditing)} style="orange">
             {isEditing ? 'Done Editing' : 'Edit Menu'}
-          </button>
+          </Button>
         </div>
       </div>
 
@@ -77,7 +72,9 @@ function MenuItemsSection({
                 <td className="px-3 py-3">{item.id.id}</td>
                 {isEditing && (
                   <td className="px-3 py-3">
-                    <button
+                    <Button
+                      style="red"
+                      small
                       onClick={() =>
                         setMenuItems(current =>
                           current.filter(
@@ -85,10 +82,9 @@ function MenuItemsSection({
                           ),
                         )
                       }
-                      className="rounded-md bg-red-600 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-red-700"
                     >
                       Delete
-                    </button>
+                    </Button>
                   </td>
                 )}
               </tr>

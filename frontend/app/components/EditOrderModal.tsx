@@ -47,6 +47,7 @@ export default function EditOrderModal({order, state}: Props) {
       title={`Edit ${formatOrderName(order)}`}
       state={state}
       apply={applyChanges}
+      confirm={canChangeCookTime || canChangeState ? 'Apply Changes' : 'OK'}
     >
       <div className="text-sm text-gray-500">
         <p>Items: {order.itemNames.join(', ')}</p>

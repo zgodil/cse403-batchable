@@ -41,10 +41,10 @@ function Home() {
           </p>
         </div>
         <div className="flex gap-3">
-          <Button style="secondary" to="/restaurant">
+          <Button style="purple" to="/restaurant">
             ⚙️ Manage Restaurant
           </Button>
-          <Button onClick={() => addOrderModal.setOpen(true)} style="primary">
+          <Button onClick={() => addOrderModal.setOpen(true)} style="blue">
             + Add New Order
           </Button>
         </div>

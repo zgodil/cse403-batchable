@@ -1,5 +1,4 @@
 import {useState} from 'react';
-import {Link} from 'react-router';
 import DriversSection from '../components/restaurant/DriversSection';
 import MenuItemsSection from '../components/restaurant/MenuItemsSection';
 import RestaurantDetailsSection from '../components/restaurant/RestaurantDetailsSection';
@@ -8,6 +7,7 @@ import {
   initialMenuItems,
   initialRestaurant,
 } from '../components/restaurant/mockData';
+import Button from '~/components/Button';
 
 function RestaurantPage() {
   const [drivers, setDrivers] = useState(initialDrivers);
@@ -31,12 +31,9 @@ function RestaurantPage() {
               Manage restaurant profile, drivers, and menu items in one place.
             </p>
           </div>
-          <Link
-            to="/"
-            className="rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 px-4 py-2 font-semibold text-gray-700 dark:text-gray-200 transition hover:bg-gray-100 dark:hover:bg-gray-800"
-          >
+          <Button to="/" style="dark">
             Back to Dashboard
-          </Link>
+          </Button>
         </div>
 
         <div className="grid grid-cols-1 gap-6">

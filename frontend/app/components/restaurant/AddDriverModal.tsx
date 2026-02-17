@@ -39,6 +39,7 @@ export default function AddDriverModal({state}: Props) {
       title="Add Driver"
       apply={submitNewDriver}
       confirm="Add Driver"
+      style="indigo"
     >
       <FormField
         label="Driver Name"
