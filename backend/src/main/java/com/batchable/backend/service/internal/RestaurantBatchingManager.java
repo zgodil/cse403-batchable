@@ -257,11 +257,7 @@ public class RestaurantBatchingManager {
       List<Order> orders = tentativeBatch.getBatch();
       removeUncookedOrders(orders, toBeReAdded);
       if (!orders.isEmpty()) {
-        System.out.println("SHOULD BE TRUE");
         readyBatches.add(new ReadyBatch(orders));
-      } else {
-        System.out.println("WAS FALSE");
-
       }
     }
     return toBeReAdded;
