@@ -1,6 +1,7 @@
 package com.batchable.backend.db.dao;
 
 import com.batchable.backend.db.PostgresTestBase;
+import com.batchable.backend.db.TestDataSource;
 import com.batchable.backend.db.models.Restaurant;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -13,11 +14,13 @@ import static org.junit.jupiter.api.Assertions.*;
 
 public class RestaurantDAOTest extends PostgresTestBase {
 
+  private TestDataSource ds;
   private RestaurantDAO restaurantDAO;
 
   @BeforeEach
   void setUp() throws Exception {
-    restaurantDAO = new RestaurantDAO(conn);
+    ds = new TestDataSource(conn);
+    restaurantDAO = new RestaurantDAO(ds);
     cleanDb();
   }
 
@@ -107,7 +110,8 @@ public class RestaurantDAOTest extends PostgresTestBase {
   }
 
   @Test
-  void restaurantExistsByNameExcludingId_trueWhenAnotherRowHasName_falseWhenOnlySelfHasName() throws Exception {
+  void restaurantExistsByNameExcludingId_trueWhenAnotherRowHasName_falseWhenOnlySelfHasName()
+      throws Exception {
     long id1 = restaurantDAO.createRestaurant("R1", "Seattle");
     long id2 = restaurantDAO.createRestaurant("R2", "Bellevue");
 

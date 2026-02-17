@@ -1,6 +1,7 @@
 package com.batchable.backend.db.dao;
 
 import com.batchable.backend.db.PostgresTestBase;
+import com.batchable.backend.db.TestDataSource;
 import com.batchable.backend.db.models.Driver;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -15,22 +16,24 @@ import static org.junit.jupiter.api.Assertions.*;
 
 public class DriverDAOTest extends PostgresTestBase {
 
+  private TestDataSource ds;
   private DriverDAO driverDAO;
 
   @BeforeEach
   void setUp() throws Exception {
-    driverDAO = new DriverDAO(conn);
+    ds = new TestDataSource(conn);
+    driverDAO = new DriverDAO(ds);
     cleanDb();
   }
 
-  private static void cleanDb() throws Exception {
+  private void cleanDb() throws Exception {
     // keep this aggressive so tests are isolated even if other tables exist
     try (Statement st = conn.createStatement()) {
       // Order matters less with CASCADE, but keep Restaurant last-ish for readability.
       // Quote "Order" if it exists in your schema.
       st.execute("TRUNCATE TABLE Driver RESTART IDENTITY CASCADE;");
       st.execute("TRUNCATE TABLE Batch RESTART IDENTITY CASCADE;");
-      st.execute("TRUNCATE TABLE MenuItem RESTART IDENTITY CASCADE;");
+      st.execute("TRUNCATE TABLE \"menu_item\" RESTART IDENTITY CASCADE;");
       st.execute("TRUNCATE TABLE \"Order\" RESTART IDENTITY CASCADE;");
       st.execute("TRUNCATE TABLE Restaurant RESTART IDENTITY CASCADE;");
     } catch (Exception ignored) {
@@ -39,7 +42,7 @@ public class DriverDAOTest extends PostgresTestBase {
     }
   }
 
-  private static long insertRestaurant(String name, String location) throws Exception {
+  private long insertRestaurant(String name, String location) throws Exception {
     final String sql = "INSERT INTO Restaurant(name, location) VALUES (?, ?) RETURNING id;";
     try (PreparedStatement ps = conn.prepareStatement(sql)) {
       ps.setString(1, name);
@@ -122,7 +125,7 @@ public class DriverDAOTest extends PostgresTestBase {
     Driver d = driverDAO.getDriver(id).orElseThrow();
     assertEquals("Samuel", d.name);
     assertEquals("425", d.phoneNumber);
-    assertTrue(d.onShift);          // unchanged
+    assertTrue(d.onShift); // unchanged
     assertEquals(rid, d.restaurantId); // unchanged
   }
 

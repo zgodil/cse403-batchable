@@ -1,6 +1,7 @@
 package com.batchable.backend.db.dao;
 
 import com.batchable.backend.db.PostgresTestBase;
+import com.batchable.backend.db.TestDataSource;
 import com.batchable.backend.db.models.MenuItem;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -15,18 +16,20 @@ import static org.junit.jupiter.api.Assertions.*;
 
 public class MenuItemDAOTest extends PostgresTestBase {
 
+  private TestDataSource ds;
   private MenuItemDAO menuItemDAO;
 
   @BeforeEach
   void setUp() throws Exception {
-    menuItemDAO = new MenuItemDAO(conn);
+    ds = new TestDataSource(conn);
+    menuItemDAO = new MenuItemDAO(ds);
     cleanDb();
   }
 
-  private static void cleanDb() throws Exception {
+  private void cleanDb() throws Exception {
     try (Statement st = conn.createStatement()) {
       // Keep tests isolated. If some tables don't exist yet, remove those TRUNCATE lines.
-      st.execute("TRUNCATE TABLE Menu_Item RESTART IDENTITY CASCADE;");
+      st.execute("TRUNCATE TABLE \"menu_item\" RESTART IDENTITY CASCADE;");
       st.execute("TRUNCATE TABLE Driver RESTART IDENTITY CASCADE;");
       st.execute("TRUNCATE TABLE Batch RESTART IDENTITY CASCADE;");
       st.execute("TRUNCATE TABLE \"Order\" RESTART IDENTITY CASCADE;");
@@ -36,7 +39,7 @@ public class MenuItemDAOTest extends PostgresTestBase {
     }
   }
 
-  private static long insertRestaurant(String name, String location) throws Exception {
+  private long insertRestaurant(String name, String location) throws Exception {
     final String sql = "INSERT INTO Restaurant(name, location) VALUES (?, ?) RETURNING id;";
     try (PreparedStatement ps = conn.prepareStatement(sql)) {
       ps.setString(1, name);

@@ -1,6 +1,7 @@
 package com.batchable.backend.db.dao;
 
 import com.batchable.backend.db.PostgresTestBase;
+import com.batchable.backend.db.TestDataSource;
 import com.batchable.backend.db.models.Order;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -17,11 +18,13 @@ import static org.junit.jupiter.api.Assertions.*;
 
 public class OrderDAOTest extends PostgresTestBase {
 
+  private TestDataSource ds;
   private OrderDAO orderDAO;
 
   @BeforeEach
   void setUp() throws Exception {
-    orderDAO = new OrderDAO(conn);
+    ds = new TestDataSource(conn);
+    orderDAO = new OrderDAO(ds);
     cleanDb();
   }
 
@@ -40,7 +43,7 @@ public class OrderDAOTest extends PostgresTestBase {
 
   private static long insertRestaurant(String name) throws Exception {
     try (PreparedStatement ps =
-             conn.prepareStatement("INSERT INTO Restaurant(name, location) VALUES (?, ?) RETURNING id;")) {
+        conn.prepareStatement("INSERT INTO Restaurant(name, location) VALUES (?, ?) RETURNING id;")) {
       ps.setString(1, name);
       ps.setString(2, "Seattle");
       try (ResultSet rs = ps.executeQuery()) {
@@ -52,8 +55,8 @@ public class OrderDAOTest extends PostgresTestBase {
 
   private static long insertDriver(long restaurantId, String name) throws Exception {
     try (PreparedStatement ps =
-             conn.prepareStatement(
-                 "INSERT INTO Driver(restaurant_id, name, phone_number, on_shift) VALUES (?, ?, ?, ?) RETURNING id;")) {
+        conn.prepareStatement(
+            "INSERT INTO Driver(restaurant_id, name, phone_number, on_shift) VALUES (?, ?, ?, ?) RETURNING id;")) {
       ps.setLong(1, restaurantId);
       ps.setString(2, name);
       ps.setString(3, "555-555-5555");
@@ -69,9 +72,9 @@ public class OrderDAOTest extends PostgresTestBase {
     Instant dispatch = micros(Instant.now());
     Instant expected = micros(dispatch.plusSeconds(900));
     try (PreparedStatement ps =
-             conn.prepareStatement(
-                 "INSERT INTO Batch(driver_id, route, dispatch_time, expected_completion_time) " +
-                     "VALUES (?, ?, ?, ?) RETURNING id;")) {
+        conn.prepareStatement(
+            "INSERT INTO Batch(driver_id, route, dispatch_time, expected_completion_time) " +
+                "VALUES (?, ?, ?, ?) RETURNING id;")) {
       ps.setLong(1, driverId);
       ps.setString(2, "encodedpolyline");
       ps.setTimestamp(3, java.sql.Timestamp.from(dispatch));
@@ -89,17 +92,17 @@ public class OrderDAOTest extends PostgresTestBase {
 
     Instant t0 = micros(Instant.now());
 
-    long id = orderDAO.createOrder(
-        rid,
-        "123 Main St",
-        "[\"Burger\"]",
-        t0,
-        null,
-        null,
-        Order.State.COOKING,
-        false,
-        null
-    );
+    long id =
+        orderDAO.createOrder(
+            rid,
+            "123 Main St",
+            "[\"Burger\"]",
+            t0,
+            null,
+            null,
+            Order.State.COOKING,
+            false,
+            null);
 
     assertTrue(id > 0);
 
@@ -124,11 +127,11 @@ public class OrderDAOTest extends PostgresTestBase {
     long rid = insertRestaurant("R1");
     Instant t0 = micros(Instant.now());
 
-    long id = orderDAO.createOrder(
-        rid, "Addr", "[]", t0,
-        null, null,
-        Order.State.COOKING, false, null
-    );
+    long id =
+        orderDAO.createOrder(
+            rid, "Addr", "[]", t0,
+            null, null,
+            Order.State.COOKING, false, null);
 
     assertTrue(orderDAO.updateOrderState(id, Order.State.COOKED));
 
@@ -144,11 +147,11 @@ public class OrderDAOTest extends PostgresTestBase {
     Instant cooked = micros(t0.plusSeconds(600));
     Instant delivered = micros(t0.plusSeconds(1800));
 
-    long id = orderDAO.createOrder(
-        rid, "Addr", "[]", t0,
-        null, null,
-        Order.State.COOKING, false, null
-    );
+    long id =
+        orderDAO.createOrder(
+            rid, "Addr", "[]", t0,
+            null, null,
+            Order.State.COOKING, false, null);
 
     assertTrue(orderDAO.updateOrderCookedTime(id, cooked));
     assertTrue(orderDAO.updateOrderDeliveryTime(id, delivered));
@@ -166,11 +169,11 @@ public class OrderDAOTest extends PostgresTestBase {
     Instant cooked = micros(t0.plusSeconds(100));
     Instant delivered = micros(t0.plusSeconds(200));
 
-    long id = orderDAO.createOrder(
-        rid, "Addr", "[]", t0,
-        delivered, cooked,
-        Order.State.DELIVERED, false, null
-    );
+    long id =
+        orderDAO.createOrder(
+            rid, "Addr", "[]", t0,
+            delivered, cooked,
+            Order.State.DELIVERED, false, null);
 
     assertTrue(orderDAO.remakeOrder(id, Order.State.COOKING, true));
 
@@ -187,11 +190,11 @@ public class OrderDAOTest extends PostgresTestBase {
     long rid = insertRestaurant("R1");
     Instant t0 = micros(Instant.now());
 
-    long id = orderDAO.createOrder(
-        rid, "Addr", "[]", t0,
-        null, null,
-        Order.State.COOKING, false, null
-    );
+    long id =
+        orderDAO.createOrder(
+            rid, "Addr", "[]", t0,
+            null, null,
+            Order.State.COOKING, false, null);
 
     assertTrue(orderDAO.deleteOrder(id));
     assertTrue(orderDAO.getOrder(id).isEmpty());
@@ -219,11 +222,11 @@ public class OrderDAOTest extends PostgresTestBase {
     long batchId = insertBatch(driverId);
 
     Instant t0 = micros(Instant.now());
-    long orderId = orderDAO.createOrder(
-        rid, "Addr", "[]", t0,
-        null, null,
-        Order.State.COOKING, false, null
-    );
+    long orderId =
+        orderDAO.createOrder(
+            rid, "Addr", "[]", t0,
+            null, null,
+            Order.State.COOKING, false, null);
 
     assertTrue(orderDAO.updateOrderBatchId(orderId, batchId));
 
@@ -246,8 +249,7 @@ public class OrderDAOTest extends PostgresTestBase {
     orderDAO.createOrder(
         rid, "Addr", "[]", t0,
         null, null,
-        Order.State.COOKING, false, null
-    );
+        Order.State.COOKING, false, null);
 
     assertTrue(orderDAO.hasActiveOrdersForRestaurant(rid));
   }

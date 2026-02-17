@@ -1,11 +1,10 @@
 package com.batchable.backend.db.dao;
 
 import static org.junit.jupiter.api.Assertions.*;
+
 import com.batchable.backend.db.PostgresTestBase;
-
-
+import com.batchable.backend.db.TestDataSource;
 import com.batchable.backend.db.models.Batch;
-import java.sql.Connection;
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
@@ -16,20 +15,18 @@ import org.junit.jupiter.api.Test;
  * DAO tests are DB-backed: they verify SQL actually works against Postgres.
  *
  * Assumes you already have a PostgresTestBase that provides:
- *  - Connection getConnection()
+ *  - a Connection field named `conn`
  *  - a clean DB per test (or you can TRUNCATE in @BeforeEach)
  *
  * If your base class name/methods differ, adjust accordingly.
  */
 public class BatchDAOTest extends PostgresTestBase {
 
-  private Connection c;
   private BatchDAO batchDAO;
 
   @BeforeEach
   void setUp() throws Exception {
-    c = conn;
-    batchDAO = new BatchDAO(c);
+    batchDAO = new BatchDAO(new TestDataSource(conn));
 
     // If your PostgresTestBase does NOT auto-clean tables between tests,
     // uncomment and adjust these TRUNCATEs to match your schema.
@@ -45,12 +42,14 @@ public class BatchDAOTest extends PostgresTestBase {
   // --- helpers ---
 
   private long insertRestaurant(String name) throws Exception {
-    RestaurantDAO restaurantDAO = new RestaurantDAO(conn);
+    TestDataSource ds = new TestDataSource(conn);
+    RestaurantDAO restaurantDAO = new RestaurantDAO(ds);
     return restaurantDAO.createRestaurant(name, "somewhere");
   }
 
   private long insertDriver(long restaurantId, String name) throws Exception {
-    DriverDAO driverDAO = new DriverDAO(conn);
+    TestDataSource ds = new TestDataSource(conn);
+    DriverDAO driverDAO = new DriverDAO(ds);
     return driverDAO.createDriver(restaurantId, name, "206-555-0101", false);
   }
 
@@ -91,13 +90,22 @@ public class BatchDAOTest extends PostgresTestBase {
 
     long b1 =
         batchDAO.createBatch(
-            driverId, "r1", Instant.parse("2026-01-01T10:00:00Z"), Instant.parse("2026-01-01T10:10:00Z"));
+            driverId,
+            "r1",
+            Instant.parse("2026-01-01T10:00:00Z"),
+            Instant.parse("2026-01-01T10:10:00Z"));
     long b2 =
         batchDAO.createBatch(
-            driverId, "r2", Instant.parse("2026-01-01T11:00:00Z"), Instant.parse("2026-01-01T11:10:00Z"));
+            driverId,
+            "r2",
+            Instant.parse("2026-01-01T11:00:00Z"),
+            Instant.parse("2026-01-01T11:10:00Z"));
     long b3 =
         batchDAO.createBatch(
-            driverId, "r3", Instant.parse("2026-01-01T12:00:00Z"), Instant.parse("2026-01-01T12:10:00Z"));
+            driverId,
+            "r3",
+            Instant.parse("2026-01-01T12:00:00Z"),
+            Instant.parse("2026-01-01T12:10:00Z"));
 
     List<Batch> batches = batchDAO.listBatchesForDriver(driverId);
     assertEquals(3, batches.size());
@@ -114,10 +122,16 @@ public class BatchDAOTest extends PostgresTestBase {
 
     long older =
         batchDAO.createBatch(
-            driverId, "old", Instant.parse("2026-01-01T10:00:00Z"), Instant.parse("2026-01-01T10:10:00Z"));
+            driverId,
+            "old",
+            Instant.parse("2026-01-01T10:00:00Z"),
+            Instant.parse("2026-01-01T10:10:00Z"));
     long newer =
         batchDAO.createBatch(
-            driverId, "new", Instant.parse("2026-01-01T11:00:00Z"), Instant.parse("2026-01-01T11:10:00Z"));
+            driverId,
+            "new",
+            Instant.parse("2026-01-01T11:00:00Z"),
+            Instant.parse("2026-01-01T11:10:00Z"));
 
     Optional<Batch> got = batchDAO.getBatchForDriver(driverId);
     assertTrue(got.isPresent());
@@ -142,7 +156,10 @@ public class BatchDAOTest extends PostgresTestBase {
 
     long batchId =
         batchDAO.createBatch(
-            driverId, "r1", Instant.parse("2026-01-01T10:00:00Z"), Instant.parse("2026-01-01T10:10:00Z"));
+            driverId,
+            "r1",
+            Instant.parse("2026-01-01T10:00:00Z"),
+            Instant.parse("2026-01-01T10:10:00Z"));
 
     boolean ok =
         batchDAO.updateBatch(
@@ -177,7 +194,10 @@ public class BatchDAOTest extends PostgresTestBase {
 
     long batchId =
         batchDAO.createBatch(
-            driver1, "r1", Instant.parse("2026-01-01T10:00:00Z"), Instant.parse("2026-01-01T10:10:00Z"));
+            driver1,
+            "r1",
+            Instant.parse("2026-01-01T10:00:00Z"),
+            Instant.parse("2026-01-01T10:10:00Z"));
 
     boolean ok = batchDAO.updateBatchDriver(batchId, driver2);
     assertTrue(ok);
@@ -199,7 +219,10 @@ public class BatchDAOTest extends PostgresTestBase {
 
     long batchId =
         batchDAO.createBatch(
-            driverId, "r1", Instant.parse("2026-01-01T10:00:00Z"), Instant.parse("2026-01-01T10:10:00Z"));
+            driverId,
+            "r1",
+            Instant.parse("2026-01-01T10:00:00Z"),
+            Instant.parse("2026-01-01T10:10:00Z"));
 
     assertTrue(batchDAO.batchExists(batchId));
 
@@ -223,7 +246,10 @@ public class BatchDAOTest extends PostgresTestBase {
 
     long batchId =
         batchDAO.createBatch(
-            driverId, "r1", Instant.parse("2026-01-01T10:00:00Z"), Instant.parse("2026-01-01T10:10:00Z"));
+            driverId,
+            "r1",
+            Instant.parse("2026-01-01T10:00:00Z"),
+            Instant.parse("2026-01-01T10:10:00Z"));
 
     assertTrue(batchDAO.batchExists(batchId));
     assertFalse(batchDAO.batchExists(999999));
@@ -239,7 +265,10 @@ public class BatchDAOTest extends PostgresTestBase {
     assertFalse(batchDAO.batchExistsForDriver(driver2));
 
     batchDAO.createBatch(
-        driver1, "r1", Instant.parse("2026-01-01T10:00:00Z"), Instant.parse("2026-01-01T10:10:00Z"));
+        driver1,
+        "r1",
+        Instant.parse("2026-01-01T10:00:00Z"),
+        Instant.parse("2026-01-01T10:10:00Z"));
 
     assertTrue(batchDAO.batchExistsForDriver(driver1));
     assertFalse(batchDAO.batchExistsForDriver(driver2));
