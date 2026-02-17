@@ -4,6 +4,8 @@ import com.batchable.backend.db.models.Driver;
 import com.batchable.backend.db.models.MenuItem;
 import com.batchable.backend.db.models.Order;
 import com.batchable.backend.db.models.Restaurant;
+import com.batchable.backend.db.DatabaseManager;
+import java.sql.SQLException;
 import java.util.List;
 import org.springframework.stereotype.Service;
 
@@ -41,8 +43,23 @@ public class RestaurantService {
    *  - RuntimeException if persistence fails
    */
   public void createRestaurant(Restaurant restaurant) {
-    // TODO
-    throw new UnsupportedOperationException("Not implemented yet");
+    if (restaurant == null) {
+      throw new IllegalArgumentException("Restaurant must not be null");
+    }
+    if (restaurant.name == null || restaurant.name.isBlank()) {
+      throw new IllegalArgumentException("Restaurant name is required");
+    }
+    if (restaurant.location == null || restaurant.location.isBlank()) {
+      throw new IllegalArgumentException("Restaurant location is required");
+    }
+    try (DatabaseManager db = new DatabaseManager()) {
+      db.restaurants.createRestaurant(restaurant.name, restaurant.location);
+    } catch (SQLException e) {
+        if ("23505".equals(e.getSQLState())) {
+            throw new IllegalStateException("Restaurant already exists", e);
+        }
+        throw new RuntimeException("Failed to create restaurant", e);
+    }
   }
 
   /**
