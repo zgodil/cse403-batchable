@@ -1,4 +1,4 @@
-import {useState} from 'react';
+import {useState, type Dispatch, type SetStateAction} from 'react';
 import DriversSection from '../components/restaurant/DriversSection';
 import MenuItemsSection from '../components/restaurant/MenuItemsSection';
 import RestaurantDetailsSection from '../components/restaurant/RestaurantDetailsSection';
@@ -18,6 +18,28 @@ function RestaurantPage() {
 
   const [menuItems, setMenuItems] = useState(initialMenuItems);
   const [isEditingMenu, setIsEditingMenu] = useState(false);
+
+  const setIsEditingDriversExclusive: Dispatch<SetStateAction<boolean>> =
+    value => {
+      setIsEditingDrivers(current => {
+        const nextValue =
+          typeof value === 'function' ? value(current) : value;
+        if (nextValue) {
+          setIsEditingMenu(false);
+        }
+        return nextValue;
+      });
+    };
+
+  const setIsEditingMenuExclusive: Dispatch<SetStateAction<boolean>> = value => {
+    setIsEditingMenu(current => {
+      const nextValue = typeof value === 'function' ? value(current) : value;
+      if (nextValue) {
+        setIsEditingDrivers(false);
+      }
+      return nextValue;
+    });
+  };
 
   return (
     <div className="p-8 max-w-7xl mx-auto min-h-screen bg-white dark:bg-gray-950 text-gray-900 dark:text-gray-100">
@@ -41,7 +63,7 @@ function RestaurantPage() {
             drivers={drivers}
             setDrivers={setDrivers}
             isEditing={isEditingDrivers}
-            setIsEditing={setIsEditingDrivers}
+            setIsEditing={setIsEditingDriversExclusive}
           />
 
           <RestaurantDetailsSection
@@ -55,7 +77,7 @@ function RestaurantPage() {
             menuItems={menuItems}
             setMenuItems={setMenuItems}
             isEditing={isEditingMenu}
-            setIsEditing={setIsEditingMenu}
+            setIsEditing={setIsEditingMenuExclusive}
           />
         </div>
       </div>
