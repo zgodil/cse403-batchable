@@ -45,7 +45,6 @@ function RestaurantPage() {
             setDrivers={setDrivers}
             isEditing={isEditingDrivers}
             setIsEditing={setIsEditingDrivers}
-            restaurantId={restaurant.id}
           />
 
           <RestaurantDetailsSection
@@ -60,7 +59,6 @@ function RestaurantPage() {
             setMenuItems={setMenuItems}
             isEditing={isEditingMenu}
             setIsEditing={setIsEditingMenu}
-            restaurantId={restaurant.id}
           />
         </div>
       </div>
