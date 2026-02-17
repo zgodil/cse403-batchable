@@ -10,7 +10,7 @@ import {
 import type {Driver} from '~/domain/objects';
 
 export const driverHandlers = [
-  ...makeCrudHandlers('driver', db.drivers),
+  ...makeCrudHandlers('/driver', db.drivers),
   http.put(endpoint('/driver/:id/shift'), req => {
     const driver = db.drivers.get(asId<Driver>(req.params.id));
     if (!driver) return notFound('driver');

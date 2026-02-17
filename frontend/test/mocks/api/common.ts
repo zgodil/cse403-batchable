@@ -3,6 +3,7 @@ import {JSONTable} from './db';
 import {http, HttpResponse} from 'msw';
 import {StatusCodes} from 'http-status-codes';
 import type {DomainObject} from '~/domain/objects';
+import type {Resource} from '~/api/common';
 
 export const db = {
   restaurants: new JSONTable(json.restaurant),
@@ -39,7 +40,7 @@ export function asId<T extends DomainObject>(
 }
 
 export function makeCrudHandlers<T extends DomainObject>(
-  resourceName: string,
+  resource: Resource,
   table: JSONTable<T>,
   operations = [
     'create' as const,
@@ -49,30 +50,30 @@ export function makeCrudHandlers<T extends DomainObject>(
   ],
 ) {
   const crud = {
-    create: http.post(endpoint(`/${resourceName}`), async req => {
+    create: http.post(endpoint(resource), async req => {
       const id = table.insert(
         (await req.request.json()) as json.JSONDomainObject<T>,
       );
       return HttpResponse.json(id, {status: StatusCodes.CREATED});
     }),
-    read: http.get(endpoint(`/${resourceName}/:id`), async req => {
-      const resource = table.get(asId<T>(req.params.id));
-      if (!resource) {
-        return notFound(resourceName);
+    read: http.get(endpoint(`${resource}/:id`), async req => {
+      const row = table.get(asId<T>(req.params.id));
+      if (!row) {
+        return notFound(resource);
       }
-      return HttpResponse.json(resource);
+      return HttpResponse.json(row);
     }),
-    update: http.put(endpoint(`/${resourceName}/:id`), async req => {
+    update: http.put(endpoint(`${resource}/:id`), async req => {
       if (
         !table.update((await req.request.json()) as json.JSONDomainObject<T>)
       ) {
-        return notFound(resourceName);
+        return notFound(resource);
       }
       return noContent();
     }),
-    delete: http.delete(endpoint(`/${resourceName}/:id`), async req => {
+    delete: http.delete(endpoint(`${resource}/:id`), async req => {
       if (!table.delete(asId<T>(req.params.id))) {
-        return notFound(resourceName);
+        return notFound(resource);
       }
       return noContent();
     }),
