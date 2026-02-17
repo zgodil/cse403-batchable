@@ -23,8 +23,18 @@ const CUSTOM_TAILWIND: Record<Exclude<Style, Color>, string> = {
     'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800',
 };
 
-const getColorTailwind = (color: Color) =>
-  `bg-${color}-600 text-white hover:bg-${color}-700`;
+// Keep color classes static so Tailwind can detect and emit them.
+const COLOR_TAILWIND: Record<Color, string> = {
+  red: 'bg-red-600 text-white hover:bg-red-700',
+  orange: 'bg-orange-600 text-white hover:bg-orange-700',
+  amber: 'bg-amber-600 text-white hover:bg-amber-700',
+  emerald: 'bg-emerald-600 text-white hover:bg-emerald-700',
+  blue: 'bg-blue-600 text-white hover:bg-blue-700',
+  indigo: 'bg-indigo-600 text-white hover:bg-indigo-700',
+  purple: 'bg-purple-600 text-white hover:bg-purple-700',
+};
+
+const getColorTailwind = (color: Color) => COLOR_TAILWIND[color];
 
 const getTailwind = (style: Style) => {
   if (style === 'blank' || style === 'dark') return CUSTOM_TAILWIND[style];
