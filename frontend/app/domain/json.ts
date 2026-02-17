@@ -105,6 +105,7 @@ const identity = {
  * Represents a method of converting domain objects between a TypeScript domain object representation, and a post-parsing JSON representation. `parse` converts from JSON to TypeScript, and `unparse` vice-versa.
  */
 export interface JSONParserPair<T extends DomainObject> {
+  field: <K extends keyof T>(key: K) => JSONFieldParserPair<T[K]>;
   parse: (json: JSONDomainObject<T>) => T;
   unparse: (domain: T) => JSONDomainObject<T>;
 }
@@ -118,7 +119,10 @@ function createDomainObjectParserPair<T extends DomainObject>(spec: {
   [K in keyof T]: JSONFieldParserPair<T[K]>;
 }): JSONParserPair<T> {
   return {
-    parse(json: JSONDomainObject<T>): T {
+    field(key) {
+      return spec[key];
+    },
+    parse(json) {
       const domainObject = {} as T; // safe since "result" isn't read until return
       for (const key in spec) {
         if (!Object.hasOwn(spec, key)) continue;
@@ -126,7 +130,7 @@ function createDomainObjectParserPair<T extends DomainObject>(spec: {
       }
       return domainObject;
     },
-    unparse(domainObject: T): JSONDomainObject<T> {
+    unparse(domainObject) {
       const json = {} as JSONDomainObject<T>; // safe since "result" isn't read until return
       for (const key in spec) {
         if (!Object.hasOwn(spec, key)) continue;

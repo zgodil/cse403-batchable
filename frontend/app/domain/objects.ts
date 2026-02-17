@@ -8,6 +8,14 @@ export interface DomainObject<T extends string = string> {
   id: Id<T>;
 }
 
+export function fakeId<I extends string>(type: I) {
+  return {type, id: -3141592653};
+}
+
+export type IdKey<T extends DomainObject> = {
+  [K in keyof T]: T[K] extends Id<string> ? K : never;
+}[keyof T];
+
 export interface WorldLocation {
   address: string;
 }
@@ -84,8 +92,4 @@ export interface Batch extends DomainObject<'Batch'> {
 export interface MenuItem extends DomainObject<'MenuItem'> {
   restaurant: Restaurant['id'];
   name: string;
-}
-
-export function fakeId<I extends string>(type: I) {
-  return {type, id: -3141592653};
 }
