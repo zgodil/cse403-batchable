@@ -13,25 +13,31 @@ export class CrudApi<T extends DomainObject> {
   ) {}
 
   async create(domainObject: T) {
-    const id = await fetchJSON(
-      'POST',
-      this.resource,
-      this.parserPair.unparse(domainObject),
-    );
-    return this.parserPair.field('id').parse(id);
-  }
-
-  async read({id}: T['id']): Promise<T | null> {
     try {
-      return this.parserPair.parse(
-        await fetchJSON('GET', `${this.resource}/${id}`),
+      const id = await fetchJSON(
+        'POST',
+        this.resource,
+        this.parserPair.unparse(domainObject),
       );
-    } catch {
+      return this.parserPair.field('id').parse(id);
+    } catch (err) {
+      console.log(`Failed to create ${this.resource}`, domainObject, err);
       return null;
     }
   }
 
-  async update(domainObject: T): Promise<boolean> {
+  async read({id}: T['id']) {
+    try {
+      return this.parserPair.parse(
+        await fetchJSON('GET', `${this.resource}/${id}`),
+      );
+    } catch (err) {
+      console.log(`Failed to read ${this.resource}; id=${id}`, err);
+      return null;
+    }
+  }
+
+  async update(domainObject: T) {
     try {
       await fetchEndpoint(
         'PUT',
@@ -48,7 +54,7 @@ export class CrudApi<T extends DomainObject> {
     }
   }
 
-  async delete({id}: T['id']): Promise<boolean> {
+  async delete({id}: T['id']) {
     try {
       await fetchEndpoint('DELETE', `${this.resource}/${id}`);
       return true;

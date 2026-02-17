@@ -9,6 +9,9 @@ async function checkedCreate<T extends DomainObject>(
   domainObject: T,
 ) {
   const id = await api.create(domainObject);
+  if (id === null) {
+    expect.fail('created object must have non-null id');
+  }
   expect(id.id).toBeTypeOf('number');
   expect(id.id).not.toBe(domainObject.id.id);
   return id;
