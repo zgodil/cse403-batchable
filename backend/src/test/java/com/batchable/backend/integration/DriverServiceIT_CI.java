@@ -3,6 +3,7 @@ package com.batchable.backend.integration;
 import static org.junit.jupiter.api.Assertions.*;
 
 import com.batchable.backend.db.PostgresTestBase;
+import com.batchable.backend.db.TestDataSource;
 import com.batchable.backend.db.dao.BatchDAO;
 import com.batchable.backend.db.dao.DriverDAO;
 import com.batchable.backend.db.dao.RestaurantDAO;
@@ -36,11 +37,17 @@ public class DriverServiceIT_CI extends PostgresTestBase {
   private BatchDAO batchDAO;
   private RestaurantDAO restaurantDAO;
 
+  private TestDataSource ds;
+
   @BeforeEach
   void setUp() throws Exception {
-    driverDAO = new DriverDAO(conn);
-    batchDAO = new BatchDAO(conn);
-    restaurantDAO = new RestaurantDAO(conn);
+    // Wrap the existing PostgresTestBase connection in a DataSource for DAOs.
+    ds = new TestDataSource(conn);
+
+    driverDAO = new DriverDAO(ds);
+    batchDAO = new BatchDAO(ds);
+    restaurantDAO = new RestaurantDAO(ds);
+
     driverService = new DriverService(driverDAO, batchDAO);
 
     cleanDb();
@@ -52,7 +59,8 @@ public class DriverServiceIT_CI extends PostgresTestBase {
       st.execute("TRUNCATE TABLE \"Order\" RESTART IDENTITY CASCADE;");
       st.execute("TRUNCATE TABLE Batch RESTART IDENTITY CASCADE;");
       st.execute("TRUNCATE TABLE Driver RESTART IDENTITY CASCADE;");
-      st.execute("TRUNCATE TABLE \"Menu_Item\" RESTART IDENTITY CASCADE;");
+      // Your MenuItemDAO uses table name "menu_item"
+      st.execute("TRUNCATE TABLE \"menu_item\" RESTART IDENTITY CASCADE;");
       st.execute("TRUNCATE TABLE Restaurant RESTART IDENTITY CASCADE;");
     } catch (Exception ignored) {
       // If some tables aren't in your schema yet, delete the missing TRUNCATE lines.

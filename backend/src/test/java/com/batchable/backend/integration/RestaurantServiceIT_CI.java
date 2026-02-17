@@ -3,6 +3,7 @@ package com.batchable.backend.integration;
 import static org.junit.jupiter.api.Assertions.*;
 
 import com.batchable.backend.db.PostgresTestBase;
+import com.batchable.backend.db.TestDataSource;
 import com.batchable.backend.db.dao.DriverDAO;
 import com.batchable.backend.db.dao.MenuItemDAO;
 import com.batchable.backend.db.dao.OrderDAO;
@@ -14,6 +15,7 @@ import com.batchable.backend.service.RestaurantService;
 import java.sql.Statement;
 import java.time.Instant;
 import java.util.List;
+import javax.sql.DataSource;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -27,6 +29,8 @@ import org.junit.jupiter.api.Test;
  */
 public class RestaurantServiceIT_CI extends PostgresTestBase {
 
+  private DataSource ds;
+
   private RestaurantDAO restaurantDAO;
   private OrderDAO orderDAO;
   private DriverDAO driverDAO;
@@ -36,10 +40,12 @@ public class RestaurantServiceIT_CI extends PostgresTestBase {
 
   @BeforeEach
   void setUp() throws Exception {
-    restaurantDAO = new RestaurantDAO(conn);
-    orderDAO = new OrderDAO(conn);
-    driverDAO = new DriverDAO(conn);
-    menuItemDAO = new MenuItemDAO(conn);
+    ds = new TestDataSource(conn);
+
+    restaurantDAO = new RestaurantDAO(ds);
+    orderDAO = new OrderDAO(ds);
+    driverDAO = new DriverDAO(ds);
+    menuItemDAO = new MenuItemDAO(ds);
 
     restaurantService = new RestaurantService(restaurantDAO, orderDAO, driverDAO, menuItemDAO);
 
@@ -52,7 +58,11 @@ public class RestaurantServiceIT_CI extends PostgresTestBase {
       st.execute("TRUNCATE TABLE \"Order\" RESTART IDENTITY CASCADE;");
       st.execute("TRUNCATE TABLE Batch RESTART IDENTITY CASCADE;");
       st.execute("TRUNCATE TABLE Driver RESTART IDENTITY CASCADE;");
+
+      // If your table is unquoted lowercase menu_item, use:
+      // st.execute("TRUNCATE TABLE menu_item RESTART IDENTITY CASCADE;");
       st.execute("TRUNCATE TABLE \"menu_item\" RESTART IDENTITY CASCADE;");
+
       st.execute("TRUNCATE TABLE Restaurant RESTART IDENTITY CASCADE;");
     }
   }

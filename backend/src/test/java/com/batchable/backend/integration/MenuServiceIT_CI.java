@@ -3,6 +3,7 @@ package com.batchable.backend.integration;
 import static org.junit.jupiter.api.Assertions.*;
 
 import com.batchable.backend.db.PostgresTestBase;
+import com.batchable.backend.db.TestDataSource;
 import com.batchable.backend.db.dao.MenuItemDAO;
 import com.batchable.backend.db.dao.RestaurantDAO;
 import com.batchable.backend.db.models.MenuItem;
@@ -26,11 +27,17 @@ public class MenuServiceIT_CI extends PostgresTestBase {
   private MenuItemDAO menuItemDAO;
   private RestaurantDAO restaurantDAO;
 
+  private TestDataSource ds;
+
   @BeforeEach
   void setUp() throws Exception {
-    menuItemDAO = new MenuItemDAO(conn);
-    restaurantDAO = new RestaurantDAO(conn);
+    // Wrap the existing PostgresTestBase connection in a DataSource for DAOs.
+    ds = new TestDataSource(conn);
+
+    menuItemDAO = new MenuItemDAO(ds);
+    restaurantDAO = new RestaurantDAO(ds);
     menuService = new MenuService(menuItemDAO, restaurantDAO);
+
     cleanDb();
   }
 
@@ -38,10 +45,10 @@ public class MenuServiceIT_CI extends PostgresTestBase {
     try (Statement st = conn.createStatement()) {
       // Order matters if FKs exist
       st.execute("TRUNCATE TABLE \"Order\" RESTART IDENTITY CASCADE;");
-      st.execute("TRUNCATE TABLE batch RESTART IDENTITY CASCADE;");
-      st.execute("TRUNCATE TABLE driver RESTART IDENTITY CASCADE;");
-      st.execute("TRUNCATE TABLE menu_item RESTART IDENTITY CASCADE;");
-      st.execute("TRUNCATE TABLE restaurant RESTART IDENTITY CASCADE;");
+      st.execute("TRUNCATE TABLE Batch RESTART IDENTITY CASCADE;");
+      st.execute("TRUNCATE TABLE Driver RESTART IDENTITY CASCADE;");
+      st.execute("TRUNCATE TABLE \"menu_item\" RESTART IDENTITY CASCADE;");
+      st.execute("TRUNCATE TABLE Restaurant RESTART IDENTITY CASCADE;");
     } catch (Exception ignored) {
       // If some tables aren't present yet, delete the missing TRUNCATE lines.
     }
@@ -56,7 +63,7 @@ public class MenuServiceIT_CI extends PostgresTestBase {
   }
 
   private static long countMenuItemsForRestaurant(long restaurantId) throws Exception {
-    final String sql = "SELECT COUNT(*) AS c FROM menu_item WHERE restaurant_id = ?;";
+    final String sql = "SELECT COUNT(*) AS c FROM \"menu_item\" WHERE restaurant_id = ?;";
     try (PreparedStatement ps = conn.prepareStatement(sql)) {
       ps.setLong(1, restaurantId);
       try (ResultSet rs = ps.executeQuery()) {
@@ -67,7 +74,7 @@ public class MenuServiceIT_CI extends PostgresTestBase {
   }
 
   private static long countAllMenuItems() throws Exception {
-    try (PreparedStatement ps = conn.prepareStatement("SELECT COUNT(*) AS c FROM menu_item;");
+    try (PreparedStatement ps = conn.prepareStatement("SELECT COUNT(*) AS c FROM \"menu_item\";");
          ResultSet rs = ps.executeQuery()) {
       assertTrue(rs.next());
       return rs.getLong("c");

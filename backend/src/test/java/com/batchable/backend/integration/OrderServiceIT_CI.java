@@ -2,12 +2,12 @@ package com.batchable.backend.integration;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
-import java.sql.Timestamp;
+
 import com.batchable.backend.db.PostgresTestBase;
+import com.batchable.backend.db.TestDataSource;
 import com.batchable.backend.db.dao.BatchDAO;
 import com.batchable.backend.db.dao.OrderDAO;
 import com.batchable.backend.db.dao.RestaurantDAO;
-import com.batchable.backend.db.models.Batch;
 import com.batchable.backend.db.models.Order;
 import com.batchable.backend.service.OrderService;
 import com.batchable.backend.websocket.OrderWebSocketPublisher;
@@ -15,6 +15,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Timestamp;
 import java.time.Instant;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -38,15 +39,20 @@ public class OrderServiceIT_CI extends PostgresTestBase {
   private OrderWebSocketPublisher publisher;       // real
   private OrderService service;                    // real
 
+  private TestDataSource ds;
+
   @BeforeEach
   void setUp() throws Exception {
-    // PostgresTestBase.startDb() sets this
-    c = PostgresTestBase.conn;
+    // PostgresTestBase provides this per-test
+    c = conn;
     assertNotNull(c, "PostgresTestBase.conn is null — did @BeforeAll run?");
 
-    restaurantDAO = new RestaurantDAO(c);
-    orderDAO = new OrderDAO(c);
-    batchDAO = new BatchDAO(c);
+    // Wrap the Connection as a DataSource so DAOs match the new constructor signature.
+    ds = new TestDataSource(c);
+
+    restaurantDAO = new RestaurantDAO(ds);
+    orderDAO = new OrderDAO(ds);
+    batchDAO = new BatchDAO(ds);
 
     messagingTemplate = mock(SimpMessagingTemplate.class);
     publisher = new OrderWebSocketPublisher(messagingTemplate);
@@ -63,18 +69,18 @@ public class OrderServiceIT_CI extends PostgresTestBase {
     // If your schema uses quoted names like "Order", you must quote them here too.
     // Use TRUNCATE ... CASCADE if your schema supports it.
     try (var st = c.createStatement()) {
-      // If these table names differ (case/underscores), update accordingly.
+      // Match your DAO SQL which uses: Driver, Batch, Restaurant, and "Order"
       st.execute("TRUNCATE TABLE \"Order\" RESTART IDENTITY CASCADE;");
-      st.execute("TRUNCATE TABLE batch RESTART IDENTITY CASCADE;");
-      st.execute("TRUNCATE TABLE driver RESTART IDENTITY CASCADE;");
-      st.execute("TRUNCATE TABLE restaurant RESTART IDENTITY CASCADE;");
+      st.execute("TRUNCATE TABLE Batch RESTART IDENTITY CASCADE;");
+      st.execute("TRUNCATE TABLE Driver RESTART IDENTITY CASCADE;");
+      st.execute("TRUNCATE TABLE Restaurant RESTART IDENTITY CASCADE;");
     }
   }
 
   // ---------- helper inserts (avoid relying on other services) ----------
 
   private long createRestaurant(String name) throws SQLException {
-    // Your DAO uses "Restaurant" in SQL, so your migration likely created quoted "Restaurant".
+    // Your DAO uses Restaurant in SQL
     return restaurantDAO.createRestaurant(name, "Seattle");
   }
 
@@ -88,14 +94,13 @@ public class OrderServiceIT_CI extends PostgresTestBase {
         null,
         state,
         false,
-        null
-    );
+        null);
   }
 
   private long createDriverRow(long restaurantId) throws SQLException {
-    // Adjust table/column names if your migration used quotes/case.
+    // Match your DriverDAO SQL: INSERT INTO Driver(...)
     final String sql =
-        "INSERT INTO driver(restaurant_id, name, phone_number, on_shift) " +
+        "INSERT INTO Driver(restaurant_id, name, phone_number, on_shift) " +
         "VALUES (?, ?, ?, ?) RETURNING id;";
     try (PreparedStatement ps = c.prepareStatement(sql)) {
       ps.setLong(1, restaurantId);
@@ -110,26 +115,26 @@ public class OrderServiceIT_CI extends PostgresTestBase {
   }
 
   private long createBatchRow(long driverId) throws SQLException {
+    // Match your BatchDAO SQL: INSERT INTO Batch(...)
     final String sql =
-        "INSERT INTO batch(driver_id, route, dispatch_time, expected_completion_time) " +
+        "INSERT INTO Batch(driver_id, route, dispatch_time, expected_completion_time) " +
         "VALUES (?, ?, ?, ?) RETURNING id;";
     try (PreparedStatement ps = c.prepareStatement(sql)) {
-        ps.setLong(1, driverId);
-        ps.setString(2, "");
+      ps.setLong(1, driverId);
+      ps.setString(2, "");
 
-        Instant dispatch = Instant.now();
-        Instant expected = dispatch.plusSeconds(600);
+      Instant dispatch = Instant.now();
+      Instant expected = dispatch.plusSeconds(600);
 
-        ps.setTimestamp(3, Timestamp.from(dispatch));
-        ps.setTimestamp(4, Timestamp.from(expected));
+      ps.setTimestamp(3, Timestamp.from(dispatch));
+      ps.setTimestamp(4, Timestamp.from(expected));
 
-        try (ResultSet rs = ps.executeQuery()) {
+      try (ResultSet rs = ps.executeQuery()) {
         rs.next();
         return rs.getLong("id");
-        }
+      }
     }
   }
-
 
   // ---------- tests ----------
 
