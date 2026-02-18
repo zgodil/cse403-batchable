@@ -240,6 +240,56 @@ describe('Restaurant page', () => {
     expect(getDriversFromDb()).toHaveLength(1);
   });
 
+  it('creates a new menu item from the add menu item modal', async () => {
+    await renderLoadedRestaurantPage();
+
+    const menuSection = getSectionByHeading('Menu Items');
+    fireEvent.click(
+      within(menuSection).getByRole('button', {name: /\+ add menu item/i}),
+    );
+
+    fireEvent.change(screen.getByLabelText('Item Name'), {
+      target: {value: 'Udon'},
+    });
+    fireEvent.click(screen.getByRole('button', {name: 'Add Item'}));
+
+    await screen.findByText('Udon');
+    await waitFor(() => expect(getMenuItemsFromDb()).toHaveLength(2));
+    expect(getMenuItemsFromDb()).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          restaurant: restaurantId,
+          name: 'Udon',
+        }),
+      ]),
+    );
+  });
+
+  it('alerts when creating a menu item fails', async () => {
+    server.use(
+      http.post(endpoint('/menu'), () => {
+        return HttpResponse.text('create failed', {status: 500});
+      }),
+    );
+
+    await renderLoadedRestaurantPage();
+
+    const menuSection = getSectionByHeading('Menu Items');
+    fireEvent.click(
+      within(menuSection).getByRole('button', {name: /\+ add menu item/i}),
+    );
+
+    fireEvent.change(screen.getByLabelText('Item Name'), {
+      target: {value: 'Failed Item'},
+    });
+    fireEvent.click(screen.getByRole('button', {name: 'Add Item'}));
+
+    await waitFor(() =>
+      expect(window.alert).toHaveBeenCalledWith('Failed to create menu item.'),
+    );
+    expect(getMenuItemsFromDb()).toHaveLength(1);
+  });
+
   it('updates and deletes menu items in edit mode', async () => {
     await renderLoadedRestaurantPage();
 
