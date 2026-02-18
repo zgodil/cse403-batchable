@@ -16,6 +16,7 @@ type JSONDomainField<T> = T extends
   | WorldLocation
   | Polyline
   | PhoneNumber
+  | unknown[]
   ? string
   : T extends Id<infer I>
     ? Id<I>['id']
@@ -80,6 +81,21 @@ const parseNullable = <T>(
   },
   unparse(domain) {
     return domain === null ? null : parserPair.unparse(domain);
+  },
+});
+
+const parseList = <T>(
+  parserPair: JSONFieldParserPair<T>,
+): JSONFieldParserPair<T[]> => ({
+  parse(json) {
+    try {
+      return JSON.parse(json).map(parserPair.parse);
+    } catch {
+      return [];
+    }
+  },
+  unparse(domain) {
+    return JSON.stringify(domain.map(parserPair.unparse));
   },
 });
 
@@ -159,7 +175,7 @@ export const order = createDomainObjectParserPair<Order>({
   id: parseId('Order'),
   restaurant: parseId('Restaurant'),
   destination: parseWorldLocation,
-  itemNames: identity,
+  itemNames: parseList<string>(identity),
   initialTime: parseDate,
   deliveryTime: parseDate,
   cookedTime: parseDate,
