@@ -54,13 +54,8 @@ function MenuItemsSection({
     return true;
   };
 
-  const createMenuItem = async (menuItem: MenuItem) => {
-    const createdId = await menuApi.create(menuItem);
-    if (!createdId) {
-      alert('Failed to create menu item.');
-      return;
-    }
-    setMenuItems(current => [...current, {...menuItem, id: createdId}]);
+  const addCreatedMenuItem = (menuItem: MenuItem) => {
+    setMenuItems(current => [...current, menuItem]);
   };
 
   const saveMenuItem = async (menuItem: MenuItem) => {
@@ -137,7 +132,10 @@ function MenuItemsSection({
         </table>
       </div>
 
-      <AddMenuItemModal state={addMenuItemModal} onCreate={createMenuItem} />
+      <AddMenuItemModal
+        state={addMenuItemModal}
+        onCreated={addCreatedMenuItem}
+      />
     </section>
   );
 }

@@ -4,14 +4,15 @@ import FormModal from '../FormModal';
 import type {ModalState} from '../Modal';
 import RestaurantContext from '../RestaurantContext';
 import {fakeId, type MenuItem} from '~/domain/objects';
+import {menuApi} from '~/api/endpoints/menu';
 
 interface Props {
   state: ModalState;
-  onCreate: (menuItem: MenuItem) => Promise<void> | void;
+  onCreated: (menuItem: MenuItem) => void;
 }
-export default function AddMenuItemModal({state, onCreate}: Props) {
+export default function AddMenuItemModal({state, onCreated}: Props) {
   const restaurant = useContext(RestaurantContext);
-  const submitNewMenuItem = (data: {name: string}) => {
+  const submitNewMenuItem = async (data: {name: string}) => {
     if (!restaurant) {
       alert("You're not logged in");
       return;
@@ -23,7 +24,13 @@ export default function AddMenuItemModal({state, onCreate}: Props) {
       name: data.name,
     };
 
-    void onCreate(newMenuItem);
+    const createdId = await menuApi.create(newMenuItem);
+    if (!createdId) {
+      alert('Failed to create menu item.');
+      return;
+    }
+
+    onCreated({...newMenuItem, id: createdId});
   };
 
   return (
