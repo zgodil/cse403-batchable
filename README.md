@@ -40,9 +40,9 @@ chmod +x ./build.sh
 ./run.sh
 ```
 Follow this link to take you to the virtual Phone where you will recieve the text confirmation https://console.twilio.com/us1/develop/sms/virtual-phone
-You'll need to log in using the provided credentials: 
-User email: <See Ed>
-password: <See Ed>
+You'll need to log in using the provided credentials:\
+User email: <See Ed>\
+password: <See Ed>\
 
 select recovery code as verification method when logging in:
 
