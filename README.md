@@ -68,7 +68,7 @@ docker compose up -d db
 npm run db:psql
 ```
 
-### Coverage
+### Code Coverage
 #### Prerequisites
 Get Docker
 Ensure Docker Desktop is running
