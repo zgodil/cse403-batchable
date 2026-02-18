@@ -17,6 +17,7 @@ type JSONDomainField<T> = T extends
   | Polyline
   | PhoneNumber
   | unknown[]
+  | string
   ? string
   : T extends Id<infer I>
     ? Id<I>['id']
@@ -108,6 +109,16 @@ const parsePhoneNumber: JSONFieldParserPair<PhoneNumber> = {
   },
 };
 
+// TODO: this shouldn't be the case
+const parseUppercase = <T extends string>(): JSONFieldParserPair<T> => ({
+  parse(upper: string) {
+    return upper.toLowerCase() as T;
+  },
+  unparse(lower: T) {
+    return lower.toUpperCase() as JSONDomainField<T>;
+  },
+});
+
 const identity = {
   parse<T>(x: T) {
     return x;
@@ -179,7 +190,7 @@ export const order = createDomainObjectParserPair<Order>({
   initialTime: parseDate,
   deliveryTime: parseDate,
   cookedTime: parseDate,
-  state: identity,
+  state: parseUppercase<Order['state']>(),
   highPriority: identity,
   currentBatch: parseNullable(parseId('Batch')),
 });
