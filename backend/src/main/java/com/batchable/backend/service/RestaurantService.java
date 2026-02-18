@@ -78,12 +78,13 @@ public class RestaurantService {
     // Only reject if a positive id is supplied during creation.
     if (restaurant.id > 0)
       throw new IllegalStateException("restaurant.id must be <= 0 (database-generated)");
-
+  
     try {
       if (restaurantDAO.restaurantExistsByName(restaurant.name))
         throw new IllegalStateException("Restaurant already exists: " + restaurant.name);
 
-      return restaurantDAO.createRestaurant(restaurant.name, restaurant.location);
+      long restaurantId = restaurantDAO.createRestaurant(restaurant.name, restaurant.location);
+      return restaurantId;
 
     } catch (SQLException e) {
       throw new RuntimeException("Failed to create restaurant", e);
@@ -134,7 +135,7 @@ public class RestaurantService {
       boolean ok = restaurantDAO.updateRestaurant(restaurantId, restaurant.name, restaurant.location);
       if (!ok)
         throw new IllegalArgumentException("Restaurant not found: " + restaurantId);
-
+      
     } catch (SQLException e) {
       throw new RuntimeException("Failed to update restaurant", e);
     }

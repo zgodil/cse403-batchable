@@ -116,6 +116,12 @@ public class DriverService {
     }
   }
 
+  /** Returns whether the given driver (specified by id) is available to drive a batch */
+  public boolean isAvailable(long driverId) {
+    Driver driver = getDriver(driverId);
+    return driver.onShift && getDriverBatch(driverId) != null;
+  }
+
   /** Removes a driver from the system. */
   public void removeDriver(long driverId) {
     if (driverId <= 0) throw new IllegalArgumentException("driverId must be positive");
