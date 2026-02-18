@@ -26,7 +26,7 @@ export default function DriverOverview() {
   return (
     <OverviewSection
       title="🚗 Driver Status"
-      items={drivers}
+      items={drivers.filter(driver => driver.onShift)}
       renderItem={driver => <DriverCard driver={driver} />}
     />
   );
