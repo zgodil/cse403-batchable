@@ -4,6 +4,7 @@ import {useModal} from '../Modal';
 import AddDriverModal from './AddDriverModal';
 import Button from '../Button';
 import {driverApi} from '~/api/endpoints/driver';
+import DriverRow from './DriverRow';
 
 type DriversSectionProps = {
   drivers: Driver[];
@@ -96,111 +97,21 @@ function DriversSection({
               const isEditingDriver = editingDriverId === driver.id.id;
 
               return (
-                <tr
+                <DriverRow
                   key={driver.id.id}
-                  className="border-b border-gray-100 dark:border-gray-800"
-                >
-                  <td className="px-3 py-3">
-                    {isEditing && isEditingDriver ? (
-                      <input
-                        value={driver.name}
-                        onChange={event =>
-                          setDrivers(current =>
-                            current.map(item =>
-                              item.id.id === driver.id.id
-                                ? {...item, name: event.target.value}
-                                : item,
-                            ),
-                          )
-                        }
-                        className="w-full rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-950 px-2 py-1"
-                      />
-                    ) : (
-                      driver.name
-                    )}
-                  </td>
-                  <td className="px-3 py-3">
-                    {isEditing && isEditingDriver ? (
-                      <input
-                        value={driver.phoneNumber.compact}
-                        onChange={event =>
-                          setDrivers(current =>
-                            current.map(item =>
-                              item.id.id === driver.id.id
-                                ? {
-                                    ...item,
-                                    phoneNumber: {compact: event.target.value},
-                                  }
-                                : item,
-                            ),
-                          )
-                        }
-                        className="w-full rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-950 px-2 py-1"
-                      />
-                    ) : (
-                      driver.phoneNumber.compact
-                    )}
-                  </td>
-                  <td className="px-3 py-3">
-                    {isEditing && isEditingDriver ? (
-                      <label className="inline-flex items-center gap-2">
-                        <input
-                          type="checkbox"
-                          checked={driver.onShift}
-                          onChange={event =>
-                            setDrivers(current =>
-                              current.map(item =>
-                                item.id.id === driver.id.id
-                                  ? {
-                                      ...item,
-                                      onShift: event.target.checked,
-                                    }
-                                  : item,
-                              ),
-                            )
-                          }
-                        />
-                        <span>On Shift</span>
-                      </label>
-                    ) : (
-                      <span
-                        className={`rounded-full px-2 py-1 text-xs font-semibold ${
-                          driver.onShift
-                            ? 'bg-emerald-100 text-emerald-700'
-                            : 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-200'
-                        }`}
-                      >
-                        {driver.onShift ? 'On Shift' : 'Off Shift'}
-                      </span>
-                    )}
-                  </td>
-                  {isEditing && (
-                    <td className="px-3 py-3">
-                      <div className="flex items-center gap-2">
-                        <Button
-                          style={isEditingDriver ? 'blue' : 'indigo'}
-                          small
-                          onClick={() => {
-                            if (!isEditingDriver) {
-                              setEditingDriverId(driver.id.id);
-                              return;
-                            }
-                            void saveDriver(driver);
-                          }}
-                        >
-                          {isEditingDriver ? 'Done' : 'Edit'}
-                        </Button>
-                        <Button
-                          style="red"
-                          small
-                          onClick={() => void deleteDriver(driver)}
-                        >
-                          Delete
-                        </Button>
-                      </div>
-                    </td>
-                  )}
-                </tr>
+                  driver={driver}
+                  isEditingSection={isEditing}
+                  isEditingDriver={isEditingDriver}
+                  setDrivers={setDrivers}
+                  onToggleEdit={() => {
+                    if (!isEditingDriver) {
+                      setEditingDriverId(driver.id.id);
+                      return;
+                    }
+                    void saveDriver(driver);
+                  }}
+                  onDelete={() => void deleteDriver(driver)}
+                />
               );
             })}
           </tbody>

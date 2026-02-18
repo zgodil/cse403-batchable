@@ -4,6 +4,7 @@ import {useModal} from '../Modal';
 import AddMenuItemModal from './AddMenuItemModal';
 import Button from '../Button';
 import {menuApi} from '~/api/endpoints/menu';
+import MenuItemRow from './MenuItemRow';
 
 type MenuItemsSectionProps = {
   menuItems: MenuItem[];
@@ -97,57 +98,21 @@ function MenuItemsSection({
               const isEditingMenuItem = editingMenuItemId === item.id.id;
 
               return (
-                <tr
+                <MenuItemRow
                   key={item.id.id}
-                  className="border-b border-gray-100 dark:border-gray-800"
-                >
-                  <td className="px-3 py-3">
-                    {isEditing && isEditingMenuItem ? (
-                      <input
-                        value={item.name}
-                        onChange={event =>
-                          setMenuItems(current =>
-                            current.map(currentItem =>
-                              currentItem.id.id === item.id.id
-                                ? {...currentItem, name: event.target.value}
-                                : currentItem,
-                            ),
-                          )
-                        }
-                        className="w-full rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-950 px-2 py-1"
-                      />
-                    ) : (
-                      item.name
-                    )}
-                  </td>
-                  <td className="px-3 py-3">{item.id.id}</td>
-                  {isEditing && (
-                    <td className="px-3 py-3">
-                      <div className="flex items-center gap-2">
-                        <Button
-                          style={isEditingMenuItem ? 'orange' : 'amber'}
-                          small
-                          onClick={() => {
-                            if (!isEditingMenuItem) {
-                              setEditingMenuItemId(item.id.id);
-                              return;
-                            }
-                            void saveMenuItem(item);
-                          }}
-                        >
-                          {isEditingMenuItem ? 'Done' : 'Edit'}
-                        </Button>
-                        <Button
-                          style="red"
-                          small
-                          onClick={() => void deleteMenuItem(item)}
-                        >
-                          Delete
-                        </Button>
-                      </div>
-                    </td>
-                  )}
-                </tr>
+                  menuItem={item}
+                  isEditingSection={isEditing}
+                  isEditingMenuItem={isEditingMenuItem}
+                  setMenuItems={setMenuItems}
+                  onToggleEdit={() => {
+                    if (!isEditingMenuItem) {
+                      setEditingMenuItemId(item.id.id);
+                      return;
+                    }
+                    void saveMenuItem(item);
+                  }}
+                  onDelete={() => void deleteMenuItem(item)}
+                />
               );
             })}
           </tbody>
