@@ -15,9 +15,12 @@ Thank you!
 ## Frontend (Local Development)
 ### Prerequisites
 - install node.js via the [node.js](https://nodejs.org/en)
-Once you have node installed, enter the frontend folder `cd frontend`
-Then, install the dependencies: `npm install`
-Next, run the server: `npm run dev` 
+Once you have node installed, enter the frontend folder
+```cd frontend```
+Then, install the dependencies:
+```npm install```
+Next, run the server:
+```npm run build``` 
 
 ## Backend (Local Development)
 To run the backend locally:
