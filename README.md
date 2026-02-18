@@ -24,7 +24,9 @@ npm install
 Next, run the server:
 ```bash
 npm run build
-``` 
+```
+After running npm build, a folder named `build` should appear within the frontend. Copy all contents of the `build` folder, and paste it into a folder named `static`, located in backend/src/main/resources/
+Now you're set up to communicate with and run the backend!
 
 ## Backend (Local Development)
 ### Prerequisites
