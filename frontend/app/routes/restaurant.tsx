@@ -109,9 +109,6 @@ function RestaurantPage() {
             </p>
           </div>
           <div className="flex items-center gap-2">
-            <Button style="indigo" onClick={() => void loadRestaurantData()}>
-              Refresh Data
-            </Button>
             <Button to="/" style="dark">
               Back to Dashboard
             </Button>
