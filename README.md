@@ -4,12 +4,6 @@ Our product is Batchable, a real-time food delivery batching system. It works as
 
 A link to our requirements and plan can be found here: [Batchable](https://docs.google.com/document/d/1lBQPrSYdc8PdP-THlGFKEYEQGw-icpVO-P4352XmHsA/edit?usp=sharing)
 
-## Editor/Git Configuration
-Please install an [EditorConfig](https://editorconfig.org/) extension/plug-in for your editor so as to use our global .editorconfig settings and not mess up spacing, indentation, or line endings. If you're on Windows, please also use Git's `autocrlf=false` option, which is likely already enabled. If it's not, you can use:
-```sh
-$ git config --global autocrlf false
-```
-Thank you!
 ## Frontend (Local Development)
 ### Prerequisites
 Install node.js via the [node.js](https://nodejs.org/en)
@@ -66,6 +60,12 @@ Ensure Docker Desktop is running
 
 To run code coverage: `./mvnw verify`
 Look for coverage results in `backend/target/site/jacoco/index.html`
+
+## Editor/Git Configuration
+Please install an [EditorConfig](https://editorconfig.org/) extension/plug-in for your editor so as to use our global .editorconfig settings and not mess up spacing, indentation, or line endings. If you're on Windows, please also use Git's `autocrlf=false` option, which is likely already enabled. If it's not, you can use:
+```sh
+$ git config --global autocrlf false
+```
 
 
 
