@@ -16,19 +16,21 @@ Thank you!
 ### Prerequisites
 - install node.js via the [node.js](https://nodejs.org/en)
 Once you have node installed, enter the frontend folder
-```
+```bash
 cd frontend
 ```
 Then, install the dependencies:
-```
+```bash
 npm install
 ```
 Next, run the server:
-```
+```bash
 npm run build
 ``` 
 
 ## Backend (Local Development)
+### Prerequisites
+Download JDK 17 [here](https://www.oracle.com/java/technologies/javase/jdk17-archive-downloads.html)
 To run the backend locally:
 ```bash
 cd backend
