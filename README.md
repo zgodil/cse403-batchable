@@ -12,7 +12,7 @@ $ git config --global autocrlf false
 Thank you!
 ## Frontend (Local Development)
 ### Prerequisites
-- install node.js via the [node.js](https://nodejs.org/en)
+Install node.js via the [node.js](https://nodejs.org/en)
 Once you have node installed, enter the frontend folder
 ```bash
 cd frontend
