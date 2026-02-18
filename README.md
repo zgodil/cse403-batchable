@@ -39,7 +39,7 @@ Then run the backend server
 ```bash
 ./mvnw spring-boot:run
 ```
-### Coverage
+### Coverage <br>
 #### Prerequisites
 Ensure Docker Desktop is running
 `$ docker` should return docker commands
