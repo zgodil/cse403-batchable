@@ -59,7 +59,7 @@ const parseDate: JSONFieldParserPair<Date> = {
     return new Date(utc);
   },
   unparse(date) {
-    return date.toUTCString();
+    return date.toISOString();
   },
 };
 

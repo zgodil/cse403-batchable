@@ -2,13 +2,11 @@ import * as json from '~/domain/json';
 import type {DomainObject, Id, IdKey} from '~/domain/objects';
 
 class Table<T extends DomainObject> {
-  private rows: T[];
-
-  constructor() {
-    this.rows = [];
-  }
+  private rows: T[] = [];
+  private nextId = 1;
 
   clear() {
+    this.nextId = 1;
     this.rows = [];
   }
 
@@ -37,9 +35,7 @@ class Table<T extends DomainObject> {
   }
 
   insert(domainObject: T) {
-    const id = this.rows.length
-      ? Math.max(...this.rows.map(row => row.id.id)) + 1
-      : 0;
+    const id = this.nextId++;
     domainObject.id.id = id;
     this.rows.push(domainObject);
     return id;
