@@ -1,4 +1,4 @@
-import {initialDrivers, initialMenuItems, initialRestaurant} from '~/components/restaurant/mockData';
+import {initialDrivers, initialMenuItems, initialRestaurant} from './seedData';
 import * as json from '~/domain/json';
 import {db, resetMockDatabase} from './common';
 

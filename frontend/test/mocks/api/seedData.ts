@@ -1,4 +1,4 @@
-import type {Driver, MenuItem, Restaurant} from '../../domain/objects';
+import type {Driver, MenuItem, Restaurant} from '~/domain/objects';
 
 const restaurantId = {type: 'Restaurant' as const, id: 1};
 
