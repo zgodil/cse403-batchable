@@ -11,6 +11,9 @@ export async function fetchEndpoint(
   return await apiFetch(path, {
     body: body !== undefined ? JSON.stringify(body) : undefined,
     method,
+    headers: {
+      'Content-Type': 'application/json',
+    },
   });
 }
 
