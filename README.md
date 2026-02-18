@@ -15,38 +15,29 @@ Then, install the dependencies:
 ```bash
 npm install
 ```
-Next, run the server:
-```bash
-npm run build
-```
 
 ## Backend (Local Development)
 ### Prerequisites
 Download JDK 17 [here](https://www.oracle.com/java/technologies/javase/jdk17-archive-downloads.html)\
 To run the backend locally:
+
 ```bash
 cd backend
 ```
-Then run the backend server
-```bash
-./mvnw spring-boot:run
-```
+
 ## Database (Local Development)
+Make sure you have Docker Desktop installed and running.
 
-We use Postgres running in Docker for local development. The database data persist via Docker and Schema/Migrations will live under infra/postgres
-
-### Prerequisites
-- Docker Desktop
-- Node.js (for npm scripts)
-
-### Start the database
-```bash
-docker compose up -d db
-```
-
-### Connect to Postgres
+# Running the app!
+Put the env file sent in Ed into vars.env in the root of the project.
+Then, while still in the root, execute the following in a sh-compatible terminal:
 ``` bash
-npm run db:psql
+# in project root
+chmod +x ./vars.env
+chmod +x ./run.sh
+chmod +x ./build.sh
+./build.sh
+./run.sh
 ```
 
 ### Code Coverage (front end and back end)
