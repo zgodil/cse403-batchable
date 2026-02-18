@@ -10,6 +10,7 @@ import com.batchable.backend.db.dao.OrderDAO;
 import com.batchable.backend.db.dao.RestaurantDAO;
 import com.batchable.backend.db.models.Order;
 import com.batchable.backend.service.BatchingManager;
+import com.batchable.backend.service.DbOrderService;
 import com.batchable.backend.service.OrderService;
 import com.batchable.backend.websocket.OrderWebSocketPublisher;
 import java.sql.Connection;
@@ -40,7 +41,7 @@ public class OrderServiceIT_CI extends PostgresTestBase {
 
   private SimpMessagingTemplate messagingTemplate; // mock
   private OrderWebSocketPublisher publisher; // real
-  private OrderService service; // real
+  private DbOrderService service; // real
 
   private TestDataSource ds;
 
@@ -60,8 +61,7 @@ public class OrderServiceIT_CI extends PostgresTestBase {
 
     messagingTemplate = mock(SimpMessagingTemplate.class);
     publisher = new OrderWebSocketPublisher(messagingTemplate);
-
-    service = new OrderService(orderDAO, batchDAO, publisher, mockBatchingManager);
+    service = new DbOrderService(orderDAO, batchDAO, publisher);
 
     // Optional: keep each test isolated if you want.
     // If you already clean tables elsewhere, remove this.
@@ -157,13 +157,13 @@ public class OrderServiceIT_CI extends PostgresTestBase {
     long rid = createRestaurant("R1");
     long oid = createOrderRow(rid, Order.State.COOKING);
 
-    service.advanceOrderState(oid, true);
+    service.advanceOrderState(oid);
     assertEquals(Order.State.COOKED, service.getOrder(oid).state);
 
-    service.advanceOrderState(oid, true);
+    service.advanceOrderState(oid);
     assertEquals(Order.State.DRIVING, service.getOrder(oid).state);
 
-    service.advanceOrderState(oid, true);
+    service.advanceOrderState(oid);
     Order delivered = service.getOrder(oid);
     assertEquals(Order.State.DELIVERED, delivered.state);
     assertNotNull(delivered.deliveryTime);
@@ -177,7 +177,7 @@ public class OrderServiceIT_CI extends PostgresTestBase {
     long oid = createOrderRow(rid, Order.State.COOKING);
 
     Instant cooked = service.getOrder(oid).initialTime.plusSeconds(120);
-    service.updateOrderCookedTime(oid, cooked, true);
+    service.updateOrderCookedTime(oid, cooked);
 
     assertEquals(cooked, service.getOrder(oid).cookedTime);
     verify(messagingTemplate, times(1)).convertAndSend("/topic/orders/" + rid, "");
@@ -188,7 +188,7 @@ public class OrderServiceIT_CI extends PostgresTestBase {
     long rid = createRestaurant("R1");
     long oid = createOrderRow(rid, Order.State.DRIVING);
 
-    service.remakeOrder(oid, true);
+    service.remakeOrder(oid);
 
     Order got = service.getOrder(oid);
     assertEquals(Order.State.COOKING, got.state);

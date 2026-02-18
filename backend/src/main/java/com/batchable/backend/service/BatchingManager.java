@@ -27,7 +27,7 @@ import com.batchable.backend.websocket.OrderWebSocketPublisher;
 @Service
 public class BatchingManager {
 
-  private final OrderService orderService;
+  private final DbOrderService dbOrderService;
 
   // Publishes updates to clients when batches change
   private final OrderWebSocketPublisher publisher;
@@ -59,13 +59,13 @@ public class BatchingManager {
    * @param orderService service for order and batch operations
    */
   public BatchingManager(OrderWebSocketPublisher publisher, BatchingAlgorithm batchingAlgorithm,
-      RestaurantService restaurantService, RouteService routeService, OrderService orderService,
+      RestaurantService restaurantService, RouteService routeService, DbOrderService dbOrderService,
       DriverService driverService) {
     this.publisher = publisher;
     this.batchingAlgorithm = batchingAlgorithm;
     this.restaurantService = restaurantService;
     this.routeService = routeService;
-    this.orderService = orderService;
+    this.dbOrderService = dbOrderService;
     this.driverService = driverService;
   }
 
@@ -100,7 +100,7 @@ public class BatchingManager {
     String address = restaurant.location;
     restaurantManagers.put(restaurantId,
         new RestaurantBatchingManager(restaurantId, address, publisher, batchingAlgorithm,
-            routeService, orderService, driverService, restaurantService, null));
+            routeService, dbOrderService, driverService, restaurantService, null));
   }
 
   /**
@@ -171,7 +171,7 @@ public class BatchingManager {
    * @throws IllegalArgumentException if the order id is not found
    */
   public void removeOrder(Long orderId) {
-    Order order = orderService.getOrder(orderId);
+    Order order = dbOrderService.getOrder(orderId);
     long restaurantId = order.restaurantId;
     getManager(restaurantId).removeOrder(orderId);
   }
@@ -189,7 +189,7 @@ public class BatchingManager {
    *        batch
    */
   public void updateOrder(Long orderId, boolean rebatchIfTentative) {
-    Order order = orderService.getOrder(orderId);
+    Order order = dbOrderService.getOrder(orderId);
     long restaurantId = order.restaurantId;
     getManager(restaurantId).updateOrder(orderId, rebatchIfTentative);
   }

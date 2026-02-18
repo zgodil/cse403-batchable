@@ -25,7 +25,7 @@ import com.google.common.cache.Cache;
 @Service
 public class BatchingAlgorithm {
   private final RouteService routeService;
-  private final OrderService orderService;
+  private final DbOrderService dbOrderService;
   private final int SECONDS_TO_HAND_DELIVER = 300; // seconds to park, walk up, walk back
   private final int PADDING_SECONDS = 60;
 
@@ -69,9 +69,9 @@ public class BatchingAlgorithm {
    * 
    * @param routeService the service used to compute travel durations between addresses
    */
-  public BatchingAlgorithm(RouteService routeService, OrderService orderService) {
+  public BatchingAlgorithm(RouteService routeService, DbOrderService dbOrderService) {
     this.routeService = routeService;
-    this.orderService = orderService;
+    this.dbOrderService = dbOrderService;
   }
 
   /**
@@ -168,7 +168,7 @@ public class BatchingAlgorithm {
     int i = inds[0];
     int j = inds[1];
     List<Order> batch = batches.get(i).batch;
-    batch.set(j, orderService.getOrder(orderId));
+    batch.set(j, dbOrderService.getOrder(orderId));
   }
 
   /**
@@ -239,8 +239,8 @@ public class BatchingAlgorithm {
           "This method must only be called with a lastAllowedCookedTime earlier than the order's cookedTime");
     }
     Duration paddedDifference = difference.plus(Duration.ofSeconds(PADDING_SECONDS));
-    orderService.updateOrderDeliveryTime(order.id, order.deliveryTime.plus(paddedDifference), true);
-    Order updatedOrder = orderService.getOrder(order.id);
+    dbOrderService.updateOrderDeliveryTime(order.id, order.deliveryTime.plus(paddedDifference));
+    Order updatedOrder = dbOrderService.getOrder(order.id);
     return updatedOrder;
   }
 

@@ -15,6 +15,7 @@ import com.batchable.backend.model.dto.RouteDirectionsResponse;
 import com.batchable.backend.service.BatchingAlgorithm;
 import com.batchable.backend.service.RouteService;
 import com.batchable.backend.service.BatchingAlgorithm.TentativeBatch;
+import com.batchable.backend.service.DbOrderService;
 import com.batchable.backend.service.DriverService;
 import com.batchable.backend.service.OrderService;
 import com.batchable.backend.service.RestaurantService;
@@ -37,7 +38,7 @@ public class RestaurantBatchingManager {
   private final List<Consumer<Long>> batchBecomeActiveListeners = new ArrayList<>();
   private final Batches batches;
   private final RouteService routeService;
-  private final OrderService orderService;
+  private final DbOrderService dbOrderService;
   private final DriverService driverService;
   private final RestaurantService restaurantService;
   // time to add when an order isn't ready when it should be for batching
@@ -54,14 +55,14 @@ public class RestaurantBatchingManager {
    */
   public RestaurantBatchingManager(long restaurantId, String restaurantAddress,
       OrderWebSocketPublisher publisher, BatchingAlgorithm batchingAlgorithm,
-      RouteService routeService, OrderService orderService, DriverService driverService,
+      RouteService routeService, DbOrderService dbOrderService, DriverService driverService,
       RestaurantService restaurantService, Batches batches) {
     this.restaurantId = restaurantId;
     this.restaurantAddress = restaurantAddress;
     this.publisher = publisher;
     this.batchingAlgorithm = batchingAlgorithm;
     this.routeService = routeService;
-    this.orderService = orderService;
+    this.dbOrderService = dbOrderService;
     this.driverService = driverService;
     this.restaurantService = restaurantService;
     this.batches = (batches != null) ? batches : new Batches();
@@ -185,7 +186,7 @@ public class RestaurantBatchingManager {
    * @throws IllegalArgumentException if the order id is not found
    */
   public void removeOrder(Long orderId) {
-    Order order = orderService.getOrder(orderId);
+    Order order = dbOrderService.getOrder(orderId);
     if (order.batchId != null) {
       // in active batch
       emitBatchChange(order.batchId);
@@ -207,7 +208,7 @@ public class RestaurantBatchingManager {
    *        batch
    */
   public void updateOrder(Long orderId, boolean rebatchIfTentative) {
-    Order order = orderService.getOrder(orderId);
+    Order order = dbOrderService.getOrder(orderId);
     if (order.batchId != null) {
       // in active batch
       emitBatchChange(order.batchId);
@@ -238,7 +239,7 @@ public class RestaurantBatchingManager {
             batch.remove(i);
           } else {
             // update
-            batch.set(i, orderService.getOrder(orderId));
+            batch.set(i, dbOrderService.getOrder(orderId));
           }
           return true;
         }
@@ -374,10 +375,10 @@ public class RestaurantBatchingManager {
       for (int i = 0; i < orders.size(); i++) {
         Order order = orders.get(i);
 
-        orderService.updateOrderDeliveryTime(order.id,
-            millisAfter(order.deliveryTime, updateMillis), true);
+        dbOrderService.updateOrderDeliveryTime(order.id,
+            millisAfter(order.deliveryTime, updateMillis));
 
-        orders.set(i, orderService.getOrder(order.id));
+        orders.set(i, dbOrderService.getOrder(order.id));
       }
     }
   }
@@ -428,11 +429,11 @@ public class RestaurantBatchingManager {
     RouteDirectionsResponse resp = routeService.getRouteDirections(restaurantAddress, stops, false);
     Instant dispatchTime = Instant.now();
     Instant expectedCompletionTime = dispatchTime.plusSeconds(resp.getDurationSeconds());
-    Long batchId = orderService.createBatch(
+    Long batchId = dbOrderService.createBatch(
         new Batch(-1, driver.id, resp.getPolyline(), dispatchTime, expectedCompletionTime));
 
     updateOrdersWithBatchIdAndAdvanceState(readyBatch.batch, batchId);
-    return orderService.getBatch(batchId);
+    return dbOrderService.getBatch(batchId);
   }
 
   /**
@@ -447,9 +448,9 @@ public class RestaurantBatchingManager {
   private void updateOrdersWithBatchIdAndAdvanceState(List<Order> orders, Long batchId) {
     for (int i = 0; i < orders.size(); i++) {
       Order order = orders.get(i);
-      orderService.setOrderBatchId(order.id, batchId);
-      orderService.advanceOrderState(order.id, true); // to DRIVING
-      orders.set(i, orderService.getOrder(order.id));
+      dbOrderService.setOrderBatchId(order.id, batchId);
+      dbOrderService.advanceOrderState(order.id); // to DRIVING
+      orders.set(i, dbOrderService.getOrder(order.id));
     }
   }
 
@@ -471,7 +472,7 @@ public class RestaurantBatchingManager {
         orders.remove(j);
         delayOrder(order);
         // important to re-get the order after updating
-        toBeReAdded.add(orderService.getOrder(order.id));
+        toBeReAdded.add(dbOrderService.getOrder(order.id));
       }
     }
   }
@@ -483,11 +484,11 @@ public class RestaurantBatchingManager {
    * @param order the order to delay
    */
   private void delayOrder(Order order) {
-    orderService.updateOrderDeliveryTime(order.id,
-        secondsAfter(order.deliveryTime, SECONDS_ADDITIONAL_COOK_TIME), true);
+    dbOrderService.updateOrderDeliveryTime(order.id,
+        secondsAfter(order.deliveryTime, SECONDS_ADDITIONAL_COOK_TIME));
 
-    orderService.updateOrderCookedTime(order.id,
-        secondsAfter(order.cookedTime, SECONDS_ADDITIONAL_COOK_TIME), true);
+    dbOrderService.updateOrderCookedTime(order.id,
+        secondsAfter(order.cookedTime, SECONDS_ADDITIONAL_COOK_TIME));
   }
 
   // returns the Instant 'millis' milliseconds after the given time

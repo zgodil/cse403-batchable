@@ -4,6 +4,7 @@ import com.batchable.backend.db.models.Driver;
 import com.batchable.backend.db.models.MenuItem;
 import com.batchable.backend.db.models.Order;
 import com.batchable.backend.db.models.Restaurant;
+import com.batchable.backend.service.BatchingManager;
 import com.batchable.backend.service.RestaurantService;
 import java.util.List;
 import org.springframework.http.HttpStatus;
@@ -23,13 +24,15 @@ import org.springframework.web.bind.annotation.RestController;
 public class RestaurantController {
 
   private final RestaurantService restaurantService;
+  private final BatchingManager batchingManager;
 
   /**
    * Constructor injection: Spring automatically provides a RestaurantService instance because it is
    * annotated with @Service
    */
-  public RestaurantController(RestaurantService restaurantService) {
+  public RestaurantController(RestaurantService restaurantService, BatchingManager batchingManager) {
     this.restaurantService = restaurantService;
+    this.batchingManager = batchingManager;
   }
 
   /**
@@ -43,6 +46,7 @@ public class RestaurantController {
   @ResponseStatus(HttpStatus.CREATED)
   public void createRestaurant(@RequestBody Restaurant restaurant) {
     restaurantService.createRestaurant(restaurant);
+    batchingManager.addManager(restaurant.id);
   }
 
   /**
@@ -57,6 +61,7 @@ public class RestaurantController {
   @ResponseStatus(HttpStatus.NO_CONTENT)
   public void updateRestaurant(@PathVariable long restaurantId, @RequestBody Restaurant restaurant) {
     restaurantService.updateRestaurant(restaurantId, restaurant);
+    batchingManager.updateManagerAddress(restaurantId, restaurantService.getRestaurant(restaurantId).location);
   }
 
   /**
@@ -84,6 +89,7 @@ public class RestaurantController {
   @ResponseStatus(HttpStatus.NO_CONTENT)
   public void removeRestaurant(@PathVariable long restaurantId) {
     restaurantService.removeRestaurant(restaurantId);
+    batchingManager.removeManager(restaurantId);
   }
 
   /**

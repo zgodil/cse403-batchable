@@ -35,9 +35,6 @@ import org.mockito.MockitoAnnotations;
  * enforces its domain rules against real data
  */
 public class RestaurantServiceIT_CI extends PostgresTestBase {
-
-  @Mock private BatchingManager mockBatchingManager;
-
   private DataSource ds;
 
   private RestaurantDAO restaurantDAO;
@@ -57,12 +54,7 @@ public class RestaurantServiceIT_CI extends PostgresTestBase {
     menuItemDAO = new MenuItemDAO(ds);
 
     restaurantService =
-        new RestaurantService(restaurantDAO, orderDAO, driverDAO, menuItemDAO, mockBatchingManager);
-
-    doNothing().when(mockBatchingManager).addManager(anyLong());
-    doNothing().when(mockBatchingManager).updateManagerAddress(anyLong(), anyString());
-    doNothing().when(mockBatchingManager).removeManager(anyLong());
-
+        new RestaurantService(restaurantDAO, orderDAO, driverDAO, menuItemDAO);
     cleanDb();
   }
 
@@ -109,32 +101,25 @@ public class RestaurantServiceIT_CI extends PostgresTestBase {
     assertEquals(id, got.id);
     assertEquals("R1", got.name);
     assertEquals("Seattle", got.location);
-    verify(mockBatchingManager).addManager(id);
   }
 
   @Test
   void createRestaurant_duplicateName_blocked() {
     long id = createRestaurant("R1", "Seattle");
-    verify(mockBatchingManager).addManager(id);
     assertThrows(IllegalStateException.class, () -> createRestaurant("R1", "Bellevue"));
-    verify(mockBatchingManager, times(1)).addManager(anyLong()); // only the first call
   }
 
   @Test
   void updateRestaurant_updatesRow_andNameUniquenessExcludingIdWorks() {
     long r1 = createRestaurant("R1", "Seattle");
     long r2 = createRestaurant("R2", "Bellevue");
-    verify(mockBatchingManager).addManager(r1);
-    verify(mockBatchingManager).addManager(r2);
 
     // trying to rename r1 to r2's name should fail
     assertThrows(IllegalStateException.class,
         () -> restaurantService.updateRestaurant(r1, new Restaurant(0, "R2", "Seattle")));
-    verify(mockBatchingManager, never()).updateManagerAddress(anyLong(), anyString());
 
     // valid update
     restaurantService.updateRestaurant(r1, new Restaurant(0, "R1-new", "Seattle-new"));
-    verify(mockBatchingManager).updateManagerAddress(r1, "Seattle-new");
 
     Restaurant got = restaurantService.getRestaurant(r1);
     assertEquals("R1-new", got.name);
@@ -154,7 +139,6 @@ public class RestaurantServiceIT_CI extends PostgresTestBase {
     assertTrue(ex.getMessage().toLowerCase().contains("active orders"));
 
     assertTrue(restaurantDAO.restaurantExists(r1));
-    verify(mockBatchingManager, never()).removeManager(r1);
   }
 
   @Test
@@ -164,8 +148,6 @@ public class RestaurantServiceIT_CI extends PostgresTestBase {
 
     restaurantService.removeRestaurant(r1);
     assertFalse(restaurantDAO.restaurantExists(r1));
-    verify(mockBatchingManager).addManager(r1);
-    verify(mockBatchingManager).removeManager(r1);
   }
 
   @Test
@@ -179,7 +161,6 @@ public class RestaurantServiceIT_CI extends PostgresTestBase {
     assertTrue(ex.getMessage().toLowerCase().contains("on shift"));
 
     assertTrue(restaurantDAO.restaurantExists(r1));
-    verify(mockBatchingManager, never()).removeManager(r1);   // <-- added verification
   }
 
   @Test
@@ -190,7 +171,6 @@ public class RestaurantServiceIT_CI extends PostgresTestBase {
 
     restaurantService.removeRestaurant(r1);
     assertFalse(restaurantDAO.restaurantExists(r1));
-    verify(mockBatchingManager).removeManager(r1);            // <-- added verification
   }
 
   @Test

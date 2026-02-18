@@ -23,6 +23,7 @@ import com.batchable.backend.db.models.Order.State;
 import com.batchable.backend.db.models.Restaurant;
 import com.batchable.backend.service.BatchingAlgorithm;
 import com.batchable.backend.service.BatchingManager;
+import com.batchable.backend.service.DbOrderService;
 import com.batchable.backend.service.DriverService;
 import com.batchable.backend.service.OrderService;
 import com.batchable.backend.service.RestaurantService;
@@ -42,7 +43,7 @@ class BatchingManagerTest {
   @Mock
   private RouteService routeService;
   @Mock
-  private OrderService orderService;
+  private DbOrderService dbOrderService;
   @Mock
   private DriverService driverService;
 
@@ -64,7 +65,7 @@ class BatchingManagerTest {
   @BeforeEach
   void setUp() {
     batchingManager = new BatchingManager(publisher, batchingAlgorithm, restaurantService,
-        routeService, orderService, driverService);
+        routeService, dbOrderService, driverService);
   }
 
   // Helper to create a real Order
@@ -192,7 +193,7 @@ class BatchingManagerTest {
     batchingManager.addManager(RESTAURANT_ID_1);
     RestaurantBatchingManager spy = spyOnManager(RESTAURANT_ID_1);
     Order order = createOrder(100L, RESTAURANT_ID_1);
-    when(orderService.getOrder(100L)).thenReturn(order);
+    when(dbOrderService.getOrder(100L)).thenReturn(order);
 
     // When
     batchingManager.removeOrder(100L);
@@ -209,7 +210,7 @@ class BatchingManagerTest {
     batchingManager.addManager(RESTAURANT_ID_1);
     RestaurantBatchingManager spy = spyOnManager(RESTAURANT_ID_1);
     Order order = createOrder(100L, RESTAURANT_ID_1);
-    when(orderService.getOrder(100L)).thenReturn(order);
+    when(dbOrderService.getOrder(100L)).thenReturn(order);
 
     // When
     batchingManager.updateOrder(100L, true);
@@ -289,7 +290,7 @@ class BatchingManagerTest {
   @Test
   void removeOrder_withInvalidOrderId_throwsException() {
     // Given
-    when(orderService.getOrder(999L)).thenThrow(new IllegalArgumentException("Order not found"));
+    when(dbOrderService.getOrder(999L)).thenThrow(new IllegalArgumentException("Order not found"));
 
     // When / Then
     assertThrows(IllegalArgumentException.class, () -> batchingManager.removeOrder(999L));
@@ -298,7 +299,7 @@ class BatchingManagerTest {
   @Test
   void updateOrder_withInvalidOrderId_throwsException() {
     // Given
-    when(orderService.getOrder(999L)).thenThrow(new IllegalArgumentException("Order not found"));
+    when(dbOrderService.getOrder(999L)).thenThrow(new IllegalArgumentException("Order not found"));
 
     // When / Then
     assertThrows(IllegalArgumentException.class, () -> batchingManager.updateOrder(999L, true));
@@ -334,7 +335,7 @@ class BatchingManagerTest {
 
     // Create order
     Order order = createOrder(100L, RESTAURANT_ID_1);
-    when(orderService.getOrder(100L)).thenReturn(order); // <-- add this stub
+    when(dbOrderService.getOrder(100L)).thenReturn(order); // <-- add this stub
 
     // When – additional operations
     batchingManager.addOrder(order);

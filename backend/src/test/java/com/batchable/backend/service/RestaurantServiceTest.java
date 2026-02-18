@@ -44,7 +44,7 @@ public class RestaurantServiceTest {
 
   @BeforeEach
   void setUp() {
-    service = new RestaurantService(restaurantDAO, orderDAO, driverDAO, menuItemDAO, mockBatchingManager);
+    service = new RestaurantService(restaurantDAO, orderDAO, driverDAO, menuItemDAO);
   }
 
   // ---- helpers ----

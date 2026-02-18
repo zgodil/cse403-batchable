@@ -8,6 +8,7 @@ import com.batchable.backend.db.models.Order;
 import com.batchable.backend.db.models.Order.State;
 import com.batchable.backend.service.BatchingAlgorithm;
 import com.batchable.backend.service.BatchingAlgorithm.TentativeBatch;
+import com.batchable.backend.service.DbOrderService;
 import com.batchable.backend.service.OrderService;
 import com.batchable.backend.service.RouteService;
 
@@ -26,7 +27,7 @@ import java.util.Set;
 
 class BatchingAlgorithmTest {
   private RouteService mockRouteService;
-  private OrderService mockOrderService;
+  private DbOrderService mockDbOrderService;
   private BatchingAlgorithm batchingAlgorithm;
   private int SECONDS_TO_HAND_DELIVER;
   private int CEIL_MINS_TO_HAND_DELIVER;
@@ -36,8 +37,8 @@ class BatchingAlgorithmTest {
   @BeforeEach
   void setUp() {
     mockRouteService = mock(RouteService.class);
-    mockOrderService = mock(OrderService.class);
-    batchingAlgorithm = new BatchingAlgorithm(mockRouteService, mockOrderService);
+    mockDbOrderService = mock(DbOrderService.class);
+    batchingAlgorithm = new BatchingAlgorithm(mockRouteService, mockDbOrderService);
     SECONDS_TO_HAND_DELIVER = batchingAlgorithm.getSecondsToHandDeliver();
     CEIL_MINS_TO_HAND_DELIVER = (SECONDS_TO_HAND_DELIVER + 59) / 60;
     ORDER_ID = 1;
@@ -178,7 +179,7 @@ class BatchingAlgorithmTest {
       Order other = new Order(order.id, order.restaurantId, order.destination, order.itemNamesJson,
           order.initialTime, order.deliveryTime, order.cookedTime, State.COOKED, order.highPriority,
           order.batchId);
-      when(mockOrderService.getOrder(anyLong())).thenReturn(other);
+      when(mockDbOrderService.getOrder(anyLong())).thenReturn(other);
       assertDoesNotThrow(
           () -> batchingAlgorithm.updateOrderInplace(batches, order.id));
       assertDoesNotThrow(() -> batchingAlgorithm.removeOrder(batches, order.id, restaurantAddress));

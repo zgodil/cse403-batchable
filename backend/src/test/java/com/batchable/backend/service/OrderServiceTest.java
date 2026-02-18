@@ -43,13 +43,12 @@ public class OrderServiceTest {
   @Mock private OrderDAO orderDAO;
   @Mock private BatchDAO batchDAO;
   @Mock private OrderWebSocketPublisher publisher;
-  @Mock private BatchingManager mockBatchingManager;
 
-  private OrderService service;
+  private DbOrderService service;
 
   @BeforeEach
   void setUp() {
-    service = new OrderService(orderDAO, batchDAO, publisher, mockBatchingManager);
+    service = new DbOrderService(orderDAO, batchDAO, publisher);
   }
 
   // ---- helpers ----
@@ -185,7 +184,7 @@ public class OrderServiceTest {
     Order o = order(5, 7, "Dest", "[]", Instant.now(), null, null, Order.State.DELIVERED, true, null);
     when(orderDAO.getOrder(5L)).thenReturn(Optional.of(o));
 
-    assertThrows(IllegalStateException.class, () -> service.advanceOrderState(5L, true));
+    assertThrows(IllegalStateException.class, () -> service.advanceOrderState(5L));
 
     verify(orderDAO).getOrder(5L);
     verifyNoMoreInteractions(orderDAO);
@@ -198,7 +197,7 @@ public class OrderServiceTest {
     when(orderDAO.getOrder(5L)).thenReturn(Optional.of(o));
     when(orderDAO.updateOrderState(5L, Order.State.COOKED)).thenReturn(true);
 
-    service.advanceOrderState(5L, true);
+    service.advanceOrderState(5L);
 
     verify(orderDAO).updateOrderState(5L, Order.State.COOKED);
     verify(orderDAO, never()).updateOrderDeliveryTime(anyLong(), any());
@@ -211,7 +210,7 @@ public class OrderServiceTest {
     when(orderDAO.getOrder(5L)).thenReturn(Optional.of(o));
     when(orderDAO.updateOrderState(5L, Order.State.DELIVERED)).thenReturn(true);
 
-    service.advanceOrderState(5L, true);
+    service.advanceOrderState(5L);
 
     verify(orderDAO).updateOrderState(5L, Order.State.DELIVERED);
 
@@ -228,7 +227,7 @@ public class OrderServiceTest {
     when(orderDAO.getOrder(5L)).thenReturn(Optional.of(o));
     when(orderDAO.updateOrderState(anyLong(), any())).thenThrow(new SQLException("boom"));
 
-    RuntimeException ex = assertThrows(RuntimeException.class, () -> service.advanceOrderState(5L, true));
+    RuntimeException ex = assertThrows(RuntimeException.class, () -> service.advanceOrderState(5L));
     assertTrue(ex.getMessage().contains("Failed to advance order state"));
     assertTrue(ex.getCause() instanceof SQLException);
 
@@ -239,7 +238,7 @@ public class OrderServiceTest {
 
   @Test
   void updateOrderCookedTime_null_throwsIAE() {
-    assertThrows(IllegalArgumentException.class, () -> service.updateOrderCookedTime(1L, null, true));
+    assertThrows(IllegalArgumentException.class, () -> service.updateOrderCookedTime(1L, null));
     verifyNoInteractions(orderDAO, batchDAO, publisher);
   }
 
@@ -249,7 +248,7 @@ public class OrderServiceTest {
     Order o = order(5, 7, "Dest", "[]", t0, null, null, Order.State.DELIVERED, true, null);
     when(orderDAO.getOrder(5L)).thenReturn(Optional.of(o));
 
-    assertThrows(IllegalStateException.class, () -> service.updateOrderCookedTime(5L, t0.plusSeconds(60), true));
+    assertThrows(IllegalStateException.class, () -> service.updateOrderCookedTime(5L, t0.plusSeconds(60)));
 
     verify(orderDAO).getOrder(5L);
     verifyNoMoreInteractions(orderDAO);
@@ -262,7 +261,7 @@ public class OrderServiceTest {
     Order o = order(5, 7, "Dest", "[]", t0, null, null, Order.State.COOKING, true, null);
     when(orderDAO.getOrder(5L)).thenReturn(Optional.of(o));
 
-    assertThrows(IllegalArgumentException.class, () -> service.updateOrderCookedTime(5L, t0.minusSeconds(1), true));
+    assertThrows(IllegalArgumentException.class, () -> service.updateOrderCookedTime(5L, t0.minusSeconds(1)));
 
     verify(orderDAO).getOrder(5L);
     verifyNoMoreInteractions(orderDAO);
@@ -277,7 +276,7 @@ public class OrderServiceTest {
     when(orderDAO.getOrder(5L)).thenReturn(Optional.of(o));
     when(orderDAO.updateOrderCookedTime(5L, cooked)).thenReturn(true);
 
-    service.updateOrderCookedTime(5L, cooked, true);
+    service.updateOrderCookedTime(5L, cooked);
 
     verify(orderDAO).updateOrderCookedTime(5L, cooked);
     verify(publisher).refreshOrderData(7L);
@@ -291,7 +290,7 @@ public class OrderServiceTest {
     when(orderDAO.getOrder(5L)).thenReturn(Optional.of(o));
     when(orderDAO.updateOrderCookedTime(anyLong(), any())).thenThrow(new SQLException("boom"));
 
-    RuntimeException ex = assertThrows(RuntimeException.class, () -> service.updateOrderCookedTime(5L, cooked, true));
+    RuntimeException ex = assertThrows(RuntimeException.class, () -> service.updateOrderCookedTime(5L, cooked));
     assertTrue(ex.getMessage().contains("Failed to update cooked time"));
     assertTrue(ex.getCause() instanceof SQLException);
 
@@ -305,7 +304,7 @@ public class OrderServiceTest {
     Order o = order(5, 7, "Dest", "[]", Instant.now(), null, null, Order.State.DELIVERED, true, null);
     when(orderDAO.getOrder(5L)).thenReturn(Optional.of(o));
 
-    assertThrows(IllegalStateException.class, () -> service.remakeOrder(5L, true));
+    assertThrows(IllegalStateException.class, () -> service.remakeOrder(5L));
 
     verify(orderDAO).getOrder(5L);
     verifyNoMoreInteractions(orderDAO);
@@ -318,7 +317,7 @@ public class OrderServiceTest {
     when(orderDAO.getOrder(5L)).thenReturn(Optional.of(o));
     when(orderDAO.remakeOrder(5L, Order.State.COOKING, true)).thenReturn(true);
 
-    service.remakeOrder(5L, true);
+    service.remakeOrder(5L);
 
     verify(orderDAO).remakeOrder(5L, Order.State.COOKING, true);
     verify(publisher).refreshOrderData(7L);
@@ -330,7 +329,7 @@ public class OrderServiceTest {
     when(orderDAO.getOrder(5L)).thenReturn(Optional.of(o));
     when(orderDAO.remakeOrder(anyLong(), any(), anyBoolean())).thenThrow(new SQLException("boom"));
 
-    RuntimeException ex = assertThrows(RuntimeException.class, () -> service.remakeOrder(5L, true));
+    RuntimeException ex = assertThrows(RuntimeException.class, () -> service.remakeOrder(5L));
     assertTrue(ex.getMessage().contains("Failed to remake order"));
     assertTrue(ex.getCause() instanceof SQLException);
 

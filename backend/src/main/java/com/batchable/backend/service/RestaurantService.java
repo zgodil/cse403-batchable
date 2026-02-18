@@ -30,19 +30,16 @@ public class RestaurantService {
   private final OrderDAO orderDAO;
   private final DriverDAO driverDAO;
   private final MenuItemDAO menuItemDAO;
-  private final BatchingManager batchingManager;
 
   public RestaurantService(
       RestaurantDAO restaurantDAO,
       OrderDAO orderDAO,
       DriverDAO driverDAO,
-      MenuItemDAO menuItemDAO,
-      BatchingManager batchingManager) {
+      MenuItemDAO menuItemDAO) {
     this.restaurantDAO = restaurantDAO;
     this.orderDAO = orderDAO;
     this.driverDAO = driverDAO;
     this.menuItemDAO = menuItemDAO;
-    this.batchingManager = batchingManager;
   }
 
   /**
@@ -87,7 +84,6 @@ public class RestaurantService {
         throw new IllegalStateException("Restaurant already exists: " + restaurant.name);
 
       long restaurantId = restaurantDAO.createRestaurant(restaurant.name, restaurant.location);
-      batchingManager.addManager(restaurantId);
       return restaurantId;
 
     } catch (SQLException e) {
@@ -140,7 +136,6 @@ public class RestaurantService {
       if (!ok)
         throw new IllegalArgumentException("Restaurant not found: " + restaurantId);
       
-      batchingManager.updateManagerAddress(restaurantId, restaurant.location);
     } catch (SQLException e) {
       throw new RuntimeException("Failed to update restaurant", e);
     }
@@ -204,8 +199,6 @@ public class RestaurantService {
       boolean ok = restaurantDAO.deleteRestaurant(restaurantId);
       if (!ok)
         throw new IllegalArgumentException("Restaurant not found: " + restaurantId);
-
-      batchingManager.removeManager(restaurantId);
 
     } catch (SQLException e) {
       throw new RuntimeException("Failed to remove restaurant", e);
