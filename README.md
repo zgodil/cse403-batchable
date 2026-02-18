@@ -21,7 +21,23 @@ npm run build
 ```
 ## IMPORTANT!
 After running npm build, a folder named `build` should appear within the frontend. Copy all contents of the `build` folder, and paste it into a folder named `static`, located in backend/src/main/resources/
+
+You must `cd backend` and then: 
+Configure the following envs according to the given document:
+```
+$ export GOOGLE_API_ROUTES_KEY = "<key>"
+```
+```
+$ export TWILIO_ACCOUNT_SID = <key>
+```
+```
+$ export TWILIO_AUTH_TOKEN=<key>
+```
+```
+$ export TWILIO_PHONE_NUMBER=<key>
+```
 Now you're set up to communicate with and run the backend!
+Note that everytime you run the backend, you need to run the above exports!
 
 ## Backend (Local Development)
 ### Prerequisites
@@ -57,19 +73,6 @@ npm run db:psql
 Get Docker
 Ensure Docker Desktop is running
 `$ docker` should return docker commands
-Configure the following envs according to the given document:
-```
-$ export GOOGLE_API_ROUTES_KEY = "<key>"
-```
-```
-$ export TWILIO_ACCOUNT_SID = <key>
-```
-```
-$ export TWILIO_AUTH_TOKEN=<key>
-```
-```
-$ export TWILIO_PHONE_NUMBER=<key>
-```
 
 To run code coverage: `./mvnw verify`
 Look for coverage results in `backend/target/site/jacoco/index.html`
