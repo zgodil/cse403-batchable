@@ -34,6 +34,9 @@ Download JDK 17 [here](https://www.oracle.com/java/technologies/javase/jdk17-arc
 To run the backend locally:
 ```bash
 cd backend
+```
+Then run the backend server
+```bash
 ./mvnw spring-boot:run
 ```
 ### Coverage
