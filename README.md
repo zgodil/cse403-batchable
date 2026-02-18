@@ -25,6 +25,7 @@ Next, run the server:
 ```bash
 npm run build
 ```
+## IMPORTANT!
 After running npm build, a folder named `build` should appear within the frontend. Copy all contents of the `build` folder, and paste it into a folder named `static`, located in backend/src/main/resources/
 Now you're set up to communicate with and run the backend!
 
@@ -39,15 +40,6 @@ Then run the backend server
 ```bash
 ./mvnw spring-boot:run
 ```
-### Coverage
-#### Prerequisites
-Ensure Docker Desktop is running
-`$ docker` should return docker commands
-`$ export GOOGLE_API_ROUTES_KEY = "<key>"`
-
-To run code coverage: `./mvnw verify`
-Look for coverage results in `backend/target/site/jacoco/index.html`
-
 ## Database (Local Development)
 
 We use Postgres running in Docker for local development. The database data persist via Docker and Schema/Migrations will live under infra/postgres
@@ -65,5 +57,15 @@ docker compose up -d db
 ``` bash
 npm run db:psql
 ```
+
+### Coverage
+#### Prerequisites
+Ensure Docker Desktop is running
+`$ docker` should return docker commands
+`$ export GOOGLE_API_ROUTES_KEY = "<key>"`
+
+To run code coverage: `./mvnw verify`
+Look for coverage results in `backend/target/site/jacoco/index.html`
+
 
 
