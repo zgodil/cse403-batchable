@@ -1,7 +1,6 @@
 import {
   useCallback,
   useEffect,
-  useMemo,
   useState,
   type Dispatch,
   type SetStateAction,
@@ -16,7 +15,7 @@ import {
 } from '../components/restaurant/mockData';
 import Button from '~/components/Button';
 import RestaurantContext from '~/components/RestaurantContext';
-import {createRestaurantApiClient} from '~/api/restaurantClient';
+import {restaurantApi} from '~/api/endpoints/restaurant';
 
 const configuredRestaurantId = Number(import.meta.env.VITE_RESTAURANT_ID);
 const DEFAULT_RESTAURANT_ID = Number.isFinite(configuredRestaurantId)
@@ -24,8 +23,6 @@ const DEFAULT_RESTAURANT_ID = Number.isFinite(configuredRestaurantId)
   : 1;
 
 function RestaurantPage() {
-  const restaurantApiClient = useMemo(() => createRestaurantApiClient(), []);
-
   const [drivers, setDrivers] = useState(initialDrivers);
   const [isEditingDrivers, setIsEditingDrivers] = useState(false);
 
@@ -41,12 +38,26 @@ function RestaurantPage() {
     setIsLoadingData(true);
     setLoadError(null);
     try {
-      const data = await restaurantApiClient.getRestaurantPageData(
-        DEFAULT_RESTAURANT_ID,
-      );
-      setDrivers(data.drivers);
-      setRestaurant(data.restaurant);
-      setMenuItems(data.menuItems);
+      const restaurantId = {
+        type: 'Restaurant' as const,
+        id: DEFAULT_RESTAURANT_ID,
+      };
+      const [restaurantData, driversData, menuItemsData] = await Promise.all([
+        restaurantApi.read(restaurantId),
+        restaurantApi.getDrivers(restaurantId),
+        restaurantApi.getMenuItems(restaurantId),
+      ]);
+
+      if (!restaurantData || !driversData || !menuItemsData) {
+        setLoadError(
+          'Could not load restaurant data from the backend. Showing local fallback data.',
+        );
+        return;
+      }
+
+      setDrivers(driversData);
+      setRestaurant(restaurantData);
+      setMenuItems(menuItemsData);
     } catch (error) {
       console.error('Failed to load restaurant admin data', error);
       setLoadError(
@@ -55,7 +66,7 @@ function RestaurantPage() {
     } finally {
       setIsLoadingData(false);
     }
-  }, [restaurantApiClient]);
+  }, []);
 
   useEffect(() => {
     void loadRestaurantData();
