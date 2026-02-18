@@ -57,6 +57,9 @@ npm run db:psql
 Ensure Docker Desktop is running
 `$ docker` should return docker commands
 `$ export GOOGLE_API_ROUTES_KEY = "<key>"`
+`$ export TWILIO_ACCOUNT_SID = <key>`
+`$ export TWILIO_AUTH_TOKEN=<key>`
+`$ export TWILIO_PHONE_NUMBER=<key>`
 
 To run code coverage: `./mvnw verify`
 Look for coverage results in `backend/target/site/jacoco/index.html`
