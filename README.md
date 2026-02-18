@@ -40,7 +40,7 @@ chmod +x ./build.sh
 ./run.sh
 ```
 
-### Code Coverage (front end and back end)
+## Code Coverage (front end and back end)
 Ensure Docker Desktop is running
 `$ docker` should return docker commands
 ### Frontend code coverage
