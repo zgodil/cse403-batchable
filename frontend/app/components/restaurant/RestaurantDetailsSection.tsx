@@ -1,12 +1,14 @@
 import type {Dispatch, SetStateAction} from 'react';
 import type {Restaurant} from '../../domain/objects';
 import Button from '../Button';
+import {restaurantApi} from '~/api/endpoints/restaurant';
 
 type RestaurantDetailsSectionProps = {
   restaurant: Restaurant;
   setRestaurant: Dispatch<SetStateAction<Restaurant>>;
   isEditing: boolean;
   setIsEditing: Dispatch<SetStateAction<boolean>>;
+  refreshRestaurantData: () => Promise<void> | void;
 };
 
 function RestaurantDetailsSection({
@@ -14,12 +16,30 @@ function RestaurantDetailsSection({
   setRestaurant,
   isEditing,
   setIsEditing,
+  refreshRestaurantData,
 }: RestaurantDetailsSectionProps) {
+  const toggleEditing = async () => {
+    if (!isEditing) {
+      setIsEditing(true);
+      return;
+    }
+
+    const updated = await restaurantApi.update(restaurant);
+    if (!updated) {
+      alert('Failed to update restaurant details.');
+      await refreshRestaurantData();
+      return;
+    }
+
+    setIsEditing(false);
+    await refreshRestaurantData();
+  };
+
   return (
     <section className="bg-white dark:bg-gray-900 p-6 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-800">
       <div className="mb-4 flex items-center justify-between">
         <h2 className="text-xl font-bold">Restaurant Details</h2>
-        <Button style="emerald" onClick={() => setIsEditing(!isEditing)}>
+        <Button style="emerald" onClick={() => void toggleEditing()}>
           {isEditing ? 'Done Editing' : 'Edit Restaurant'}
         </Button>
       </div>

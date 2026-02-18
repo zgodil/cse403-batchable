@@ -3,12 +3,14 @@ import type {Driver} from '../../domain/objects';
 import {useModal} from '../Modal';
 import AddDriverModal from './AddDriverModal';
 import Button from '../Button';
+import {driverApi} from '~/api/endpoints/driver';
 
 type DriversSectionProps = {
   drivers: Driver[];
   setDrivers: Dispatch<SetStateAction<Driver[]>>;
   isEditing: boolean;
   setIsEditing: Dispatch<SetStateAction<boolean>>;
+  refreshRestaurantData: () => Promise<void> | void;
 };
 
 function DriversSection({
@@ -16,6 +18,7 @@ function DriversSection({
   setDrivers,
   isEditing,
   setIsEditing,
+  refreshRestaurantData,
 }: DriversSectionProps) {
   const addDriverModal = useModal();
   const [editingDriverId, setEditingDriverId] = useState<number | null>(null);
@@ -28,6 +31,38 @@ function DriversSection({
 
   const toggleSectionEditing = () => {
     setIsEditing(!isEditing);
+  };
+
+  const createDriver = async (driver: Driver) => {
+    const createdId = await driverApi.create(driver);
+    if (!createdId) {
+      alert('Failed to create driver.');
+      return;
+    }
+    await refreshRestaurantData();
+  };
+
+  const saveDriver = async (driver: Driver) => {
+    const updated = await driverApi.update(driver);
+    if (!updated) {
+      alert('Failed to update driver.');
+      await refreshRestaurantData();
+      return;
+    }
+    setEditingDriverId(null);
+    await refreshRestaurantData();
+  };
+
+  const deleteDriver = async (driver: Driver) => {
+    const deleted = await driverApi.delete(driver.id);
+    if (!deleted) {
+      alert('Failed to delete driver.');
+      return;
+    }
+    if (editingDriverId === driver.id.id) {
+      setEditingDriverId(null);
+    }
+    await refreshRestaurantData();
   };
 
   return (
@@ -145,27 +180,20 @@ function DriversSection({
                         <Button
                           style={isEditingDriver ? 'blue' : 'indigo'}
                           small
-                          onClick={() =>
-                            setEditingDriverId(
-                              isEditingDriver ? null : driver.id.id,
-                            )
-                          }
+                          onClick={() => {
+                            if (!isEditingDriver) {
+                              setEditingDriverId(driver.id.id);
+                              return;
+                            }
+                            void saveDriver(driver);
+                          }}
                         >
                           {isEditingDriver ? 'Done' : 'Edit'}
                         </Button>
                         <Button
                           style="red"
                           small
-                          onClick={() => {
-                            setDrivers(current =>
-                              current.filter(
-                                item => item.id.id !== driver.id.id,
-                              ),
-                            );
-                            if (isEditingDriver) {
-                              setEditingDriverId(null);
-                            }
-                          }}
+                          onClick={() => void deleteDriver(driver)}
                         >
                           Delete
                         </Button>
@@ -179,7 +207,7 @@ function DriversSection({
         </table>
       </div>
 
-      <AddDriverModal state={addDriverModal} />
+      <AddDriverModal state={addDriverModal} onCreate={createDriver} />
     </section>
   );
 }

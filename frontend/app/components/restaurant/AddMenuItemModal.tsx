@@ -7,8 +7,9 @@ import {fakeId, type MenuItem} from '~/domain/objects';
 
 interface Props {
   state: ModalState;
+  onCreate: (menuItem: MenuItem) => Promise<void> | void;
 }
-export default function AddMenuItemModal({state}: Props) {
+export default function AddMenuItemModal({state, onCreate}: Props) {
   const restaurant = useContext(RestaurantContext);
   const submitNewMenuItem = (data: {name: string}) => {
     if (!restaurant) {
@@ -22,8 +23,7 @@ export default function AddMenuItemModal({state}: Props) {
       name: data.name,
     };
 
-    console.log('Added Menu Item:', newMenuItem);
-    // back-end API call
+    void onCreate(newMenuItem);
   };
 
   return (

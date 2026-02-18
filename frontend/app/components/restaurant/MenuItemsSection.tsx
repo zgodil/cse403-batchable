@@ -3,12 +3,14 @@ import type {MenuItem} from '../../domain/objects';
 import {useModal} from '../Modal';
 import AddMenuItemModal from './AddMenuItemModal';
 import Button from '../Button';
+import {menuApi} from '~/api/endpoints/menu';
 
 type MenuItemsSectionProps = {
   menuItems: MenuItem[];
   setMenuItems: Dispatch<SetStateAction<MenuItem[]>>;
   isEditing: boolean;
   setIsEditing: Dispatch<SetStateAction<boolean>>;
+  refreshRestaurantData: () => Promise<void> | void;
 };
 
 function MenuItemsSection({
@@ -16,6 +18,7 @@ function MenuItemsSection({
   setMenuItems,
   isEditing,
   setIsEditing,
+  refreshRestaurantData,
 }: MenuItemsSectionProps) {
   const addMenuItemModal = useModal();
   const [editingMenuItemId, setEditingMenuItemId] = useState<number | null>(
@@ -30,6 +33,38 @@ function MenuItemsSection({
 
   const toggleSectionEditing = () => {
     setIsEditing(!isEditing);
+  };
+
+  const createMenuItem = async (menuItem: MenuItem) => {
+    const createdId = await menuApi.create(menuItem);
+    if (!createdId) {
+      alert('Failed to create menu item.');
+      return;
+    }
+    await refreshRestaurantData();
+  };
+
+  const saveMenuItem = async (menuItem: MenuItem) => {
+    const updated = await menuApi.update(menuItem);
+    if (!updated) {
+      alert('Failed to update menu item.');
+      await refreshRestaurantData();
+      return;
+    }
+    setEditingMenuItemId(null);
+    await refreshRestaurantData();
+  };
+
+  const deleteMenuItem = async (menuItem: MenuItem) => {
+    const deleted = await menuApi.delete(menuItem.id);
+    if (!deleted) {
+      alert('Failed to delete menu item.');
+      return;
+    }
+    if (editingMenuItemId === menuItem.id.id) {
+      setEditingMenuItemId(null);
+    }
+    await refreshRestaurantData();
   };
 
   return (
@@ -92,27 +127,20 @@ function MenuItemsSection({
                         <Button
                           style={isEditingMenuItem ? 'orange' : 'amber'}
                           small
-                          onClick={() =>
-                            setEditingMenuItemId(
-                              isEditingMenuItem ? null : item.id.id,
-                            )
-                          }
+                          onClick={() => {
+                            if (!isEditingMenuItem) {
+                              setEditingMenuItemId(item.id.id);
+                              return;
+                            }
+                            void saveMenuItem(item);
+                          }}
                         >
                           {isEditingMenuItem ? 'Done' : 'Edit'}
                         </Button>
                         <Button
                           style="red"
                           small
-                          onClick={() => {
-                            setMenuItems(current =>
-                              current.filter(
-                                currentItem => currentItem.id.id !== item.id.id,
-                              ),
-                            );
-                            if (isEditingMenuItem) {
-                              setEditingMenuItemId(null);
-                            }
-                          }}
+                          onClick={() => void deleteMenuItem(item)}
                         >
                           Delete
                         </Button>
@@ -126,7 +154,7 @@ function MenuItemsSection({
         </table>
       </div>
 
-      <AddMenuItemModal state={addMenuItemModal} />
+      <AddMenuItemModal state={addMenuItemModal} onCreate={createMenuItem} />
     </section>
   );
 }

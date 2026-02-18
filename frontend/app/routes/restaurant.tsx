@@ -135,6 +135,7 @@ function RestaurantPage() {
             setDrivers={setDrivers}
             isEditing={isEditingDrivers}
             setIsEditing={setIsEditingDriversExclusive}
+            refreshRestaurantData={loadRestaurantData}
           />
 
           <RestaurantDetailsSection
@@ -142,6 +143,7 @@ function RestaurantPage() {
             setRestaurant={setRestaurant}
             isEditing={isEditingRestaurant}
             setIsEditing={setIsEditingRestaurant}
+            refreshRestaurantData={loadRestaurantData}
           />
 
           <MenuItemsSection
@@ -149,6 +151,7 @@ function RestaurantPage() {
             setMenuItems={setMenuItems}
             isEditing={isEditingMenu}
             setIsEditing={setIsEditingMenuExclusive}
+            refreshRestaurantData={loadRestaurantData}
           />
         </div>
       </RestaurantContext>
