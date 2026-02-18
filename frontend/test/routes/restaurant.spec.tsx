@@ -93,15 +93,15 @@ describe('Restaurant page', () => {
     expect(screen.getByText('Mochi')).toBeInTheDocument();
   });
 
-  it('shows load error and keeps local fallback data when backend data is missing', async () => {
+  it('shows load error when backend data is missing', async () => {
     vi.mocked(restaurantApi.getDrivers).mockResolvedValueOnce(null);
 
     render(<RestaurantStub />);
 
-    await screen.findByText(
-      'Could not load restaurant data from the backend. Showing local fallback data.',
-    );
-    expect(screen.getByText('Ben')).toBeInTheDocument();
+    await screen.findByText('Could not load restaurant data from the backend.');
+    expect(
+      screen.queryByRole('heading', {name: 'Restaurant Details'}),
+    ).not.toBeInTheDocument();
   });
 
   it('keeps drivers and menu edit modes mutually exclusive', async () => {
