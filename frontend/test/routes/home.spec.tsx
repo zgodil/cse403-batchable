@@ -14,7 +14,13 @@ describe('Home Dashboard', () => {
   it('opens the modal on button click', () => {
     render(<HomeStub />);
     fireEvent.click(screen.getByRole('button', {name: /\+ Add New Order/i}));
-    expect(screen.getByText(/Create New Order/i)).toBeInTheDocument();
+    expect(screen.getByText(/Customer Address/i)).toBeInTheDocument();
+    expect(screen.getByText(/Item Name\(s\)/i)).toBeInTheDocument();
+    expect(screen.getByText(/Prep Time \(min\)/i)).toBeInTheDocument();
+    expect(screen.getByText(/Delivery Time \(min\)/i)).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', {name: /Create New Order/i}),
+    ).toBeInTheDocument();
   });
 });
 
