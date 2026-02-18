@@ -1,196 +1,149 @@
 package com.batchable.backend.service;
 
+import com.batchable.backend.db.dao.BatchDAO;
+import com.batchable.backend.db.dao.OrderDAO;
 import com.batchable.backend.db.models.Batch;
 import com.batchable.backend.db.models.Order;
 import com.batchable.backend.websocket.OrderWebSocketPublisher;
 import java.time.Instant;
+import java.util.List;
 import org.springframework.stereotype.Service;
 
 /**
- * OrderService is part of the business logic layer.
- *
- * Responsibilities:
- *  - Enforce valid order lifecycle transitions
- *  - Protect domain invariants
- *  - Coordinate persistence and higher-level system behavior
- *
- * This service should be the ONLY component allowed to mutate Order state.
- * Controllers must call this service instead of modifying Orders directly.
+ * Business logic layer for orders. Enforces valid lifecycle transitions,
+ * domain invariants, and coordinates persistence and downstream effects.
+ * All order mutations must go through this service.
  */
 @Service
 public class OrderService {
+  private final DbOrderService dbOrderService;
+  private final BatchingManager batchingManager;
+  private final OrderDAO orderDAO;
+  private final BatchDAO batchDAO;
   private final OrderWebSocketPublisher publisher;
 
-  public OrderService(OrderWebSocketPublisher publisher) {
+  public OrderService(DbOrderService dbOrderService, BatchingManager batchingManager,
+      OrderDAO orderDAO, BatchDAO batchDAO, OrderWebSocketPublisher publisher) {
+    this.dbOrderService = dbOrderService;
+    this.batchingManager = batchingManager;
+    this.orderDAO = orderDAO;
+    this.batchDAO = batchDAO;
     this.publisher = publisher;
   }
 
   /**
-   * Creates a new order in the system.
+   * Creates a new order.
    *
-   * Responsibilities:
-   *  - Validate required fields (restaurant, items, timestamps, etc.)
-   *  - Ensure order does not already exist
-   *  - Initialize default state (e.g., CREATED)
-   *  - Persist to database
-   *
-   * Errors:
-   *  - IllegalArgumentException if required fields are missing or invalid
-   *  - IllegalStateException if order ID already exists
-   *  - RuntimeException (or custom DataAccessException) if persistence fails
+   * @param order the order to create (ID must be <= 0)
+   * @return the generated order ID
    */
-  public void createOrder(Order order) {
-    // TODO
-    throw new UnsupportedOperationException("Not implemented yet");
-    // Push update to frontend via WebSocket
-    // publisher.refreshOrderData(); uncomment when implemented
+  public long createOrder(Order order) {
+    long id = dbOrderService.createOrder(order);
+    batchingManager.addOrder(dbOrderService.getOrder(id));
+    return id;
   }
 
   /**
-   * Advances the state of the specified order by exactly one valid step
-   * in the lifecycle.
-   * E.g. COOKING -> COOKED
+   * Advances order state (e.g., COOKING → COOKED).
    *
-   * Responsibilities:
-   *  - Retrieve order from persistence layer
-   *  - Determine the next valid state
-   *  - Validate transition is allowed
-   *  - Persist updated state
-   *  - Trigger any necessary downstream effects (e.g., batching, notifications)
-   *
-   * Errors:
-   *  - IllegalArgumentException if orderId does not exist
-   *  - IllegalStateException if:
-   *      • Order is already DELIVERED
-   *      • No valid next state exists
-   *  - RuntimeException if persistence fails
+   * @param orderId ID of the order to advance
    */
   public void advanceOrderState(long orderId) {
-    // TODO
-    throw new UnsupportedOperationException("Not implemented yet");
-    // Push update to frontend via WebSocket
-    // publisher.refreshOrderData(); uncomment when implemented
+    dbOrderService.advanceOrderState(orderId);
+    batchingManager.updateOrder(orderId, false);
   }
 
   /**
    * Updates the cooked time of an order.
    *
-   * Domain Invariants:
-   *  - cookedTime must not be null
-   *  - cookedTime must not be before order.initialTime
-   *  - cookedTime must not be in the far past relative to now
-   *
-   * Responsibilities:
-   *  - Retrieve order
-   *  - Validate temporal constraints
-   *  - Persist update
-   *  - Potentially trigger batching recalculation if READY state depends on it
-   *
-   * Errors:
-   *  - IllegalArgumentException if:
-   *      • orderId does not exist
-   *      • cookedTime is null
-   *      • cookedTime < order.initialTime
-   *  - IllegalStateException if:
-   *      • Order is already DELIVERED
-   *  - RuntimeException if persistence fails
+   * @param orderId    ID of the order
+   * @param cookedTime new cooked time
    */
   public void updateOrderCookedTime(long orderId, Instant cookedTime) {
-    // TODO
-    throw new UnsupportedOperationException("Not implemented yet");
-    // Push update to frontend via WebSocket
-    // publisher.refreshOrderData(); uncomment when implemented
+    dbOrderService.updateOrderCookedTime(orderId, cookedTime);
+    batchingManager.updateOrder(orderId, true);
   }
-  
+
   /**
-   * Resets the specified order to behave as if it were newly created.
+   * Updates the delivery time of an order.
    *
-   * Behavior:
-   *  - Reset lifecycle state to initial (e.g., CREATED)
-   *  - Clear delivery/batch assignment
-   *  - Mark highPriority = true
-   *  - Preserve identity and restaurant association
+   * @param orderId      ID of the order
+   * @param deliveryTime new delivery time
+   */
+  public void updateOrderDeliveryTime(long orderId, Instant deliveryTime) {
+    dbOrderService.updateOrderDeliveryTime(orderId, deliveryTime);
+    batchingManager.updateOrder(orderId, true);
+  }
+
+  /**
+   * Resets an order to be remade (cooking state, high priority).
    *
-   * Use case:
-   *  - Order was incorrect or rejected and must be remade
-   *
-   * Responsibilities:
-   *  - Validate order exists
-   *  - Ensure order is eligible for remake (e.g., DELIVERED may not be allowed)
-   *  - Reset state fields consistently
-   *  - Persist update
-   *  - Trigger re-batching logic
-   *
-   * Errors:
-   *  - IllegalArgumentException if orderId does not exist
-   *  - IllegalStateException if:
-   *      • Order has been permanently finalized
-   *  - RuntimeException if persistence fails
+   * @param orderId ID of the order to remake
    */
   public void remakeOrder(long orderId) {
-    // TODO
-    throw new UnsupportedOperationException("Not implemented yet");
-    // Push update to frontend via WebSocket
-    // publisher.refreshOrderData(); uncomment when implemented
+    dbOrderService.remakeOrder(orderId);
+    batchingManager.updateOrder(orderId, true);
   }
 
   /**
-   * Retrieves the order by ID.
+   * Returns the order with the given ID.
    *
-   * Errors:
-   *  - IllegalArgumentException if orderId does not exist
+   * @param orderId ID of the order
+   * @return the order
+   * @throws IllegalArgumentException if not found
    */
   public Order getOrder(long orderId) {
-    // TODO
-    throw new UnsupportedOperationException("Not implemented yet");
+    return dbOrderService.getOrder(orderId);
   }
 
   /**
-   * Returns the Batch corresponding to the given batchId.
+   * Creates a new batch.
    *
-   * Errors:
-   *  - IllegalArgumentException if batchId does not exist
+   * @param batch the batch to create (ID must be <= 0)
+   * @return the generated batch ID
+   */
+  public long createBatch(Batch batch) {
+    return dbOrderService.createBatch(batch);
+  }
+
+
+  /**
+   * Gets batch by ID.
+   *
+   * @param batchId ID of the batch
+   * @return list of orders in that batch
    */
   public Batch getBatch(long batchId) {
-    // TODO
-    throw new UnsupportedOperationException("Not implemented yet");
+    return dbOrderService.getBatch(batchId);
   }
 
   /**
-   * Returns all orders belonging to a specific batch.
+   * Lists all orders belonging to a batch.
    *
-   * Errors:
-   *  - IllegalArgumentException if batchId does not exist
+   * @param batchId ID of the batch
+   * @return list of orders in that batch
    */
-  public Order[] getBatchOrders(long batchId) {
-    // TODO
-    throw new UnsupportedOperationException("Not implemented yet");
+  public List<Order> getBatchOrders(long batchId) {
+    return dbOrderService.getBatchOrders(batchId);
   }
 
   /**
-   * Removes an order from the system.
+   * Removes an order (if not delivered) and notifies the batching manager.
    *
-   * Domain Rules:
-   *  - Delivered orders may not be removable
-   *  - Removing an order may require batch recalculation
-   *
-   * Responsibilities:
-   *  - Validate order exists
-   *  - Ensure removal is allowed
-   *  - Remove from persistence
-   *  - Trigger downstream updates if batch was affected
-   *
-   * Errors:
-   *  - IllegalArgumentException if orderId does not exist
-   *  - IllegalStateException if:
-   *      • Order is already DELIVERED
-   *      • Order is in a finalized state
-   *  - RuntimeException if persistence fails
+   * @param orderId ID of the order to remove
    */
   public void removeOrder(long orderId) {
-    // TODO
-    throw new UnsupportedOperationException("Not implemented yet");
-    // Push update to frontend via WebSocket
-    // publisher.refreshOrderData(); uncomment when implemented
+    dbOrderService.removeOrder(orderId);
+    batchingManager.removeOrder(orderId);
+  }
+
+  /**
+   * Assigns an order to a batch.
+   *
+   * @param orderId ID of the order
+   * @param batchId ID of the batch
+   */
+  public void setOrderBatchId(long orderId, long batchId) {
+    dbOrderService.setOrderBatchId(orderId, batchId);
   }
 }
