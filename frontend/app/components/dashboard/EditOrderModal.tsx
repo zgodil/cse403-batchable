@@ -10,6 +10,7 @@ import FormField from '../FormField';
 import OrderState from '../OrderState';
 import {MS_PER_MINUTE} from '~/util/time';
 import {formatOrderName, formatTimeInterval} from '~/util/format';
+import {orderApi} from '~/api/endpoints/order';
 
 interface Props {
   order: Order;
@@ -23,13 +24,16 @@ export default function EditOrderModal({order, state}: Props) {
   const canChangeCookTime = isStateBefore(order.state, 'cooked');
   const canChangeState = isStateBefore(order.state, 'delivered');
 
-  const applyChanges = (data: {cookTime: string; state: Order['state']}) => {
+  const applyChanges = async (data: {
+    cookTime: string;
+    state: Order['state'];
+  }) => {
     if (canChangeCookTime) {
       const cookedTime = new Date(
-        order.initialTime.getTime() + Number(cookTime) * MS_PER_MINUTE,
+        order.initialTime.getTime() + Number(data.cookTime) * MS_PER_MINUTE,
       );
       console.log('Edit Order Cooked Time:', cookedTime);
-      // Call back-end API
+      await orderApi.updateCookedTime(order.id, cookedTime);
     }
 
     if (canChangeState) {
@@ -37,7 +41,7 @@ export default function EditOrderModal({order, state}: Props) {
       while (isStateBefore(currentState, data.state)) {
         currentState = nextStateAfter(currentState);
         console.log('Advance Order State:', currentState);
-        // Call back-end API
+        await orderApi.advanceState(order.id);
       }
     }
   };

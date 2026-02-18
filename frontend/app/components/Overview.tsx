@@ -1,31 +1,13 @@
-import {useEffect, useState, type ReactNode} from 'react';
+import {type ReactNode} from 'react';
 import type {DomainObject} from '~/domain/objects';
 import LoadError from './LoadError';
 import Loading from './Loading';
+import type {Loader} from '~/util/query';
 
 interface Props<T extends DomainObject> {
   title: string;
-  loadItems: () => Promise<T[] | null>;
+  itemsLoader: Loader<T[] | null>;
   renderItem: (item: T) => React.ReactElement;
-}
-
-function useLoader<T>(loader: () => Promise<T>) {
-  const [loaded, setLoaded] = useState(true);
-  const [response, setResponse] = useState<T | null>(null);
-
-  useEffect(() => {
-    if (!loaded) return;
-
-    setResponse(null);
-    setLoaded(false);
-
-    void loader().then(response => {
-      setResponse(response);
-      setLoaded(true);
-    });
-  }, []);
-
-  return {loaded, response};
 }
 
 /**
@@ -36,10 +18,10 @@ function useLoader<T>(loader: () => Promise<T>) {
  */
 export default function OverviewSection<T extends DomainObject>({
   title,
-  loadItems,
+  itemsLoader,
   renderItem,
 }: Props<T>) {
-  const {response: items, loaded} = useLoader(loadItems);
+  const {response: items, loaded} = itemsLoader;
 
   let content: ReactNode = <Loading>Loading items...</Loading>;
   if (loaded) {

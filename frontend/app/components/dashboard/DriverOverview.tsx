@@ -1,32 +1,24 @@
 import OverviewSection from '../Overview';
-import * as json from '~/domain/json';
-import type {Driver} from '~/domain/objects';
 import DriverCard from './DriverCard';
+import {useContext} from 'react';
+import {RestaurantContext} from '../RestaurantProvider';
+import {restaurantApi} from '~/api/endpoints/restaurant';
+import {useLoader} from '~/util/query';
 
 export default function DriverOverview() {
-  const jsonDrivers: json.JSONDomainObject<Driver>[] = [
-    {
-      id: 982,
-      name: 'Ben',
-      onShift: true,
-      phoneNumber: '2069994273',
-      restaurant: 98123,
-    },
-    {
-      id: 129,
-      name: 'Delano',
-      onShift: false,
-      phoneNumber: '1978176237',
-      restaurant: 98123,
-    },
-  ];
+  const restaurant = useContext(RestaurantContext);
 
-  const drivers = jsonDrivers.map(json.driver.parse);
+  const loader = useLoader(async () => {
+    if (!restaurant) return null;
+    const drivers = await restaurantApi.getDrivers(restaurant);
+    if (!drivers) return null;
+    return drivers.filter(driver => driver.onShift);
+  });
 
   return (
     <OverviewSection
       title="🚗 Driver Status"
-      items={drivers.filter(driver => driver.onShift)}
+      itemsLoader={loader}
       renderItem={driver => <DriverCard driver={driver} />}
     />
   );
