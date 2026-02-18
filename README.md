@@ -54,8 +54,10 @@ npm run db:psql
 
 ### Coverage
 #### Prerequisites
+Get Docker
 Ensure Docker Desktop is running
 `$ docker` should return docker commands
+Configure the following envs according to the given document:
 ```
 $ export GOOGLE_API_ROUTES_KEY = "<key>"
 ```
