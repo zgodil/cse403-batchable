@@ -1,25 +1,31 @@
-import {useEffect, useState, type Dispatch, type SetStateAction} from 'react';
-import type {Driver, Restaurant} from '../../domain/objects';
+import {
+  useContext,
+  useEffect,
+  useState,
+  type Dispatch,
+  type SetStateAction,
+} from 'react';
+import type {Driver} from '../../domain/objects';
 import {useModal} from '../Modal';
 import AddDriverModal from './AddDriverModal';
 import Button from '../Button';
 import {driverApi} from '~/api/endpoints/driver';
 import {restaurantApi} from '~/api/endpoints/restaurant';
 import DriverRow from './DriverRow';
+import RestaurantContext from '../RestaurantContext';
 
 type DriversSectionProps = {
-  restaurantId: Restaurant['id'];
   initialDrivers: Driver[];
   isEditing: boolean;
   setIsEditing: Dispatch<SetStateAction<boolean>>;
 };
 
 function DriversSection({
-  restaurantId,
   initialDrivers,
   isEditing,
   setIsEditing,
 }: DriversSectionProps) {
+  const restaurantId = useContext(RestaurantContext);
   const [drivers, setDrivers] = useState<Driver[]>(initialDrivers);
   const addDriverModal = useModal();
   const [editingDriverId, setEditingDriverId] = useState<number | null>(null);
@@ -35,6 +41,9 @@ function DriversSection({
   };
 
   const refreshDrivers = async () => {
+    if (!restaurantId) {
+      return false;
+    }
     const latestDrivers = await restaurantApi.getDrivers(restaurantId);
     if (!latestDrivers) {
       return false;

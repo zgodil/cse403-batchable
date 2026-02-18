@@ -11,6 +11,7 @@ import {createRoutesStub} from 'react-router';
 import * as json from '~/domain/json';
 import type {Driver, MenuItem, Restaurant} from '~/domain/objects';
 import RestaurantPage from '../../app/routes/restaurant';
+import RestaurantContext from '../../app/components/RestaurantContext';
 import {db, endpoint} from '../mocks/api/common';
 import {server} from '../mocks/api/server';
 
@@ -41,7 +42,14 @@ const testMenuItems: MenuItem[] = [
 ];
 
 const RestaurantStub = createRoutesStub([
-  {path: '/', Component: RestaurantPage},
+  {
+    path: '/',
+    Component: () => (
+      <RestaurantContext value={restaurantId}>
+        <RestaurantPage />
+      </RestaurantContext>
+    ),
+  },
 ]);
 
 function getSectionByHeading(name: string) {

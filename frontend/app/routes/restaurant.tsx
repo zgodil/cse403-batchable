@@ -1,4 +1,10 @@
-import {useEffect, useState, type Dispatch, type SetStateAction} from 'react';
+import {
+  useContext,
+  useEffect,
+  useState,
+  type Dispatch,
+  type SetStateAction,
+} from 'react';
 import {restaurantApi} from '~/api/endpoints/restaurant';
 import type {Driver, MenuItem, Restaurant} from '~/domain/objects';
 import DriversSection from '../components/restaurant/DriversSection';
@@ -8,15 +14,6 @@ import RestaurantContext from '~/components/RestaurantContext';
 import RestaurantPageHeader from '../components/restaurant/RestaurantPageHeader';
 import RestaurantPageLoadStatus from '../components/restaurant/RestaurantPageLoadStatus';
 
-const configuredRestaurantId = Number(import.meta.env.VITE_RESTAURANT_ID);
-const DEFAULT_RESTAURANT_ID = Number.isFinite(configuredRestaurantId)
-  ? configuredRestaurantId
-  : 1;
-const DEFAULT_RESTAURANT: Restaurant['id'] = {
-  type: 'Restaurant',
-  id: DEFAULT_RESTAURANT_ID,
-};
-
 type RestaurantPageData = {
   restaurant: Restaurant;
   drivers: Driver[];
@@ -24,6 +21,7 @@ type RestaurantPageData = {
 };
 
 function RestaurantPage() {
+  const restaurantId = useContext(RestaurantContext);
   const [data, setData] = useState<RestaurantPageData | null>(null);
   const [isLoadingData, setIsLoadingData] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -32,6 +30,13 @@ function RestaurantPage() {
   >(null);
 
   useEffect(() => {
+    if (!restaurantId) {
+      setData(null);
+      setLoadError('Could not determine restaurant.');
+      setIsLoadingData(false);
+      return;
+    }
+
     let cancelled = false;
 
     const loadRestaurantData = async () => {
@@ -39,9 +44,9 @@ function RestaurantPage() {
       setLoadError(null);
       try {
         const [restaurant, drivers, menuItems] = await Promise.all([
-          restaurantApi.read(DEFAULT_RESTAURANT),
-          restaurantApi.getDrivers(DEFAULT_RESTAURANT),
-          restaurantApi.getMenuItems(DEFAULT_RESTAURANT),
+          restaurantApi.read(restaurantId),
+          restaurantApi.getDrivers(restaurantId),
+          restaurantApi.getMenuItems(restaurantId),
         ]);
 
         if (cancelled) {
@@ -74,9 +79,11 @@ function RestaurantPage() {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [restaurantId]);
 
-  const setIsEditingDriversExclusive: Dispatch<SetStateAction<boolean>> = value =>
+  const setIsEditingDriversExclusive: Dispatch<
+    SetStateAction<boolean>
+  > = value =>
     setActiveEditSection(current => {
       const isEditingDrivers = current === 'drivers';
       const nextValue =
@@ -92,7 +99,8 @@ function RestaurantPage() {
   const setIsEditingMenuExclusive: Dispatch<SetStateAction<boolean>> = value =>
     setActiveEditSection(current => {
       const isEditingMenu = current === 'menu';
-      const nextValue = typeof value === 'function' ? value(isEditingMenu) : value;
+      const nextValue =
+        typeof value === 'function' ? value(isEditingMenu) : value;
 
       if (nextValue) {
         return 'menu';
@@ -101,43 +109,34 @@ function RestaurantPage() {
       return isEditingMenu ? null : current;
     });
 
-  const restaurantId = data?.restaurant.id ?? DEFAULT_RESTAURANT;
-
   const isEditingDrivers = activeEditSection === 'drivers';
   const isEditingMenu = activeEditSection === 'menu';
 
   return (
     <div className="p-8 max-w-7xl mx-auto min-h-screen bg-white dark:bg-gray-950 text-gray-900 dark:text-gray-100">
-      <RestaurantContext value={restaurantId}>
-        <RestaurantPageHeader />
-        <RestaurantPageLoadStatus
-          isLoadingData={isLoadingData}
-          loadError={loadError}
-        />
+      <RestaurantPageHeader />
+      <RestaurantPageLoadStatus
+        isLoadingData={isLoadingData}
+        loadError={loadError}
+      />
 
-        {data && (
-          <div className="grid grid-cols-1 gap-6">
-            <DriversSection
-              restaurantId={restaurantId}
-              initialDrivers={data.drivers}
-              isEditing={isEditingDrivers}
-              setIsEditing={setIsEditingDriversExclusive}
-            />
+      {data && (
+        <div className="grid grid-cols-1 gap-6">
+          <DriversSection
+            initialDrivers={data.drivers}
+            isEditing={isEditingDrivers}
+            setIsEditing={setIsEditingDriversExclusive}
+          />
 
-            <RestaurantDetailsSection
-              restaurantId={restaurantId}
-              initialRestaurant={data.restaurant}
-            />
+          <RestaurantDetailsSection initialRestaurant={data.restaurant} />
 
-            <MenuItemsSection
-              restaurantId={restaurantId}
-              initialMenuItems={data.menuItems}
-              isEditing={isEditingMenu}
-              setIsEditing={setIsEditingMenuExclusive}
-            />
-          </div>
-        )}
-      </RestaurantContext>
+          <MenuItemsSection
+            initialMenuItems={data.menuItems}
+            isEditing={isEditingMenu}
+            setIsEditing={setIsEditingMenuExclusive}
+          />
+        </div>
+      )}
     </div>
   );
 }

@@ -1,17 +1,17 @@
-import {useEffect, useState} from 'react';
+import {useContext, useEffect, useState} from 'react';
 import type {Restaurant} from '../../domain/objects';
 import Button from '../Button';
 import {restaurantApi} from '~/api/endpoints/restaurant';
+import RestaurantContext from '../RestaurantContext';
 
 type RestaurantDetailsSectionProps = {
-  restaurantId: Restaurant['id'];
   initialRestaurant: Restaurant;
 };
 
 function RestaurantDetailsSection({
-  restaurantId,
   initialRestaurant,
 }: RestaurantDetailsSectionProps) {
+  const restaurantId = useContext(RestaurantContext);
   const [restaurant, setRestaurant] = useState(initialRestaurant);
   const [draftRestaurant, setDraftRestaurant] = useState(initialRestaurant);
   const [isEditing, setIsEditing] = useState(false);
@@ -23,6 +23,9 @@ function RestaurantDetailsSection({
   }, [restaurant, isEditing]);
 
   const refreshRestaurant = async () => {
+    if (!restaurantId) {
+      return false;
+    }
     const latestRestaurant = await restaurantApi.read(restaurantId);
     if (!latestRestaurant) {
       return false;

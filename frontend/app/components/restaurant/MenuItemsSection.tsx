@@ -1,25 +1,31 @@
-import {useEffect, useState, type Dispatch, type SetStateAction} from 'react';
-import type {MenuItem, Restaurant} from '../../domain/objects';
+import {
+  useContext,
+  useEffect,
+  useState,
+  type Dispatch,
+  type SetStateAction,
+} from 'react';
+import type {MenuItem} from '../../domain/objects';
 import {useModal} from '../Modal';
 import AddMenuItemModal from './AddMenuItemModal';
 import Button from '../Button';
 import {menuApi} from '~/api/endpoints/menu';
 import {restaurantApi} from '~/api/endpoints/restaurant';
 import MenuItemRow from './MenuItemRow';
+import RestaurantContext from '../RestaurantContext';
 
 type MenuItemsSectionProps = {
-  restaurantId: Restaurant['id'];
   initialMenuItems: MenuItem[];
   isEditing: boolean;
   setIsEditing: Dispatch<SetStateAction<boolean>>;
 };
 
 function MenuItemsSection({
-  restaurantId,
   initialMenuItems,
   isEditing,
   setIsEditing,
 }: MenuItemsSectionProps) {
+  const restaurantId = useContext(RestaurantContext);
   const [menuItems, setMenuItems] = useState<MenuItem[]>(initialMenuItems);
   const addMenuItemModal = useModal();
   const [editingMenuItemId, setEditingMenuItemId] = useState<number | null>(
@@ -37,6 +43,9 @@ function MenuItemsSection({
   };
 
   const refreshMenuItems = async () => {
+    if (!restaurantId) {
+      return false;
+    }
     const latestMenuItems = await restaurantApi.getMenuItems(restaurantId);
     if (!latestMenuItems) {
       return false;
