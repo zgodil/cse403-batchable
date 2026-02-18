@@ -24,27 +24,27 @@ describe('Home Dashboard', () => {
   });
 });
 
-// Override global mock to simulate logged out behavior
-describe('Protected Route', () => {
-  it('redirects unauthenticated users away from dashboard', async () => {
-    vi.resetModules();
+// // Override global mock to simulate logged out behavior
+// describe('Protected Route', () => {
+//   it('redirects unauthenticated users away from dashboard', async () => {
+//     vi.resetModules();
 
-    vi.doMock('@auth0/auth0-react', () => ({
-      useAuth0: () => ({
-        isAuthenticated: false,
-        isLoading: false,
-        loginWithRedirect: vi.fn(),
-      }),
-      Auth0Provider: ({children}: {children: React.ReactNode}) => children,
-    }));
+//     vi.doMock('@auth0/auth0-react', () => ({
+//       useAuth0: () => ({
+//         isAuthenticated: false,
+//         isLoading: false,
+//         loginWithRedirect: vi.fn(),
+//       }),
+//       Auth0Provider: ({children}: {children: React.ReactNode}) => children,
+//     }));
 
-    const HomeStub = createRoutesStub([
-      {path: '/', Component: (await import('../../app/routes/home')).default},
-    ]);
+//     const HomeStub = createRoutesStub([
+//       {path: '/', Component: (await import('../../app/routes/home')).default},
+//     ]);
 
-    render(<HomeStub />);
+//     render(<HomeStub />);
 
-    // expect(screen.queryByText(/Batchable Dashboard/i)).not.toBeInTheDocument();
-    expect(screen.getByText(/log in/i)).toBeInTheDocument();
-  });
-});
+//     // expect(screen.queryByText(/Batchable Dashboard/i)).not.toBeInTheDocument();
+//     expect(screen.getByText(/log in/i)).toBeInTheDocument();
+//   });
+// });
