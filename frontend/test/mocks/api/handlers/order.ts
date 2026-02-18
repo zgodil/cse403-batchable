@@ -15,10 +15,11 @@ export const orderHandlers = [
   http.put(endpoint('/order/:id/advance'), req => {
     const order = db.orders.get(asId<Order>(req.params.id));
     if (!order) return notFound('order');
-    if (order.state !== 'delivered') {
+    const parsedState = json.order.field('state').parse(order.state);
+    if (parsedState !== 'delivered') {
       db.orders.update({
         ...order,
-        state: nextStateAfter(order.state),
+        state: json.order.field('state').unparse(nextStateAfter(parsedState)),
       });
     }
     return noContent();
