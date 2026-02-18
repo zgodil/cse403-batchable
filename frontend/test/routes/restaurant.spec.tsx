@@ -1,19 +1,20 @@
-import {describe, it, expect, beforeEach, vi} from 'vitest';
+import {beforeEach, describe, expect, it, vi} from 'vitest';
 import {
-  render,
   screen,
   fireEvent,
+  render,
   waitFor,
   within,
 } from '@testing-library/react';
+import {http, HttpResponse} from 'msw';
 import {createRoutesStub} from 'react-router';
+import * as json from '~/domain/json';
 import type {Driver, MenuItem, Restaurant} from '~/domain/objects';
 import RestaurantPage from '../../app/routes/restaurant';
-import {restaurantApi} from '~/api/endpoints/restaurant';
-import {driverApi} from '~/api/endpoints/driver';
-import {menuApi} from '~/api/endpoints/menu';
+import {db, endpoint} from '../mocks/api/common';
+import {server} from '../mocks/api/server';
 
-const restaurantId: Restaurant['id'] = {type: 'Restaurant', id: 77};
+const restaurantId: Restaurant['id'] = {type: 'Restaurant', id: 1};
 
 const testRestaurant: Restaurant = {
   id: restaurantId,
@@ -23,7 +24,7 @@ const testRestaurant: Restaurant = {
 
 const testDrivers: Driver[] = [
   {
-    id: {type: 'Driver', id: 701},
+    id: {type: 'Driver', id: 1},
     restaurant: restaurantId,
     name: 'Ben',
     phoneNumber: {compact: '2061112222'},
@@ -33,7 +34,7 @@ const testDrivers: Driver[] = [
 
 const testMenuItems: MenuItem[] = [
   {
-    id: {type: 'MenuItem', id: 901},
+    id: {type: 'MenuItem', id: 1},
     restaurant: restaurantId,
     name: 'Mochi',
   },
@@ -50,6 +51,30 @@ function getSectionByHeading(name: string) {
   return section;
 }
 
+function seedRestaurantData() {
+  db.restaurants.insert(json.restaurant.unparse(testRestaurant));
+  testDrivers.forEach(driver => {
+    db.drivers.insert(json.driver.unparse(driver));
+  });
+  testMenuItems.forEach(menuItem => {
+    db.menuItems.insert(json.menuItem.unparse(menuItem));
+  });
+}
+
+function getRestaurantFromDb() {
+  const restaurant = db.restaurants.get(restaurantId.id);
+  if (!restaurant) throw new Error('Restaurant not found in mock database');
+  return json.restaurant.parse(restaurant);
+}
+
+function getDriversFromDb() {
+  return db.drivers.findAll().map(json.driver.parse);
+}
+
+function getMenuItemsFromDb() {
+  return db.menuItems.findAll().map(json.menuItem.parse);
+}
+
 async function renderLoadedRestaurantPage() {
   render(<RestaurantStub />);
   await screen.findByText('Ben');
@@ -61,19 +86,7 @@ describe('Restaurant page', () => {
 
     vi.spyOn(console, 'error').mockImplementation(() => {});
     vi.spyOn(window, 'alert').mockImplementation(() => {});
-
-    vi.spyOn(restaurantApi, 'read').mockResolvedValue(testRestaurant);
-    vi.spyOn(restaurantApi, 'getDrivers').mockResolvedValue(testDrivers);
-    vi.spyOn(restaurantApi, 'getMenuItems').mockResolvedValue(testMenuItems);
-    vi.spyOn(restaurantApi, 'update').mockResolvedValue(true);
-
-    vi.spyOn(driverApi, 'create').mockResolvedValue({type: 'Driver', id: 999});
-    vi.spyOn(driverApi, 'update').mockResolvedValue(true);
-    vi.spyOn(driverApi, 'delete').mockResolvedValue(true);
-
-    vi.spyOn(menuApi, 'create').mockResolvedValue({type: 'MenuItem', id: 998});
-    vi.spyOn(menuApi, 'update').mockResolvedValue(true);
-    vi.spyOn(menuApi, 'delete').mockResolvedValue(true);
+    seedRestaurantData();
   });
 
   it('loads backend restaurant data and clears loading state', async () => {
@@ -94,7 +107,11 @@ describe('Restaurant page', () => {
   });
 
   it('shows load error when backend data is missing', async () => {
-    vi.mocked(restaurantApi.getDrivers).mockResolvedValueOnce(null);
+    server.use(
+      http.get(endpoint('/restaurant/:id/drivers'), () => {
+        return HttpResponse.json(null);
+      }),
+    );
 
     render(<RestaurantStub />);
 
@@ -150,12 +167,10 @@ describe('Restaurant page', () => {
     );
 
     await waitFor(() =>
-      expect(restaurantApi.update).toHaveBeenCalledWith(
-        expect.objectContaining({
-          name: 'Updated Batchable Restaurant',
-          location: {address: '123 Updated St, Seattle, WA'},
-        }),
-      ),
+      expect(getRestaurantFromDb()).toMatchObject({
+        name: 'Updated Batchable Restaurant',
+        location: {address: '123 Updated St, Seattle, WA'},
+      }),
     );
   });
 
@@ -168,28 +183,33 @@ describe('Restaurant page', () => {
     );
 
     fireEvent.change(screen.getByLabelText('Driver Name'), {
-      target: {value: 'H'},
+      target: {value: 'Nina'},
     });
     fireEvent.change(screen.getByLabelText('Phone Number (digits only)'), {
       target: {value: '2063334444'},
     });
     fireEvent.click(screen.getByRole('button', {name: 'Add Driver'}));
 
-    await waitFor(() =>
-      expect(driverApi.create).toHaveBeenCalledWith(
+    await screen.findByText('Nina');
+    await waitFor(() => expect(getDriversFromDb()).toHaveLength(2));
+    expect(getDriversFromDb()).toEqual(
+      expect.arrayContaining([
         expect.objectContaining({
           restaurant: restaurantId,
-          name: 'H',
+          name: 'Nina',
           phoneNumber: {compact: '2063334444'},
           onShift: false,
         }),
-      ),
+      ]),
     );
-    await waitFor(() => expect(restaurantApi.read).toHaveBeenCalledTimes(2));
   });
 
   it('alerts when creating a driver fails', async () => {
-    vi.mocked(driverApi.create).mockResolvedValueOnce(null);
+    server.use(
+      http.post(endpoint('/driver'), () => {
+        return HttpResponse.text('create failed', {status: 500});
+      }),
+    );
 
     await renderLoadedRestaurantPage();
 
@@ -209,7 +229,7 @@ describe('Restaurant page', () => {
     await waitFor(() =>
       expect(window.alert).toHaveBeenCalledWith('Failed to create driver.'),
     );
-    expect(restaurantApi.read).toHaveBeenCalledTimes(1);
+    expect(getDriversFromDb()).toHaveLength(1);
   });
 
   it('updates and deletes menu items in edit mode', async () => {
@@ -227,14 +247,14 @@ describe('Restaurant page', () => {
     fireEvent.click(within(menuSection).getByRole('button', {name: 'Done'}));
 
     await waitFor(() =>
-      expect(menuApi.update).toHaveBeenCalledWith(
-        expect.objectContaining({name: 'Updated Mochi'}),
+      expect(getMenuItemsFromDb()).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({name: 'Updated Mochi'}),
+        ]),
       ),
     );
 
     fireEvent.click(within(menuSection).getByRole('button', {name: 'Delete'}));
-    await waitFor(() =>
-      expect(menuApi.delete).toHaveBeenCalledWith({type: 'MenuItem', id: 901}),
-    );
+    await waitFor(() => expect(getMenuItemsFromDb()).toHaveLength(0));
   });
 });
