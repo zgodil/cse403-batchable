@@ -12,7 +12,7 @@ import Button from '../Button';
 import {driverApi} from '~/api/endpoints/driver';
 import {restaurantApi} from '~/api/endpoints/restaurant';
 import DriverRow from './DriverRow';
-import RestaurantContext from '../RestaurantContext';
+import {RestaurantContext} from '../RestaurantProvider';
 
 type DriversSectionProps = {
   initialDrivers: Driver[];

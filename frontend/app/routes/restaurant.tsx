@@ -10,9 +10,9 @@ import type {Driver, MenuItem, Restaurant} from '~/domain/objects';
 import DriversSection from '../components/restaurant/DriversSection';
 import MenuItemsSection from '../components/restaurant/MenuItemsSection';
 import RestaurantDetailsSection from '../components/restaurant/RestaurantDetailsSection';
-import RestaurantContext from '~/components/RestaurantContext';
 import RestaurantPageHeader from '../components/restaurant/RestaurantPageHeader';
 import RestaurantPageLoadStatus from '../components/restaurant/RestaurantPageLoadStatus';
+import {RestaurantContext} from '~/components/RestaurantProvider';
 
 type RestaurantPageData = {
   restaurant: Restaurant;

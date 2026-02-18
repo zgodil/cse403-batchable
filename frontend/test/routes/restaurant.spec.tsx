@@ -11,7 +11,7 @@ import {createRoutesStub} from 'react-router';
 import * as json from '~/domain/json';
 import type {Driver, MenuItem, Restaurant} from '~/domain/objects';
 import RestaurantPage from '../../app/routes/restaurant';
-import RestaurantContext from '../../app/components/RestaurantContext';
+import {RestaurantContext} from '../../app/components/RestaurantProvider';
 import {db, endpoint} from '../mocks/api/common';
 import {server} from '../mocks/api/server';
 

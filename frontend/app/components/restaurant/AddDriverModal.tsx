@@ -2,7 +2,7 @@ import {fakeId, type Driver} from '~/domain/objects';
 import FormField from '../FormField';
 import type {ModalState} from '../Modal';
 import {useContext} from 'react';
-import RestaurantContext from '../RestaurantContext';
+import {RestaurantContext} from '../RestaurantProvider';
 import FormModal from '../FormModal';
 
 interface Props {

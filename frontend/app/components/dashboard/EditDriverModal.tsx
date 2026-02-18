@@ -1,7 +1,7 @@
 import type {Driver} from '~/domain/objects';
-import type {ModalState} from './Modal';
-import FormModal from './FormModal';
-import FormField from './FormField';
+import type {ModalState} from '../Modal';
+import FormModal from '../FormModal';
+import FormField from '../FormField';
 import {formatDriverName} from '~/util/format';
 import * as json from '~/domain/json';
 

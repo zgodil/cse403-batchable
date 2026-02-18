@@ -1,18 +1,16 @@
 import type {Driver} from '~/domain/objects';
 import {formatDriverName, formatPhoneNumber} from '~/util/format';
-import {useModal} from './Modal';
-import EditDriverModal from './EditDriverModal';
-import Card from './Card';
+import Card from '../Card';
 
 interface Props {
   driver: Driver;
 }
 
 export default function DriverCard({driver}: Props) {
-  const editDriverModal = useModal();
+  // const editDriverModal = useModal();
   return (
     <>
-      <Card onClick={() => editDriverModal.setOpen(true)}>
+      <Card>
         <div className="flex justify-between items-startr flex-col">
           <h2 className="font-bold text-gray-900 dark:text-gray-100">
             {formatDriverName(driver)}
@@ -30,7 +28,7 @@ export default function DriverCard({driver}: Props) {
           Status: {driver.onShift ? 'ON' : 'OFF'} SHIFT
         </p>
       </Card>
-      <EditDriverModal driver={driver} state={editDriverModal} />
+      {/* <EditDriverModal driver={driver} state={editDriverModal} /> */}
     </>
   );
 }

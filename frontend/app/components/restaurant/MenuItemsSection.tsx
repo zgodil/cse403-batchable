@@ -12,7 +12,7 @@ import Button from '../Button';
 import {menuApi} from '~/api/endpoints/menu';
 import {restaurantApi} from '~/api/endpoints/restaurant';
 import MenuItemRow from './MenuItemRow';
-import RestaurantContext from '../RestaurantContext';
+import {RestaurantContext} from '../RestaurantProvider';
 
 type MenuItemsSectionProps = {
   initialMenuItems: MenuItem[];

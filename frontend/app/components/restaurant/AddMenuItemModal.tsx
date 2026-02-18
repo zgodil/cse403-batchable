@@ -2,7 +2,7 @@ import {useContext} from 'react';
 import FormField from '../FormField';
 import FormModal from '../FormModal';
 import type {ModalState} from '../Modal';
-import RestaurantContext from '../RestaurantContext';
+import {RestaurantContext} from '../RestaurantProvider';
 import {fakeId, type MenuItem} from '~/domain/objects';
 import {menuApi} from '~/api/endpoints/menu';
 

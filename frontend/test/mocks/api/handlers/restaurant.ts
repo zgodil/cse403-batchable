@@ -9,6 +9,11 @@ export const restaurantHandlers = [
       db.drivers.findMatching('restaurant', asId<Restaurant>(req.params.id)),
     );
   }),
+  http.get(endpoint('/restaurant/:id/orders'), req => {
+    return HttpResponse.json(
+      db.orders.findMatching('restaurant', asId<Restaurant>(req.params.id)),
+    );
+  }),
   http.get(endpoint('/restaurant/:id/menu'), req => {
     return HttpResponse.json(
       db.menuItems.findMatching('restaurant', asId<Restaurant>(req.params.id)),

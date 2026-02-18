@@ -2,7 +2,7 @@ import {useContext, useEffect, useState} from 'react';
 import type {Restaurant} from '../../domain/objects';
 import Button from '../Button';
 import {restaurantApi} from '~/api/endpoints/restaurant';
-import RestaurantContext from '../RestaurantContext';
+import {RestaurantContext} from '../RestaurantProvider';
 
 type RestaurantDetailsSectionProps = {
   initialRestaurant: Restaurant;
