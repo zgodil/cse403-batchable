@@ -49,14 +49,21 @@ docker compose up -d db
 npm run db:psql
 ```
 
-### Code Coverage
-#### Prerequisites
-Get Docker
+### Code Coverage (front end and back end)
 Ensure Docker Desktop is running
 `$ docker` should return docker commands
-
-To run code coverage: `./mvnw verify`
+### Frontend code coverage
+```bash
+cd frontend
+npm test
+```
+### Backend code coverage
+To run code coverage: 
+```bash
+./mvnw verify
+```
 Look for coverage results in `backend/target/site/jacoco/index.html`
+
 
 ## Editor/Git Configuration
 Please install an [EditorConfig](https://editorconfig.org/) extension/plug-in for your editor so as to use our global .editorconfig settings and not mess up spacing, indentation, or line endings. If you're on Windows, please also use Git's `autocrlf=false` option, which is likely already enabled. If it's not, you can use:
