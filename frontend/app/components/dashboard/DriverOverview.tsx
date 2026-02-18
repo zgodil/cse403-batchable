@@ -1,4 +1,4 @@
-import OverviewSection from './Overview';
+import OverviewSection from '../Overview';
 import * as json from '~/domain/json';
 import type {Driver} from '~/domain/objects';
 import DriverCard from './DriverCard';

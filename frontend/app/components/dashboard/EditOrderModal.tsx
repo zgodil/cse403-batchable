@@ -4,10 +4,10 @@ import {
   ORDER_STATES,
   type Order,
 } from '~/domain/objects';
-import {type ModalState} from './Modal';
-import FormModal from './FormModal';
-import FormField from './FormField';
-import OrderState from './OrderState';
+import {type ModalState} from '../Modal';
+import FormModal from '../FormModal';
+import FormField from '../FormField';
+import OrderState from '../OrderState';
 import {MS_PER_MINUTE} from '~/util/time';
 import {formatOrderName, formatTimeInterval} from '~/util/format';
 

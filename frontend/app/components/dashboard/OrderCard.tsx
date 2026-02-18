@@ -1,9 +1,9 @@
 import type {Order} from '~/domain/objects';
 import {formatOrderName, formatTimeInterval} from '~/util/format';
 import EditOrderModal from './EditOrderModal';
-import Card from './Card';
-import {useModal} from './Modal';
-import OrderState from './OrderState';
+import Card from '../Card';
+import {useModal} from '../Modal';
+import OrderState from '../OrderState';
 
 interface Props {
   order: Order;

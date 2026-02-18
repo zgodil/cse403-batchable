@@ -1,5 +1,5 @@
 import type {Order} from '~/domain/objects';
-import OverviewSection from './Overview';
+import OverviewSection from '../Overview';
 import * as json from '~/domain/json';
 import OrderCard from './OrderCard';
 

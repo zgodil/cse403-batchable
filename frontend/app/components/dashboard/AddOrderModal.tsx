@@ -1,10 +1,10 @@
 import {fakeId, type Order} from '~/domain/objects';
 import * as json from '~/domain/json';
-import {type ModalState} from './Modal';
+import {type ModalState} from '../Modal';
 import {useContext} from 'react';
-import RestaurantContext from './RestaurantContext';
-import FormField from './FormField';
-import FormModal from './FormModal';
+import RestaurantContext from '../RestaurantContext';
+import FormField from '../FormField';
+import FormModal from '../FormModal';
 import {MS_PER_MINUTE} from '~/util/time';
 
 interface Props {

@@ -1,8 +1,8 @@
 import {useAuth0} from '@auth0/auth0-react';
 import LoginButton from '../components/LoginButton';
-import OrderOverview from '../components/OrderOverview';
-import DriverOverview from '../components/DriverOverview';
-import AddOrderModal from '../components/AddOrderModal';
+import OrderOverview from '../components/dashboard/OrderOverview';
+import DriverOverview from '../components/dashboard/DriverOverview';
+import AddOrderModal from '../components/dashboard/AddOrderModal';
 import Button from '~/components/Button';
 import {useModal} from '~/components/Modal';
 

@@ -1,8 +1,8 @@
 import type {Driver} from '~/domain/objects';
 import {formatDriverName, formatPhoneNumber} from '~/util/format';
-import {useModal} from './Modal';
+import {useModal} from '../Modal';
 import EditDriverModal from './EditDriverModal';
-import Card from './Card';
+import Card from '../Card';
 
 interface Props {
   driver: Driver;
