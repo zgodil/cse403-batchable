@@ -30,7 +30,7 @@ npm run build
 
 ## Backend (Local Development)
 ### Prerequisites
-Download JDK 17 [here](https://www.oracle.com/java/technologies/javase/jdk17-archive-downloads.html)
+Download JDK 17 [here](https://www.oracle.com/java/technologies/javase/jdk17-archive-downloads.html)\
 To run the backend locally:
 ```bash
 cd backend
