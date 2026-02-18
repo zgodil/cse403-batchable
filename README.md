@@ -39,6 +39,15 @@ chmod +x ./build.sh
 ./build.sh
 ./run.sh
 ```
+Follow this link to take you to the virtual Phone where you will recieve the text confirmation https://console.twilio.com/us1/develop/sms/virtual-phone
+You'll need to log in using the provided credentials: 
+User email: <See Ed>
+password: <See Ed>
+
+select recovery code as verification method when logging in:
+
+From there you will see a drop down on the right side with the text " Choose a sender number" click on it and select the only number available.
+All confimation  will be sent to this virtual number and will act as a mock phone
 
 ## Code Coverage (front end and back end)
 Ensure Docker Desktop is running
