@@ -2,14 +2,15 @@ import {fakeId, type Driver} from '~/domain/objects';
 import FormField from '../FormField';
 import type {ModalState} from '../Modal';
 import {useContext} from 'react';
-import RestaurantContext from '../RestaurantContext';
+import {RestaurantContext} from '../RestaurantProvider';
 import FormModal from '../FormModal';
 
 interface Props {
   state: ModalState;
+  onCreate: (driver: Driver) => Promise<void> | void;
 }
 
-export default function AddDriverModal({state}: Props) {
+export default function AddDriverModal({state, onCreate}: Props) {
   const restaurant = useContext(RestaurantContext);
   const submitNewDriver = (data: {
     name: string;
@@ -29,8 +30,7 @@ export default function AddDriverModal({state}: Props) {
       onShift: !!data.onShift,
     };
 
-    console.log('Added Driver', driver);
-    // back-end API call
+    void onCreate(driver);
   };
 
   return (

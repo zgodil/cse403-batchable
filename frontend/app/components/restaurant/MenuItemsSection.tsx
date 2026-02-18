@@ -1,22 +1,32 @@
-import {useEffect, useState, type Dispatch, type SetStateAction} from 'react';
+import {
+  useContext,
+  useEffect,
+  useState,
+  type Dispatch,
+  type SetStateAction,
+} from 'react';
 import type {MenuItem} from '../../domain/objects';
 import {useModal} from '../Modal';
 import AddMenuItemModal from './AddMenuItemModal';
 import Button from '../Button';
+import {menuApi} from '~/api/endpoints/menu';
+import {restaurantApi} from '~/api/endpoints/restaurant';
+import MenuItemRow from './MenuItemRow';
+import {RestaurantContext} from '../RestaurantProvider';
 
 type MenuItemsSectionProps = {
-  menuItems: MenuItem[];
-  setMenuItems: Dispatch<SetStateAction<MenuItem[]>>;
+  initialMenuItems: MenuItem[];
   isEditing: boolean;
   setIsEditing: Dispatch<SetStateAction<boolean>>;
 };
 
 function MenuItemsSection({
-  menuItems,
-  setMenuItems,
+  initialMenuItems,
   isEditing,
   setIsEditing,
 }: MenuItemsSectionProps) {
+  const restaurantId = useContext(RestaurantContext);
+  const [menuItems, setMenuItems] = useState<MenuItem[]>(initialMenuItems);
   const addMenuItemModal = useModal();
   const [editingMenuItemId, setEditingMenuItemId] = useState<number | null>(
     null,
@@ -30,6 +40,51 @@ function MenuItemsSection({
 
   const toggleSectionEditing = () => {
     setIsEditing(!isEditing);
+  };
+
+  const refreshMenuItems = async () => {
+    if (!restaurantId) {
+      return false;
+    }
+    const latestMenuItems = await restaurantApi.getMenuItems(restaurantId);
+    if (!latestMenuItems) {
+      return false;
+    }
+    setMenuItems(latestMenuItems);
+    return true;
+  };
+
+  const addCreatedMenuItem = (menuItem: MenuItem) => {
+    setMenuItems(current => [...current, menuItem]);
+  };
+
+  const saveMenuItem = async (menuItem: MenuItem) => {
+    const updated = await menuApi.update(menuItem);
+    if (!updated) {
+      alert('Failed to update menu item.');
+      await refreshMenuItems();
+      return;
+    }
+    setMenuItems(current =>
+      current.map(currentItem =>
+        currentItem.id.id === menuItem.id.id ? menuItem : currentItem,
+      ),
+    );
+    setEditingMenuItemId(null);
+  };
+
+  const deleteMenuItem = async (menuItem: MenuItem) => {
+    const deleted = await menuApi.delete(menuItem.id);
+    if (!deleted) {
+      alert('Failed to delete menu item.');
+      return;
+    }
+    if (editingMenuItemId === menuItem.id.id) {
+      setEditingMenuItemId(null);
+    }
+    setMenuItems(current =>
+      current.filter(currentItem => currentItem.id.id !== menuItem.id.id),
+    );
   };
 
   return (
@@ -62,71 +117,25 @@ function MenuItemsSection({
               const isEditingMenuItem = editingMenuItemId === item.id.id;
 
               return (
-                <tr
+                <MenuItemRow
                   key={item.id.id}
-                  className="border-b border-gray-100 dark:border-gray-800"
-                >
-                  <td className="px-3 py-3">
-                    {isEditing && isEditingMenuItem ? (
-                      <input
-                        value={item.name}
-                        onChange={event =>
-                          setMenuItems(current =>
-                            current.map(currentItem =>
-                              currentItem.id.id === item.id.id
-                                ? {...currentItem, name: event.target.value}
-                                : currentItem,
-                            ),
-                          )
-                        }
-                        className="w-full rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-950 px-2 py-1"
-                      />
-                    ) : (
-                      item.name
-                    )}
-                  </td>
-                  <td className="px-3 py-3">{item.id.id}</td>
-                  {isEditing && (
-                    <td className="px-3 py-3">
-                      <div className="flex items-center gap-2">
-                        <Button
-                          style={isEditingMenuItem ? 'orange' : 'amber'}
-                          small
-                          onClick={() =>
-                            setEditingMenuItemId(
-                              isEditingMenuItem ? null : item.id.id,
-                            )
-                          }
-                        >
-                          {isEditingMenuItem ? 'Done' : 'Edit'}
-                        </Button>
-                        <Button
-                          style="red"
-                          small
-                          onClick={() => {
-                            setMenuItems(current =>
-                              current.filter(
-                                currentItem => currentItem.id.id !== item.id.id,
-                              ),
-                            );
-                            if (isEditingMenuItem) {
-                              setEditingMenuItemId(null);
-                            }
-                          }}
-                        >
-                          Delete
-                        </Button>
-                      </div>
-                    </td>
-                  )}
-                </tr>
+                  menuItem={item}
+                  isEditingSection={isEditing}
+                  isEditingMenuItem={isEditingMenuItem}
+                  onStartEdit={() => setEditingMenuItemId(item.id.id)}
+                  onSave={updatedMenuItem => void saveMenuItem(updatedMenuItem)}
+                  onDelete={() => void deleteMenuItem(item)}
+                />
               );
             })}
           </tbody>
         </table>
       </div>
 
-      <AddMenuItemModal state={addMenuItemModal} />
+      <AddMenuItemModal
+        state={addMenuItemModal}
+        onCreated={addCreatedMenuItem}
+      />
     </section>
   );
 }

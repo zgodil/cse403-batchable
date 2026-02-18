@@ -1,22 +1,32 @@
-import {useEffect, useState, type Dispatch, type SetStateAction} from 'react';
+import {
+  useContext,
+  useEffect,
+  useState,
+  type Dispatch,
+  type SetStateAction,
+} from 'react';
 import type {Driver} from '../../domain/objects';
 import {useModal} from '../Modal';
 import AddDriverModal from './AddDriverModal';
 import Button from '../Button';
+import {driverApi} from '~/api/endpoints/driver';
+import {restaurantApi} from '~/api/endpoints/restaurant';
+import DriverRow from './DriverRow';
+import {RestaurantContext} from '../RestaurantProvider';
 
 type DriversSectionProps = {
-  drivers: Driver[];
-  setDrivers: Dispatch<SetStateAction<Driver[]>>;
+  initialDrivers: Driver[];
   isEditing: boolean;
   setIsEditing: Dispatch<SetStateAction<boolean>>;
 };
 
 function DriversSection({
-  drivers,
-  setDrivers,
+  initialDrivers,
   isEditing,
   setIsEditing,
 }: DriversSectionProps) {
+  const restaurantId = useContext(RestaurantContext);
+  const [drivers, setDrivers] = useState<Driver[]>(initialDrivers);
   const addDriverModal = useModal();
   const [editingDriverId, setEditingDriverId] = useState<number | null>(null);
 
@@ -28,6 +38,52 @@ function DriversSection({
 
   const toggleSectionEditing = () => {
     setIsEditing(!isEditing);
+  };
+
+  const refreshDrivers = async () => {
+    if (!restaurantId) {
+      return false;
+    }
+    const latestDrivers = await restaurantApi.getDrivers(restaurantId);
+    if (!latestDrivers) {
+      return false;
+    }
+    setDrivers(latestDrivers);
+    return true;
+  };
+
+  const createDriver = async (driver: Driver) => {
+    const createdId = await driverApi.create(driver);
+    if (!createdId) {
+      alert('Failed to create driver.');
+      return;
+    }
+    setDrivers(current => [...current, {...driver, id: createdId}]);
+  };
+
+  const saveDriver = async (driver: Driver) => {
+    const updated = await driverApi.update(driver);
+    if (!updated) {
+      alert('Failed to update driver.');
+      await refreshDrivers();
+      return;
+    }
+    setDrivers(current =>
+      current.map(item => (item.id.id === driver.id.id ? driver : item)),
+    );
+    setEditingDriverId(null);
+  };
+
+  const deleteDriver = async (driver: Driver) => {
+    const deleted = await driverApi.delete(driver.id);
+    if (!deleted) {
+      alert('Failed to delete driver.');
+      return;
+    }
+    if (editingDriverId === driver.id.id) {
+      setEditingDriverId(null);
+    }
+    setDrivers(current => current.filter(item => item.id.id !== driver.id.id));
   };
 
   return (
@@ -61,125 +117,22 @@ function DriversSection({
               const isEditingDriver = editingDriverId === driver.id.id;
 
               return (
-                <tr
+                <DriverRow
                   key={driver.id.id}
-                  className="border-b border-gray-100 dark:border-gray-800"
-                >
-                  <td className="px-3 py-3">
-                    {isEditing && isEditingDriver ? (
-                      <input
-                        value={driver.name}
-                        onChange={event =>
-                          setDrivers(current =>
-                            current.map(item =>
-                              item.id.id === driver.id.id
-                                ? {...item, name: event.target.value}
-                                : item,
-                            ),
-                          )
-                        }
-                        className="w-full rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-950 px-2 py-1"
-                      />
-                    ) : (
-                      driver.name
-                    )}
-                  </td>
-                  <td className="px-3 py-3">
-                    {isEditing && isEditingDriver ? (
-                      <input
-                        value={driver.phoneNumber.compact}
-                        onChange={event =>
-                          setDrivers(current =>
-                            current.map(item =>
-                              item.id.id === driver.id.id
-                                ? {
-                                    ...item,
-                                    phoneNumber: {compact: event.target.value},
-                                  }
-                                : item,
-                            ),
-                          )
-                        }
-                        className="w-full rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-950 px-2 py-1"
-                      />
-                    ) : (
-                      driver.phoneNumber.compact
-                    )}
-                  </td>
-                  <td className="px-3 py-3">
-                    {isEditing && isEditingDriver ? (
-                      <label className="inline-flex items-center gap-2">
-                        <input
-                          type="checkbox"
-                          checked={driver.onShift}
-                          onChange={event =>
-                            setDrivers(current =>
-                              current.map(item =>
-                                item.id.id === driver.id.id
-                                  ? {
-                                      ...item,
-                                      onShift: event.target.checked,
-                                    }
-                                  : item,
-                              ),
-                            )
-                          }
-                        />
-                        <span>On Shift</span>
-                      </label>
-                    ) : (
-                      <span
-                        className={`rounded-full px-2 py-1 text-xs font-semibold ${
-                          driver.onShift
-                            ? 'bg-emerald-100 text-emerald-700'
-                            : 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-200'
-                        }`}
-                      >
-                        {driver.onShift ? 'On Shift' : 'Off Shift'}
-                      </span>
-                    )}
-                  </td>
-                  {isEditing && (
-                    <td className="px-3 py-3">
-                      <div className="flex items-center gap-2">
-                        <Button
-                          style={isEditingDriver ? 'blue' : 'indigo'}
-                          small
-                          onClick={() =>
-                            setEditingDriverId(
-                              isEditingDriver ? null : driver.id.id,
-                            )
-                          }
-                        >
-                          {isEditingDriver ? 'Done' : 'Edit'}
-                        </Button>
-                        <Button
-                          style="red"
-                          small
-                          onClick={() => {
-                            setDrivers(current =>
-                              current.filter(
-                                item => item.id.id !== driver.id.id,
-                              ),
-                            );
-                            if (isEditingDriver) {
-                              setEditingDriverId(null);
-                            }
-                          }}
-                        >
-                          Delete
-                        </Button>
-                      </div>
-                    </td>
-                  )}
-                </tr>
+                  driver={driver}
+                  isEditingSection={isEditing}
+                  isEditingDriver={isEditingDriver}
+                  onStartEdit={() => setEditingDriverId(driver.id.id)}
+                  onSave={updatedDriver => void saveDriver(updatedDriver)}
+                  onDelete={() => void deleteDriver(driver)}
+                />
               );
             })}
           </tbody>
         </table>
       </div>
 
-      <AddDriverModal state={addDriverModal} />
+      <AddDriverModal state={addDriverModal} onCreate={createDriver} />
     </section>
   );
 }

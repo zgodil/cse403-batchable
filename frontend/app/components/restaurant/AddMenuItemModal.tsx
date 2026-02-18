@@ -2,15 +2,17 @@ import {useContext} from 'react';
 import FormField from '../FormField';
 import FormModal from '../FormModal';
 import type {ModalState} from '../Modal';
-import RestaurantContext from '../RestaurantContext';
+import {RestaurantContext} from '../RestaurantProvider';
 import {fakeId, type MenuItem} from '~/domain/objects';
+import {menuApi} from '~/api/endpoints/menu';
 
 interface Props {
   state: ModalState;
+  onCreated: (menuItem: MenuItem) => void;
 }
-export default function AddMenuItemModal({state}: Props) {
+export default function AddMenuItemModal({state, onCreated}: Props) {
   const restaurant = useContext(RestaurantContext);
-  const submitNewMenuItem = (data: {name: string}) => {
+  const submitNewMenuItem = async (data: {name: string}) => {
     if (!restaurant) {
       alert("You're not logged in");
       return;
@@ -22,8 +24,13 @@ export default function AddMenuItemModal({state}: Props) {
       name: data.name,
     };
 
-    console.log('Added Menu Item:', newMenuItem);
-    // back-end API call
+    const createdId = await menuApi.create(newMenuItem);
+    if (!createdId) {
+      alert('Failed to create menu item.');
+      return;
+    }
+
+    onCreated({...newMenuItem, id: createdId});
   };
 
   return (
