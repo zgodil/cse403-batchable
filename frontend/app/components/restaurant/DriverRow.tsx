@@ -1,4 +1,4 @@
-import type {Dispatch, SetStateAction} from 'react';
+import {useEffect, useState} from 'react';
 import type {Driver} from '~/domain/objects';
 import Button from '../Button';
 
@@ -6,8 +6,8 @@ type DriverRowProps = {
   driver: Driver;
   isEditingSection: boolean;
   isEditingDriver: boolean;
-  setDrivers: Dispatch<SetStateAction<Driver[]>>;
-  onToggleEdit: () => void;
+  onStartEdit: () => void;
+  onSave: (driver: Driver) => void;
   onDelete: () => void;
 };
 
@@ -15,27 +15,29 @@ export default function DriverRow({
   driver,
   isEditingSection,
   isEditingDriver,
-  setDrivers,
-  onToggleEdit,
+  onStartEdit,
+  onSave,
   onDelete,
 }: DriverRowProps) {
+  const [draftDriver, setDraftDriver] = useState(driver);
+
+  useEffect(() => {
+    if (!isEditingDriver) {
+      setDraftDriver(driver);
+    }
+  }, [driver, isEditingDriver]);
+
   return (
-    <tr
-      key={driver.id.id}
-      className="border-b border-gray-100 dark:border-gray-800"
-    >
+    <tr className="border-b border-gray-100 dark:border-gray-800">
       <td className="px-3 py-3">
         {isEditingSection && isEditingDriver ? (
           <input
-            value={driver.name}
+            value={draftDriver.name}
             onChange={event =>
-              setDrivers(current =>
-                current.map(item =>
-                  item.id.id === driver.id.id
-                    ? {...item, name: event.target.value}
-                    : item,
-                ),
-              )
+              setDraftDriver(current => ({
+                ...current,
+                name: event.target.value,
+              }))
             }
             className="w-full rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-950 px-2 py-1"
           />
@@ -46,18 +48,12 @@ export default function DriverRow({
       <td className="px-3 py-3">
         {isEditingSection && isEditingDriver ? (
           <input
-            value={driver.phoneNumber.compact}
+            value={draftDriver.phoneNumber.compact}
             onChange={event =>
-              setDrivers(current =>
-                current.map(item =>
-                  item.id.id === driver.id.id
-                    ? {
-                        ...item,
-                        phoneNumber: {compact: event.target.value},
-                      }
-                    : item,
-                ),
-              )
+              setDraftDriver(current => ({
+                ...current,
+                phoneNumber: {compact: event.target.value},
+              }))
             }
             className="w-full rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-950 px-2 py-1"
           />
@@ -70,18 +66,12 @@ export default function DriverRow({
           <label className="inline-flex items-center gap-2">
             <input
               type="checkbox"
-              checked={driver.onShift}
+              checked={draftDriver.onShift}
               onChange={event =>
-                setDrivers(current =>
-                  current.map(item =>
-                    item.id.id === driver.id.id
-                      ? {
-                          ...item,
-                          onShift: event.target.checked,
-                        }
-                      : item,
-                  ),
-                )
+                setDraftDriver(current => ({
+                  ...current,
+                  onShift: event.target.checked,
+                }))
               }
             />
             <span>On Shift</span>
@@ -104,7 +94,9 @@ export default function DriverRow({
             <Button
               style={isEditingDriver ? 'blue' : 'indigo'}
               small
-              onClick={onToggleEdit}
+              onClick={() =>
+                isEditingDriver ? onSave(draftDriver) : onStartEdit()
+              }
             >
               {isEditingDriver ? 'Done' : 'Edit'}
             </Button>

@@ -1,38 +1,53 @@
-import type {Dispatch, SetStateAction} from 'react';
+import {useEffect, useState} from 'react';
 import type {Restaurant} from '../../domain/objects';
 import Button from '../Button';
 import {restaurantApi} from '~/api/endpoints/restaurant';
 
 type RestaurantDetailsSectionProps = {
-  restaurant: Restaurant;
-  setRestaurant: Dispatch<SetStateAction<Restaurant | null>>;
-  isEditing: boolean;
-  setIsEditing: Dispatch<SetStateAction<boolean>>;
-  refreshRestaurantData: () => Promise<void> | void;
+  restaurantId: Restaurant['id'];
+  initialRestaurant: Restaurant;
 };
 
 function RestaurantDetailsSection({
-  restaurant,
-  setRestaurant,
-  isEditing,
-  setIsEditing,
-  refreshRestaurantData,
+  restaurantId,
+  initialRestaurant,
 }: RestaurantDetailsSectionProps) {
+  const [restaurant, setRestaurant] = useState(initialRestaurant);
+  const [draftRestaurant, setDraftRestaurant] = useState(initialRestaurant);
+  const [isEditing, setIsEditing] = useState(false);
+
+  useEffect(() => {
+    if (!isEditing) {
+      setDraftRestaurant(restaurant);
+    }
+  }, [restaurant, isEditing]);
+
+  const refreshRestaurant = async () => {
+    const latestRestaurant = await restaurantApi.read(restaurantId);
+    if (!latestRestaurant) {
+      return false;
+    }
+    setRestaurant(latestRestaurant);
+    setDraftRestaurant(latestRestaurant);
+    return true;
+  };
+
   const toggleEditing = async () => {
     if (!isEditing) {
+      setDraftRestaurant(restaurant);
       setIsEditing(true);
       return;
     }
 
-    const updated = await restaurantApi.update(restaurant);
+    const updated = await restaurantApi.update(draftRestaurant);
     if (!updated) {
       alert('Failed to update restaurant details.');
-      await refreshRestaurantData();
+      await refreshRestaurant();
       return;
     }
 
+    setRestaurant(draftRestaurant);
     setIsEditing(false);
-    await refreshRestaurantData();
   };
 
   return (
@@ -48,11 +63,11 @@ function RestaurantDetailsSection({
         <label className="text-sm font-semibold text-gray-700 dark:text-gray-300">
           Restaurant Name
           <input
-            value={restaurant.name}
+            value={draftRestaurant.name}
             disabled={!isEditing}
             onChange={event =>
-              setRestaurant(current => ({
-                ...(current ?? restaurant),
+              setDraftRestaurant(current => ({
+                ...current,
                 name: event.target.value,
               }))
             }
@@ -63,13 +78,13 @@ function RestaurantDetailsSection({
         <label className="text-sm font-semibold text-gray-700 dark:text-gray-300 md:col-span-2">
           Address
           <input
-            value={restaurant.location.address}
+            value={draftRestaurant.location.address}
             disabled={!isEditing}
             onChange={event =>
-              setRestaurant(current => ({
-                ...(current ?? restaurant),
+              setDraftRestaurant(current => ({
+                ...current,
                 location: {
-                  ...(current ?? restaurant).location,
+                  ...current.location,
                   address: event.target.value,
                 },
               }))

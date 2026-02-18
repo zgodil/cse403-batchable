@@ -1,26 +1,26 @@
 import {useEffect, useState, type Dispatch, type SetStateAction} from 'react';
-import type {MenuItem} from '../../domain/objects';
+import type {MenuItem, Restaurant} from '../../domain/objects';
 import {useModal} from '../Modal';
 import AddMenuItemModal from './AddMenuItemModal';
 import Button from '../Button';
 import {menuApi} from '~/api/endpoints/menu';
+import {restaurantApi} from '~/api/endpoints/restaurant';
 import MenuItemRow from './MenuItemRow';
 
 type MenuItemsSectionProps = {
-  menuItems: MenuItem[];
-  setMenuItems: Dispatch<SetStateAction<MenuItem[]>>;
+  restaurantId: Restaurant['id'];
+  initialMenuItems: MenuItem[];
   isEditing: boolean;
   setIsEditing: Dispatch<SetStateAction<boolean>>;
-  refreshRestaurantData: () => Promise<void> | void;
 };
 
 function MenuItemsSection({
-  menuItems,
-  setMenuItems,
+  restaurantId,
+  initialMenuItems,
   isEditing,
   setIsEditing,
-  refreshRestaurantData,
 }: MenuItemsSectionProps) {
+  const [menuItems, setMenuItems] = useState<MenuItem[]>(initialMenuItems);
   const addMenuItemModal = useModal();
   const [editingMenuItemId, setEditingMenuItemId] = useState<number | null>(
     null,
@@ -36,24 +36,37 @@ function MenuItemsSection({
     setIsEditing(!isEditing);
   };
 
+  const refreshMenuItems = async () => {
+    const latestMenuItems = await restaurantApi.getMenuItems(restaurantId);
+    if (!latestMenuItems) {
+      return false;
+    }
+    setMenuItems(latestMenuItems);
+    return true;
+  };
+
   const createMenuItem = async (menuItem: MenuItem) => {
     const createdId = await menuApi.create(menuItem);
     if (!createdId) {
       alert('Failed to create menu item.');
       return;
     }
-    await refreshRestaurantData();
+    setMenuItems(current => [...current, {...menuItem, id: createdId}]);
   };
 
   const saveMenuItem = async (menuItem: MenuItem) => {
     const updated = await menuApi.update(menuItem);
     if (!updated) {
       alert('Failed to update menu item.');
-      await refreshRestaurantData();
+      await refreshMenuItems();
       return;
     }
+    setMenuItems(current =>
+      current.map(currentItem =>
+        currentItem.id.id === menuItem.id.id ? menuItem : currentItem,
+      ),
+    );
     setEditingMenuItemId(null);
-    await refreshRestaurantData();
   };
 
   const deleteMenuItem = async (menuItem: MenuItem) => {
@@ -65,7 +78,9 @@ function MenuItemsSection({
     if (editingMenuItemId === menuItem.id.id) {
       setEditingMenuItemId(null);
     }
-    await refreshRestaurantData();
+    setMenuItems(current =>
+      current.filter(currentItem => currentItem.id.id !== menuItem.id.id),
+    );
   };
 
   return (
@@ -103,14 +118,8 @@ function MenuItemsSection({
                   menuItem={item}
                   isEditingSection={isEditing}
                   isEditingMenuItem={isEditingMenuItem}
-                  setMenuItems={setMenuItems}
-                  onToggleEdit={() => {
-                    if (!isEditingMenuItem) {
-                      setEditingMenuItemId(item.id.id);
-                      return;
-                    }
-                    void saveMenuItem(item);
-                  }}
+                  onStartEdit={() => setEditingMenuItemId(item.id.id)}
+                  onSave={updatedMenuItem => void saveMenuItem(updatedMenuItem)}
                   onDelete={() => void deleteMenuItem(item)}
                 />
               );

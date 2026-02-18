@@ -1,26 +1,26 @@
 import {useEffect, useState, type Dispatch, type SetStateAction} from 'react';
-import type {Driver} from '../../domain/objects';
+import type {Driver, Restaurant} from '../../domain/objects';
 import {useModal} from '../Modal';
 import AddDriverModal from './AddDriverModal';
 import Button from '../Button';
 import {driverApi} from '~/api/endpoints/driver';
+import {restaurantApi} from '~/api/endpoints/restaurant';
 import DriverRow from './DriverRow';
 
 type DriversSectionProps = {
-  drivers: Driver[];
-  setDrivers: Dispatch<SetStateAction<Driver[]>>;
+  restaurantId: Restaurant['id'];
+  initialDrivers: Driver[];
   isEditing: boolean;
   setIsEditing: Dispatch<SetStateAction<boolean>>;
-  refreshRestaurantData: () => Promise<void> | void;
 };
 
 function DriversSection({
-  drivers,
-  setDrivers,
+  restaurantId,
+  initialDrivers,
   isEditing,
   setIsEditing,
-  refreshRestaurantData,
 }: DriversSectionProps) {
+  const [drivers, setDrivers] = useState<Driver[]>(initialDrivers);
   const addDriverModal = useModal();
   const [editingDriverId, setEditingDriverId] = useState<number | null>(null);
 
@@ -34,24 +34,35 @@ function DriversSection({
     setIsEditing(!isEditing);
   };
 
+  const refreshDrivers = async () => {
+    const latestDrivers = await restaurantApi.getDrivers(restaurantId);
+    if (!latestDrivers) {
+      return false;
+    }
+    setDrivers(latestDrivers);
+    return true;
+  };
+
   const createDriver = async (driver: Driver) => {
     const createdId = await driverApi.create(driver);
     if (!createdId) {
       alert('Failed to create driver.');
       return;
     }
-    await refreshRestaurantData();
+    setDrivers(current => [...current, {...driver, id: createdId}]);
   };
 
   const saveDriver = async (driver: Driver) => {
     const updated = await driverApi.update(driver);
     if (!updated) {
       alert('Failed to update driver.');
-      await refreshRestaurantData();
+      await refreshDrivers();
       return;
     }
+    setDrivers(current =>
+      current.map(item => (item.id.id === driver.id.id ? driver : item)),
+    );
     setEditingDriverId(null);
-    await refreshRestaurantData();
   };
 
   const deleteDriver = async (driver: Driver) => {
@@ -63,7 +74,7 @@ function DriversSection({
     if (editingDriverId === driver.id.id) {
       setEditingDriverId(null);
     }
-    await refreshRestaurantData();
+    setDrivers(current => current.filter(item => item.id.id !== driver.id.id));
   };
 
   return (
@@ -102,14 +113,8 @@ function DriversSection({
                   driver={driver}
                   isEditingSection={isEditing}
                   isEditingDriver={isEditingDriver}
-                  setDrivers={setDrivers}
-                  onToggleEdit={() => {
-                    if (!isEditingDriver) {
-                      setEditingDriverId(driver.id.id);
-                      return;
-                    }
-                    void saveDriver(driver);
-                  }}
+                  onStartEdit={() => setEditingDriverId(driver.id.id)}
+                  onSave={updatedDriver => void saveDriver(updatedDriver)}
                   onDelete={() => void deleteDriver(driver)}
                 />
               );

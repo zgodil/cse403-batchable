@@ -1,4 +1,4 @@
-import type {Dispatch, SetStateAction} from 'react';
+import {useEffect, useState} from 'react';
 import type {MenuItem} from '~/domain/objects';
 import Button from '../Button';
 
@@ -6,8 +6,8 @@ type MenuItemRowProps = {
   menuItem: MenuItem;
   isEditingSection: boolean;
   isEditingMenuItem: boolean;
-  setMenuItems: Dispatch<SetStateAction<MenuItem[]>>;
-  onToggleEdit: () => void;
+  onStartEdit: () => void;
+  onSave: (menuItem: MenuItem) => void;
   onDelete: () => void;
 };
 
@@ -15,27 +15,29 @@ export default function MenuItemRow({
   menuItem,
   isEditingSection,
   isEditingMenuItem,
-  setMenuItems,
-  onToggleEdit,
+  onStartEdit,
+  onSave,
   onDelete,
 }: MenuItemRowProps) {
+  const [draftMenuItem, setDraftMenuItem] = useState(menuItem);
+
+  useEffect(() => {
+    if (!isEditingMenuItem) {
+      setDraftMenuItem(menuItem);
+    }
+  }, [menuItem, isEditingMenuItem]);
+
   return (
-    <tr
-      key={menuItem.id.id}
-      className="border-b border-gray-100 dark:border-gray-800"
-    >
+    <tr className="border-b border-gray-100 dark:border-gray-800">
       <td className="px-3 py-3">
         {isEditingSection && isEditingMenuItem ? (
           <input
-            value={menuItem.name}
+            value={draftMenuItem.name}
             onChange={event =>
-              setMenuItems(current =>
-                current.map(currentItem =>
-                  currentItem.id.id === menuItem.id.id
-                    ? {...currentItem, name: event.target.value}
-                    : currentItem,
-                ),
-              )
+              setDraftMenuItem(current => ({
+                ...current,
+                name: event.target.value,
+              }))
             }
             className="w-full rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-950 px-2 py-1"
           />
@@ -50,7 +52,9 @@ export default function MenuItemRow({
             <Button
               style={isEditingMenuItem ? 'orange' : 'amber'}
               small
-              onClick={onToggleEdit}
+              onClick={() =>
+                isEditingMenuItem ? onSave(draftMenuItem) : onStartEdit()
+              }
             >
               {isEditingMenuItem ? 'Done' : 'Edit'}
             </Button>
