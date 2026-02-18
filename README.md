@@ -12,6 +12,12 @@ Please install an [EditorConfig](https://editorconfig.org/) extension/plug-in fo
 $ git config --global autocrlf false
 ```
 Thank you!
+## Frontend (Local Development)
+### Prerequisites
+- install node.js via the [node.js](https://nodejs.org/en)
+Once you have node installed, enter the frontend folder `cd frontend`
+Then, install the dependencies: `npm install`
+Next, run the server: `npm run dev` 
 
 ## Backend (Local Development)
 To run the backend locally:
@@ -21,8 +27,9 @@ cd backend
 ```
 ### Coverage
 #### Prerequisites
-- Ensure GOOGLE_API_ROUTES_KEY = "key"
-- Ensure Docker Desktop is running
+Ensure Docker Desktop is running
+`$ docker` should return docker commands
+`$ export GOOGLE_API_ROUTES_KEY = "<key>"`
 
 To run code coverage: `./mvnw verify`
 Look for coverage results in `backend/target/site/jacoco/index.html`
