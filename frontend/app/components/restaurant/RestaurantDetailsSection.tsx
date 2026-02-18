@@ -5,7 +5,7 @@ import {restaurantApi} from '~/api/endpoints/restaurant';
 
 type RestaurantDetailsSectionProps = {
   restaurant: Restaurant;
-  setRestaurant: Dispatch<SetStateAction<Restaurant>>;
+  setRestaurant: Dispatch<SetStateAction<Restaurant | null>>;
   isEditing: boolean;
   setIsEditing: Dispatch<SetStateAction<boolean>>;
   refreshRestaurantData: () => Promise<void> | void;
@@ -52,7 +52,7 @@ function RestaurantDetailsSection({
             disabled={!isEditing}
             onChange={event =>
               setRestaurant(current => ({
-                ...current,
+                ...(current ?? restaurant),
                 name: event.target.value,
               }))
             }
@@ -67,9 +67,9 @@ function RestaurantDetailsSection({
             disabled={!isEditing}
             onChange={event =>
               setRestaurant(current => ({
-                ...current,
+                ...(current ?? restaurant),
                 location: {
-                  ...current.location,
+                  ...(current ?? restaurant).location,
                   address: event.target.value,
                 },
               }))

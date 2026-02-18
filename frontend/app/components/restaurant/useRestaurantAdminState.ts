@@ -5,8 +5,8 @@ import {
   type Dispatch,
   type SetStateAction,
 } from 'react';
-import {initialDrivers, initialMenuItems, initialRestaurant} from './mockData';
 import {restaurantApi} from '~/api/endpoints/restaurant';
+import type {Driver, MenuItem, Restaurant} from '~/domain/objects';
 
 const configuredRestaurantId = Number(import.meta.env.VITE_RESTAURANT_ID);
 const DEFAULT_RESTAURANT_ID = Number.isFinite(configuredRestaurantId)
@@ -14,13 +14,13 @@ const DEFAULT_RESTAURANT_ID = Number.isFinite(configuredRestaurantId)
   : 1;
 
 export function useRestaurantAdminState() {
-  const [drivers, setDrivers] = useState(initialDrivers);
+  const [drivers, setDrivers] = useState<Driver[]>([]);
   const [isEditingDrivers, setIsEditingDrivers] = useState(false);
 
-  const [restaurant, setRestaurant] = useState(initialRestaurant);
+  const [restaurant, setRestaurant] = useState<Restaurant | null>(null);
   const [isEditingRestaurant, setIsEditingRestaurant] = useState(false);
 
-  const [menuItems, setMenuItems] = useState(initialMenuItems);
+  const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
   const [isEditingMenu, setIsEditingMenu] = useState(false);
   const [isLoadingData, setIsLoadingData] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -40,9 +40,10 @@ export function useRestaurantAdminState() {
       ]);
 
       if (!restaurantData || !driversData || !menuItemsData) {
-        setLoadError(
-          'Could not load restaurant data from the backend. Showing local fallback data.',
-        );
+        setDrivers([]);
+        setRestaurant(null);
+        setMenuItems([]);
+        setLoadError('Could not load restaurant data from the backend.');
         return;
       }
 
@@ -51,9 +52,10 @@ export function useRestaurantAdminState() {
       setMenuItems(menuItemsData);
     } catch (error) {
       console.error('Failed to load restaurant admin data', error);
-      setLoadError(
-        'Could not load restaurant data from the backend. Showing local fallback data.',
-      );
+      setDrivers([]);
+      setRestaurant(null);
+      setMenuItems([]);
+      setLoadError('Could not load restaurant data from the backend.');
     } finally {
       setIsLoadingData(false);
     }

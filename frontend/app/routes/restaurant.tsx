@@ -27,38 +27,40 @@ function RestaurantPage() {
 
   return (
     <div className="p-8 max-w-7xl mx-auto min-h-screen bg-white dark:bg-gray-950 text-gray-900 dark:text-gray-100">
-      <RestaurantContext value={restaurant.id}>
+      <RestaurantContext value={restaurant?.id ?? null}>
         <RestaurantPageHeader />
         <RestaurantPageLoadStatus
           isLoadingData={isLoadingData}
           loadError={loadError}
         />
 
-        <div className="grid grid-cols-1 gap-6">
-          <DriversSection
-            drivers={drivers}
-            setDrivers={setDrivers}
-            isEditing={isEditingDrivers}
-            setIsEditing={setIsEditingDriversExclusive}
-            refreshRestaurantData={loadRestaurantData}
-          />
+        {restaurant && (
+          <div className="grid grid-cols-1 gap-6">
+            <DriversSection
+              drivers={drivers}
+              setDrivers={setDrivers}
+              isEditing={isEditingDrivers}
+              setIsEditing={setIsEditingDriversExclusive}
+              refreshRestaurantData={loadRestaurantData}
+            />
 
-          <RestaurantDetailsSection
-            restaurant={restaurant}
-            setRestaurant={setRestaurant}
-            isEditing={isEditingRestaurant}
-            setIsEditing={setIsEditingRestaurant}
-            refreshRestaurantData={loadRestaurantData}
-          />
+            <RestaurantDetailsSection
+              restaurant={restaurant}
+              setRestaurant={setRestaurant}
+              isEditing={isEditingRestaurant}
+              setIsEditing={setIsEditingRestaurant}
+              refreshRestaurantData={loadRestaurantData}
+            />
 
-          <MenuItemsSection
-            menuItems={menuItems}
-            setMenuItems={setMenuItems}
-            isEditing={isEditingMenu}
-            setIsEditing={setIsEditingMenuExclusive}
-            refreshRestaurantData={loadRestaurantData}
-          />
-        </div>
+            <MenuItemsSection
+              menuItems={menuItems}
+              setMenuItems={setMenuItems}
+              isEditing={isEditingMenu}
+              setIsEditing={setIsEditingMenuExclusive}
+              refreshRestaurantData={loadRestaurantData}
+            />
+          </div>
+        )}
       </RestaurantContext>
     </div>
   );
