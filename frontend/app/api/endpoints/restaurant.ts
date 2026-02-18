@@ -1,6 +1,6 @@
 import * as json from '~/domain/json';
 import {CrudApi} from '../crud';
-import type {Driver, MenuItem, Restaurant} from '~/domain/objects';
+import type {Driver, MenuItem, Order, Restaurant} from '~/domain/objects';
 import {fetchJSON} from '../common';
 
 class RestaurantApi extends CrudApi<Restaurant> {
@@ -16,6 +16,18 @@ class RestaurantApi extends CrudApi<Restaurant> {
       return drivers.map(json.driver.parse);
     } catch (err) {
       console.error(`Cannot get drivers for restaurant; id=${id}`, err);
+      return null;
+    }
+  }
+  async getOrders({id}: Restaurant['id']) {
+    try {
+      const orders: json.JSONDomainObject<Order>[] = await fetchJSON(
+        'GET',
+        `${this.resource}/${id}/orders`,
+      );
+      return orders.map(json.order.parse);
+    } catch (err) {
+      console.error(`Cannot find orders for restaurant; id=${id}`, err);
       return null;
     }
   }

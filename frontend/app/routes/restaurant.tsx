@@ -1,10 +1,16 @@
 import DriversSection from '../components/restaurant/DriversSection';
 import MenuItemsSection from '../components/restaurant/MenuItemsSection';
 import RestaurantDetailsSection from '../components/restaurant/RestaurantDetailsSection';
-import RestaurantContext from '~/components/RestaurantContext';
 import RestaurantPageHeader from '../components/restaurant/RestaurantPageHeader';
 import RestaurantPageLoadStatus from '../components/restaurant/RestaurantPageLoadStatus';
 import {useRestaurantAdminState} from '../components/restaurant/useRestaurantAdminState';
+import Button from '~/components/Button';
+import {RestaurantContext} from '~/components/RestaurantProvider';
+
+const configuredRestaurantId = Number(import.meta.env.VITE_RESTAURANT_ID);
+const DEFAULT_RESTAURANT_ID = Number.isFinite(configuredRestaurantId)
+  ? configuredRestaurantId
+  : 1;
 
 function RestaurantPage() {
   const {

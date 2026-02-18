@@ -1,11 +1,11 @@
 import {fakeId, type Order} from '~/domain/objects';
-import * as json from '~/domain/json';
-import {type ModalState} from './Modal';
+import {type ModalState} from '../Modal';
 import {useContext} from 'react';
-import RestaurantContext from './RestaurantContext';
-import FormField from './FormField';
-import FormModal from './FormModal';
+import {RestaurantContext} from '../RestaurantProvider';
+import FormField from '../FormField';
+import FormModal from '../FormModal';
 import {MS_PER_MINUTE} from '~/util/time';
+import {orderApi} from '~/api/endpoints/order';
 
 interface Props {
   modal: ModalState;
@@ -14,7 +14,7 @@ interface Props {
 export default function AddOrderModal({modal}: Props) {
   const restaurant = useContext(RestaurantContext);
 
-  const addOrder = (data: {
+  const addOrder = async (data: {
     address: string;
     items: string;
     cookTime: string;
@@ -48,8 +48,10 @@ export default function AddOrderModal({modal}: Props) {
       state: 'cooking',
     };
 
-    console.log('New Order Data:', json.order.unparse(order));
-    // call Backend Web Server API
+    console.log('New Order Data:', order);
+    if (!(await orderApi.create(order))) {
+      alert('Failed to create order');
+    }
   };
 
   return (

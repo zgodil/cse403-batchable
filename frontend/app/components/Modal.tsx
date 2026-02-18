@@ -21,6 +21,13 @@ export function useModal(): ModalState {
 }
 
 /**
+ * Determines whether any modal is currently open
+ */
+export function anyModalOpen(): boolean {
+  return document.querySelector('dialog:modal') !== null;
+}
+
+/**
  * Represents a modal dialog box, implemented on top of the native HTML <dialog> element for maximal native support.
  * @param state The state of the modal, and the ability to change it. The setter is required in this to facilitate the modal's inherent autoclosing abilities
  * @param title The title of the modal, to display before all the other children
