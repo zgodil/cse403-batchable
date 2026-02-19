@@ -28,4 +28,4 @@ We have noticed that a lot of our work this week is debugging the different comp
 - Delano: Expand the authentication functionality and debug it: 5 hours
 
 - H: Removing as many type assertions as possible, 
-Verifying JSON format matching with some back-end team member(s), Adding menu items to the "add order" modal, Replacing the 1500ms "websocket" with a real one: 5 hours
+verifying JSON format matching with some back-end team member(s), adding menu items to the "add order" modal, replacing the 1500ms "websocket" with a real one: 5 hours
