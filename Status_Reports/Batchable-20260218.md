@@ -1,5 +1,5 @@
 ## High Level Goal
-Debug the front and backend apis for the Gamma release. Expand the functionality of Auth and Twilio. Add menu-item page for the front end.
+Debug the front and backend apis for the Gamma release. Expand the functionality of Auth and Twilio. Add menu-item page for the front end after fixing the front-end and back-end integration.
 
 ## Original Goals for the Week
 - Emily: Skeleton for Backend Webserver & Batching manager: 2-3 hrs, Basic batching algorithm and integrating it with google api: 3-4 hrs, keep adding to these components: Unknown
