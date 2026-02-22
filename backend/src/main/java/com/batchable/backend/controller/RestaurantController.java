@@ -47,7 +47,7 @@ public class RestaurantController {
   @ResponseStatus(HttpStatus.CREATED)
   public long createRestaurant(@RequestBody Restaurant restaurant) {
     long id = restaurantService.createRestaurant(restaurant);
-    batchingManager.addManager(restaurant.id);
+    batchingManager.addManager(id);
     return id;
   }
 
