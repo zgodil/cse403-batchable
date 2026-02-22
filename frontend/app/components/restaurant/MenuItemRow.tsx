@@ -45,7 +45,6 @@ export default function MenuItemRow({
           menuItem.name
         )}
       </td>
-      <td className="px-3 py-3">{menuItem.id.id}</td>
       {isEditingSection && (
         <td className="px-3 py-3">
           <div className="flex items-center gap-2">
