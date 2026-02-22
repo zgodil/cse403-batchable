@@ -7,7 +7,7 @@ import * as json from '~/domain/json';
  * Thanks to MSW, this works both in production and development!
  */
 export class CrudApi<T extends DomainObject> {
-  private static DELAY = 0;
+  private static DELAY = 300;
 
   constructor(
     protected resource: Resource,
