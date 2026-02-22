@@ -88,7 +88,7 @@ function MenuItemsSection({
   };
 
   return (
-    <section className="h-full lg:h-[18rem] flex flex-col bg-white dark:bg-gray-900 p-6 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-800">
+    <section className="h-full lg:h-72 flex flex-col bg-white dark:bg-gray-900 p-6 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-800">
       <div className="mb-4 flex items-center justify-between">
         <h2 className="text-xl font-bold">Menu Items</h2>
         <div className="flex items-center gap-2">
