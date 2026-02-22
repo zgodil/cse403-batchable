@@ -88,7 +88,7 @@ function MenuItemsSection({
   };
 
   return (
-    <section className="bg-white dark:bg-gray-900 p-6 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-800">
+    <section className="h-full lg:h-[18rem] flex flex-col bg-white dark:bg-gray-900 p-6 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-800">
       <div className="mb-4 flex items-center justify-between">
         <h2 className="text-xl font-bold">Menu Items</h2>
         <div className="flex items-center gap-2">
@@ -101,7 +101,7 @@ function MenuItemsSection({
         </div>
       </div>
 
-      <div className="overflow-x-auto">
+      <div className="overflow-x-auto lg:flex-1 lg:min-h-0 lg:overflow-y-auto">
         <table className="w-full text-left text-sm">
           <thead>
             <tr className="border-b border-gray-200 dark:border-gray-800 text-gray-600 dark:text-gray-300">
