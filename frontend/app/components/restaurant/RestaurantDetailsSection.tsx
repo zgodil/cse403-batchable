@@ -54,7 +54,7 @@ function RestaurantDetailsSection({
   };
 
   return (
-    <section className="bg-white dark:bg-gray-900 p-6 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-800">
+    <section className="h-full lg:h-72 bg-white dark:bg-gray-900 p-6 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-800">
       <div className="mb-4 flex items-center justify-between">
         <h2 className="text-xl font-bold">Restaurant Details</h2>
         <Button style="emerald" onClick={() => void toggleEditing()}>

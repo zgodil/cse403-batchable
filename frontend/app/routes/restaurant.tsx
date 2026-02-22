@@ -128,13 +128,15 @@ function RestaurantPage() {
             setIsEditing={setIsEditingDriversExclusive}
           />
 
-          <RestaurantDetailsSection initialRestaurant={data.restaurant} />
+          <div className="grid grid-cols-1 gap-6 lg:grid-cols-2 lg:items-stretch">
+            <RestaurantDetailsSection initialRestaurant={data.restaurant} />
 
-          <MenuItemsSection
-            initialMenuItems={data.menuItems}
-            isEditing={isEditingMenu}
-            setIsEditing={setIsEditingMenuExclusive}
-          />
+            <MenuItemsSection
+              initialMenuItems={data.menuItems}
+              isEditing={isEditingMenu}
+              setIsEditing={setIsEditingMenuExclusive}
+            />
+          </div>
         </div>
       )}
     </div>
