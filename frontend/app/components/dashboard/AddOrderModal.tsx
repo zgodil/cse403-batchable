@@ -1,11 +1,13 @@
-import {fakeId, type Order} from '~/domain/objects';
+import {fakeId, type MenuItem, type Order} from '~/domain/objects';
 import {type ModalState} from '../Modal';
-import {useContext} from 'react';
+import {useContext, useEffect, useState} from 'react';
 import {RestaurantContext} from '../RestaurantProvider';
 import FormField from '../FormField';
 import FormModal from '../FormModal';
+import MenuItemSelector from '../MenuItemSelector';
 import {MS_PER_MINUTE} from '~/util/time';
 import {orderApi} from '~/api/endpoints/order';
+import {restaurantApi} from '~/api/endpoints/restaurant';
 
 interface Props {
   modal: ModalState;
@@ -13,15 +15,77 @@ interface Props {
 
 export default function AddOrderModal({modal}: Props) {
   const restaurant = useContext(RestaurantContext);
+  const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
+  const [loadingMenuItems, setLoadingMenuItems] = useState(false);
+  const [menuItemsLoadFailed, setMenuItemsLoadFailed] = useState(false);
+  const [selectedItemNames, setSelectedItemNames] = useState<string[]>([]);
+
+  useEffect(() => {
+    if (!modal.open) {
+      setSelectedItemNames([]);
+      setLoadingMenuItems(false);
+      setMenuItemsLoadFailed(false);
+      return;
+    }
+
+    if (!restaurant) {
+      setMenuItems([]);
+      setSelectedItemNames([]);
+      setLoadingMenuItems(false);
+      setMenuItemsLoadFailed(false);
+      return;
+    }
+
+    let cancelled = false;
+
+    const loadMenuItems = async () => {
+      setLoadingMenuItems(true);
+      setMenuItemsLoadFailed(false);
+
+      const loadedMenuItems = await restaurantApi.getMenuItems(restaurant);
+      if (cancelled) {
+        return;
+      }
+
+      if (!loadedMenuItems) {
+        setMenuItems([]);
+        setSelectedItemNames([]);
+        setMenuItemsLoadFailed(true);
+        setLoadingMenuItems(false);
+        return;
+      }
+
+      setMenuItems(loadedMenuItems);
+      setSelectedItemNames(current =>
+        current.filter(selectedItemName =>
+          loadedMenuItems.some(menuItem => menuItem.name === selectedItemName),
+        ),
+      );
+      setLoadingMenuItems(false);
+    };
+
+    void loadMenuItems();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [modal.open, restaurant]);
 
   const addOrder = async (data: {
     address: string;
-    items: string;
     cookTime: string;
     deliverTime: string;
   }) => {
     if (!restaurant) {
       alert("You aren't logged in");
+      return;
+    }
+
+    const itemNames = selectedItemNames
+      .map(name => name.trim())
+      .filter(name => name.length > 0);
+    if (itemNames.length === 0) {
+      alert('Select at least one menu item');
       return;
     }
 
@@ -44,7 +108,7 @@ export default function AddOrderModal({modal}: Props) {
       deliveryTime,
       currentBatch: null,
       highPriority: false,
-      itemNames: data.items.split(',').map(name => name.trim()),
+      itemNames,
       state: 'cooking',
     };
 
@@ -68,12 +132,12 @@ export default function AddOrderModal({modal}: Props) {
         placeholder="123 Batch St"
         required
       />
-      <FormField
-        label="Item Name(s)"
-        type="text"
-        name="items"
-        placeholder="Tiramisu, Shrimp Fried Rice, ..."
-        required
+      <MenuItemSelector
+        menuItems={menuItems}
+        selectedItemNames={selectedItemNames}
+        setSelectedItemNames={setSelectedItemNames}
+        loadingMenuItems={loadingMenuItems}
+        menuItemsLoadFailed={menuItemsLoadFailed}
       />
       <FormField
         label="Prep Time (min)"
