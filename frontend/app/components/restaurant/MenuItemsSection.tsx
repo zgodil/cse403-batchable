@@ -106,7 +106,6 @@ function MenuItemsSection({
           <thead>
             <tr className="border-b border-gray-200 dark:border-gray-800 text-gray-600 dark:text-gray-300">
               <th className="px-3 py-2 font-semibold">Name</th>
-              <th className="px-3 py-2 font-semibold">Menu Item ID</th>
               {isEditing && (
                 <th className="px-3 py-2 font-semibold">Actions</th>
               )}
