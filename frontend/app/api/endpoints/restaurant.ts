@@ -5,7 +5,18 @@ import {fetchJSON} from '../common';
 
 class RestaurantApi extends CrudApi<Restaurant> {
   constructor() {
-    super('/restaurant', json.restaurant);
+    super('/api/restaurant', json.restaurant);
+  }
+
+  /** Get the current user's restaurant (requires auth). */
+  async getMyRestaurant(): Promise<Restaurant['id'] | null> {
+    try {
+      const r = await fetchJSON('GET', '/api/restaurant/me');
+      return json.restaurant.parse(r).id;
+    } catch (err) {
+      console.error('Cannot get my restaurant', err);
+      return null;
+    }
   }
   async getDrivers({id}: Restaurant['id']) {
     try {
