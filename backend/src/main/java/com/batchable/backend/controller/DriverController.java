@@ -19,7 +19,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 // Marks this class as a REST controller in Spring
 // All methods return JSON by default
-@RequestMapping("/driver")
+@RequestMapping("/api/driver")
 // Base URL path for all endpoints in this controller
 public class DriverController {
 

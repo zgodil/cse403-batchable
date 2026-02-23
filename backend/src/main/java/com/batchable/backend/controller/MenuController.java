@@ -18,7 +18,7 @@ import org.springframework.web.bind.annotation.PutMapping;
 @RestController
 // Marks this class as a REST controller in Spring
 // All methods return JSON by default
-@RequestMapping("/menu")
+@RequestMapping("/api/menu")
 // Base URL path for all endpoints in this controller
 public class MenuController {
 

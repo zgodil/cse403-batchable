@@ -9,6 +9,8 @@ import com.batchable.backend.service.RestaurantService;
 import java.util.ArrayList;
 import java.util.List;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -21,7 +23,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 
 @RestController
-@RequestMapping("/restaurant")
+@RequestMapping("/api/restaurant")
 public class RestaurantController {
 
   private final RestaurantService restaurantService;
@@ -66,9 +68,21 @@ public class RestaurantController {
   }
 
   /**
+   * Get the current user's restaurant (from JWT sub). Creates one if none exists.
+   *
+   * GET /api/restaurant/me
+   */
+  @GetMapping("/me")
+  @ResponseStatus(HttpStatus.OK)
+  public Restaurant getMyRestaurant(@AuthenticationPrincipal Jwt jwt) {
+    String sub = jwt == null ? null : jwt.getSubject();
+    return restaurantService.getOrCreateRestaurantForUser(sub);
+  }
+
+  /**
    * Get a restaurant by ID.
    *
-   * GET /restaurant/{restaurantId}
+   * GET /api/restaurant/{restaurantId}
    *
    * @param restaurantId the ID of the restaurant
    * @return the Restaurant object
