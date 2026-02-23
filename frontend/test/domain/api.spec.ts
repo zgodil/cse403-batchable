@@ -213,6 +213,22 @@ function getFakeOrder(restaurant: Restaurant['id']): Order {
   };
 }
 
+const tryAdvanceOrder = async (
+  state: Order['state'],
+  nextState: Order['state'],
+  works: boolean,
+) => {
+  const restaurant = await checkedCreate(restaurantApi, getFakeRestaurant());
+  const order = await checkedCreate<Order>(orderApi, {
+    ...getFakeOrder(restaurant),
+    state,
+  });
+  expect((await orderApi.read(order))?.state).toBe(state);
+  const advanced = await orderApi.advanceState(order);
+  expect(advanced).toBe(works);
+  expect((await orderApi.read(order))?.state).toBe(works ? nextState : state);
+};
+
 describe('/order endpoint', () => {
   it('can create and read back an order', async () => {
     const restaurant = await checkedCreate(restaurantApi, getFakeRestaurant());
@@ -233,5 +249,14 @@ describe('/order endpoint', () => {
     const readback = await orderApi.read(order);
     expect(readback?.highPriority).toBe(true);
     expect(readback?.itemNames).toEqual(original?.itemNames);
+  });
+
+  it('advances when advanced', async () => {
+    await tryAdvanceOrder('cooking', 'cooked', true);
+  });
+
+  it("doesn't advance when >= cooked", async () => {
+    await tryAdvanceOrder('cooked', 'driving', false);
+    await tryAdvanceOrder('driving', 'delivered', false);
   });
 });
