@@ -99,6 +99,37 @@ function getFakeRestaurant2(): Restaurant {
 }
 
 describe('/restaurant endpoint', () => {
+  async function expectArrayRetrival<T extends DomainObject>(
+    itemApi: CrudApi<T>,
+    getItems: (id: Restaurant['id']) => Promise<T[] | null>,
+    getFake: (id: Restaurant['id']) => T,
+    getFake2: (id: Restaurant['id']) => T,
+  ) {
+    const restaurant = await checkedCreate(restaurantApi, getFakeRestaurant());
+    const item = await checkedCreate(itemApi, getFake(restaurant));
+    const restaurant2 = await checkedCreate(
+      restaurantApi,
+      getFakeRestaurant2(),
+    );
+    const item2 = await checkedCreate(itemApi, getFake2(restaurant2));
+    const restaurantItems = [await itemApi.read(item)];
+    const restaurant2Items = [await itemApi.read(item2)];
+    const actualRestaurantItems = await getItems(restaurant);
+    const actualRestaurant2Items = await getItems(restaurant2);
+
+    expect(actualRestaurant2Items).not.toBe(null);
+    expect(actualRestaurantItems).not.toBe(null);
+    expect(actualRestaurantItems).toEqual(restaurantItems);
+    expect(actualRestaurant2Items).toEqual(restaurant2Items);
+
+    expect(
+      await getItems({
+        type: 'Restaurant',
+        id: 1e80,
+      }),
+    ).toBe(null);
+  }
+
   it('can create and read back a restaurant', async () => {
     await expectReadbackCreated(restaurantApi, getFakeRestaurant());
   });
@@ -115,24 +146,31 @@ describe('/restaurant endpoint', () => {
     );
   });
 
-  it('can retrieve drivers', async () => {
-    const restaurant = await checkedCreate(restaurantApi, getFakeRestaurant());
-    const driver = await checkedCreate(driverApi, getFakeDriver(restaurant));
-    const restaurant2 = await checkedCreate(
-      restaurantApi,
-      getFakeRestaurant2(),
+  it('can retrieve orders', async () => {
+    await expectArrayRetrival(
+      orderApi,
+      id => restaurantApi.getOrders(id),
+      getFakeOrder,
+      getFakeOrder,
     );
-    const driver2 = await checkedCreate(driverApi, getFakeDriver2(restaurant2));
-    const restaurantDrivers = [await driverApi.read(driver)];
-    const restaurant2Drivers = [await driverApi.read(driver2)];
-    const actualRestaurantDrivers = await restaurantApi.getDrivers(restaurant);
-    const actualRestaurant2Drivers =
-      await restaurantApi.getDrivers(restaurant2);
+  });
 
-    expect(actualRestaurant2Drivers).not.toBe(null);
-    expect(actualRestaurantDrivers).not.toBe(null);
-    expect(actualRestaurantDrivers).toEqual(restaurantDrivers);
-    expect(actualRestaurant2Drivers).toEqual(restaurant2Drivers);
+  it('can retrieve drivers', async () => {
+    await expectArrayRetrival(
+      driverApi,
+      id => restaurantApi.getDrivers(id),
+      getFakeDriver,
+      getFakeDriver2,
+    );
+  });
+
+  it('can retrieve menu items', async () => {
+    await expectArrayRetrival(
+      menuApi,
+      id => restaurantApi.getMenuItems(id),
+      getFakeMenuItem,
+      getFakeMenuItem2,
+    );
   });
 });
 
