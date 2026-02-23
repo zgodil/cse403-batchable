@@ -1,5 +1,5 @@
-// import {useAuth0} from '@auth0/auth0-react';
-// import LoginButton from '../components/LoginButton';
+import {useAuth0} from '@auth0/auth0-react';
+import LoginButton from '../components/LoginButton';
 import OrderOverview from '../components/dashboard/OrderOverview';
 import DriverOverview from '../components/dashboard/DriverOverview';
 import AddOrderModal from '../components/dashboard/AddOrderModal';
@@ -8,27 +8,27 @@ import {useModal} from '~/components/Modal';
 import OrderRefreshProvider from '~/components/OrderRefreshProvider';
 
 function Home() {
-  // const {isAuthenticated, isLoading} = useAuth0();
+  const {isAuthenticated, isLoading, user, logout} = useAuth0();
   const addOrderModal = useModal();
 
-  // if (isLoading) {
-  //   return (
-  //     <div className="flex items-center justify-center min-h-screen bg-white dark:bg-gray-950">
-  //       <p className="text-gray-900 dark:text-gray-100">Loading...</p>
-  //     </div>
-  //   );
-  // }
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-white dark:bg-gray-950">
+        <p className="text-gray-900 dark:text-gray-100">Loading...</p>
+      </div>
+    );
+  }
 
-  // if (!isAuthenticated) {
-  //   return (
-  //     <div className="flex flex-col items-center justify-center min-h-screen bg-white dark:bg-gray-950">
-  //       <h1 className="text-3xl font-bold mb-6 text-gray-900 dark:text-gray-100">
-  //         Welcome to Batchable
-  //       </h1>
-  //       <LoginButton />
-  //     </div>
-  //   );
-  // }
+  if (!isAuthenticated) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen bg-white dark:bg-gray-950">
+        <h1 className="text-3xl font-bold mb-6 text-gray-900 dark:text-gray-100">
+          Welcome to Batchable
+        </h1>
+        <LoginButton />
+      </div>
+    );
+  }
 
   return (
     <OrderRefreshProvider>
@@ -42,7 +42,18 @@ function Home() {
               Adaptive Real-Time Delivery Batching System
             </p>
           </div>
-          <div className="flex gap-3">
+          <div className="flex items-center gap-3">
+            {user?.email && (
+              <span className="text-sm text-gray-600 dark:text-gray-400">
+                {user.email}
+              </span>
+            )}
+            <Button
+              onClick={() => logout({logoutParams: {returnTo: window.location.origin}})}
+              style="dark"
+            >
+              Log out
+            </Button>
             <Button style="purple" to="/restaurant">
               ⚙️ Manage Restaurant
             </Button>
