@@ -196,11 +196,12 @@ public class BatchingAlgorithm {
     try {
       lastAllowedCookedTime = getLastAllowedCookedTime(order, restaurantAddress);
     } catch (InvalidRouteException e) {
-      // Order location is invalid
-      // Use invariant that order has already been added to db
+      // Order or restaurant address invalid for Google Routes (e.g. "Address not set")
       dbOrderService.removeOrder(order.id);
       throw new IllegalStateException(
-          "Could not add order id " + order.id + " to batching algorithm", e);
+          "Could not add order id " + order.id + " to batching algorithm. "
+              + "Set a real restaurant address in Manage Restaurant and use a valid delivery address (e.g. full street address).",
+          e);
     }
     if (order.cookedTime.isAfter(lastAllowedCookedTime)) {
       Order updatedOrder = fixDeliveryTime(order, lastAllowedCookedTime);

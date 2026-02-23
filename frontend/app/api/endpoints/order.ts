@@ -5,7 +5,7 @@ import {fetchEndpoint} from '../common';
 
 class OrderApi extends CrudApi<Order> {
   constructor() {
-    super('/order', json.order);
+    super('/api/order', json.order);
   }
   async advanceState({id}: Order['id']) {
     try {

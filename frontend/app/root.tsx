@@ -1,3 +1,4 @@
+import {useEffect} from 'react';
 import {
   isRouteErrorResponse,
   Links,
@@ -9,8 +10,9 @@ import {
 
 import type {Route} from './+types/root';
 import './app.css';
-import {Auth0Provider} from '@auth0/auth0-react';
+import {Auth0Provider, useAuth0} from '@auth0/auth0-react';
 import RestaurantProvider from './components/RestaurantProvider';
+import {setTokenGetter} from './api/authToken';
 
 export const links: Route.LinksFunction = () => [
   {rel: 'preconnect', href: 'https://fonts.googleapis.com'},
@@ -26,6 +28,22 @@ export const links: Route.LinksFunction = () => [
 ];
 
 const redirectUri = typeof window !== 'undefined' ? window.location.origin : '';
+// Required for API calls: create an API in Auth0 Dashboard (APIs → Create API), then set its Identifier here or in .env as VITE_AUTH0_AUDIENCE
+const audience = import.meta.env.VITE_AUTH0_AUDIENCE ?? undefined;
+
+function AuthTokenSetter({children}: {children: React.ReactNode}) {
+  const {getAccessTokenSilently} = useAuth0();
+  useEffect(() => {
+    setTokenGetter(() =>
+      getAccessTokenSilently(
+        audience ? {authorizationParams: {audience}} : undefined,
+      )
+        .then(t => t ?? null)
+        .catch(() => null),
+    );
+  }, [getAccessTokenSilently, audience]);
+  return <>{children}</>;
+}
 
 export function Layout({children}: {children: React.ReactNode}) {
   return (
@@ -42,12 +60,15 @@ export function Layout({children}: {children: React.ReactNode}) {
           clientId="WV9iiESgd8Uc56V35K5XZFEd7wbQYsoU"
           authorizationParams={{
             redirect_uri: redirectUri,
+            ...(audience ? {audience} : {}),
           }}
           cacheLocation="localstorage"
           useRefreshTokens={false}
         >
-          <RestaurantProvider>{children}</RestaurantProvider>
-        </Auth0Provider>
+          <AuthTokenSetter>
+            <RestaurantProvider>{children}</RestaurantProvider>
+          </AuthTokenSetter>
+          </Auth0Provider>
         <ScrollRestoration />
         <Scripts />
       </body>
