@@ -322,11 +322,11 @@ public class DbOrderService {
       throw new IllegalArgumentException("initialTime is required");
     }
 
-    if (batch.expectedCompletionTime == null) {
+    if (batch.completionTime == null) {
       throw new IllegalArgumentException("completionTime is required");
     }
 
-    if (batch.expectedCompletionTime.isBefore(batch.dispatchTime)) {
+    if (batch.completionTime.isBefore(batch.dispatchTime)) {
       throw new IllegalArgumentException("completionTime must not be before dispatchTime");
     }
 
@@ -338,7 +338,7 @@ public class DbOrderService {
     try {
       // batch ids initialized to null then filled in later
       long id = batchDAO.createBatch(batch.driverId, batch.route, batch.dispatchTime,
-          batch.expectedCompletionTime);
+          batch.completionTime);
       return id;
     } catch (SQLException e) {
       throw new RuntimeException("Failed to create batch", e);

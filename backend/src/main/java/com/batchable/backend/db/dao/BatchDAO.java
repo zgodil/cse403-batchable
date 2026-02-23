@@ -44,12 +44,12 @@ public class BatchDAO {
   }
 
   /** Creates a new batch row and returns the generated ID. */
-  public long createBatch(long driverId, String routePolyline, Instant dispatchTime, Instant expectedCompletionTime)
+  public long createBatch(long driverId, String routePolyline, Instant dispatchTime, Instant completionTime)
       throws SQLException {
 
     final String sql =
-        "INSERT INTO Batch(driver_id, route, dispatch_time, expected_completion_time) " +
-        "VALUES (?, ?, ?, ?) RETURNING id;";
+        "INSERT INTO Batch(driver_id, route, dispatch_time, completion_time, finished) " +
+        "VALUES (?, ?, ?, ?, ?) RETURNING id;";
 
     try (Connection conn = dataSource.getConnection();
          PreparedStatement ps = conn.prepareStatement(sql)) {
@@ -57,7 +57,8 @@ public class BatchDAO {
       ps.setLong(1, driverId);
       ps.setString(2, routePolyline);
       ps.setTimestamp(3, ts(dispatchTime));
-      ps.setTimestamp(4, ts(expectedCompletionTime));
+      ps.setTimestamp(4, ts(completionTime));
+      ps.setBoolean(5, false); // new batches start unfinished
 
       try (ResultSet rs = ps.executeQuery()) {
         rs.next();
@@ -69,7 +70,7 @@ public class BatchDAO {
   /** Retrieves a batch by ID. Returns Optional.empty() if not found. */
   public Optional<Batch> getBatch(long batchId) throws SQLException {
     final String sql =
-        "SELECT id, driver_id, route, dispatch_time, expected_completion_time " +
+        "SELECT id, driver_id, route, dispatch_time, completion_time, finished " +
         "FROM Batch WHERE id = ?;";
 
     try (Connection conn = dataSource.getConnection();
@@ -87,7 +88,7 @@ public class BatchDAO {
   /** Returns the most recent batch for a driver (by highest id). */
   public Optional<Batch> getBatchForDriver(long driverId) throws SQLException {
     final String sql =
-        "SELECT id, driver_id, route, dispatch_time, expected_completion_time " +
+        "SELECT id, driver_id, route, dispatch_time, completion_time, finished " +
         "FROM Batch WHERE driver_id = ? ORDER BY id DESC LIMIT 1;";
 
     try (Connection conn = dataSource.getConnection();
@@ -105,7 +106,7 @@ public class BatchDAO {
   /** Lists all batches for a driver ordered by id. */
   public List<Batch> listBatchesForDriver(long driverId) throws SQLException {
     final String sql =
-        "SELECT id, driver_id, route, dispatch_time, expected_completion_time " +
+        "SELECT id, driver_id, route, dispatch_time, completion_time, finished " +
         "FROM Batch WHERE driver_id = ? ORDER BY id;";
 
     List<Batch> out = new ArrayList<>();
@@ -125,21 +126,49 @@ public class BatchDAO {
     return out;
   }
 
-  /** Updates mutable batch fields (NOT id). Returns true iff one row updated. */
-  public boolean updateBatch(long batchId, String routePolyline, Instant dispatchTime, Instant expectedCompletionTime)
+  /**
+   * Updates mutable batch fields (route, dispatch_time, completion_time).
+   * Returns true iff one row updated.
+   */
+  public boolean updateBatch(long batchId, String routePolyline, Instant dispatchTime, Instant completionTime)
       throws SQLException {
 
     final String sql =
-        "UPDATE Batch SET route = ?, dispatch_time = ?, expected_completion_time = ? WHERE id = ?;";
+        "UPDATE Batch SET route = ?, dispatch_time = ?, completion_time = ? WHERE id = ?;";
 
     try (Connection conn = dataSource.getConnection();
          PreparedStatement ps = conn.prepareStatement(sql)) {
 
       ps.setString(1, routePolyline);
       ps.setTimestamp(2, ts(dispatchTime));
-      ps.setTimestamp(3, ts(expectedCompletionTime));
+      ps.setTimestamp(3, ts(completionTime));
       ps.setLong(4, batchId);
 
+      return ps.executeUpdate() == 1;
+    }
+  }
+
+  /** Marks a batch as finished (sets finished = true). Returns true iff one row updated. */
+  public boolean markBatchFinished(long batchId) throws SQLException {
+    final String sql = "UPDATE Batch SET finished = true WHERE id = ?;";
+
+    try (Connection conn = dataSource.getConnection();
+         PreparedStatement ps = conn.prepareStatement(sql)) {
+
+      ps.setLong(1, batchId);
+      return ps.executeUpdate() == 1;
+    }
+  }
+
+  /** Sets the finished flag explicitly. Returns true iff one row updated. */
+  public boolean setBatchFinished(long batchId, boolean finished) throws SQLException {
+    final String sql = "UPDATE Batch SET finished = ? WHERE id = ?;";
+
+    try (Connection conn = dataSource.getConnection();
+         PreparedStatement ps = conn.prepareStatement(sql)) {
+
+      ps.setBoolean(1, finished);
+      ps.setLong(2, batchId);
       return ps.executeUpdate() == 1;
     }
   }
@@ -207,7 +236,8 @@ public class BatchDAO {
         rs.getLong("driver_id"),
         rs.getString("route"),
         instant(rs, "dispatch_time"),
-        instant(rs, "expected_completion_time")
+        instant(rs, "completion_time"),
+        rs.getBoolean("finished")
     );
   }
 }

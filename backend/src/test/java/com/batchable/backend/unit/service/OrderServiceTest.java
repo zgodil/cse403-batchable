@@ -76,7 +76,7 @@ public class OrderServiceTest {
   }
 
   private static Batch batch(long id, long driverId) {
-    return new Batch(id, driverId, "poly", Instant.now(), Instant.now().plusSeconds(60));
+    return new Batch(id, driverId, "poly", Instant.now(), Instant.now().plusSeconds(60), false);
   }
 
   // ---- createOrder ----

@@ -399,7 +399,7 @@ class RestaurantBatchingManagerTest {
     RouteDirectionsResponse routeResp = createRouteResponse("poly", 300);
     when(routeService.getRouteDirections(eq(ADDRESS), anyList(), eq(false))).thenReturn(routeResp);
     when(dbOrderService.createBatch(any(Batch.class))).thenReturn(100L);
-    Batch createdBatch = new Batch(100L, driver.id, "poly", now, now.plusSeconds(300));
+    Batch createdBatch = new Batch(100L, driver.id, "poly", now, now.plusSeconds(300), false);
     when(dbOrderService.getBatch(100L)).thenReturn(createdBatch);
 
     when(dbOrderService.getOrder(1L)).thenReturn(order1);
@@ -576,8 +576,8 @@ class RestaurantBatchingManagerTest {
     when(routeService.getRouteDirections(eq(ADDRESS), anyList(), eq(false))).thenReturn(routeResp);
     when(dbOrderService.createBatch(any(Batch.class))).thenReturn(100L, 101L);
 
-    Batch batch1 = new Batch(100L, d1.id, "poly1", now, now.plusSeconds(600));
-    Batch batch2 = new Batch(101L, d2.id, "poly2", now, now.plusSeconds(600));
+    Batch batch1 = new Batch(100L, d1.id, "poly1", now, now.plusSeconds(600), false);
+    Batch batch2 = new Batch(101L, d2.id, "poly2", now, now.plusSeconds(600), false);
     when(dbOrderService.getBatch(100L)).thenReturn(batch1);
     when(dbOrderService.getBatch(101L)).thenReturn(batch2);
 
@@ -697,7 +697,7 @@ class RestaurantBatchingManagerTest {
     when(routeService.getRouteDirections(eq(ADDRESS), anyList(), eq(false))).thenReturn(routeResp);
     when(dbOrderService.createBatch(any(Batch.class))).thenReturn(100L);
     when(dbOrderService.getBatch(100L))
-        .thenReturn(new Batch(100L, d.id, "poly", now, now.plusSeconds(120)));
+        .thenReturn(new Batch(100L, d.id, "poly", now, now.plusSeconds(120), false));
 
     when(dbOrderService.getOrder(1L)).thenReturn(o);
 
@@ -799,7 +799,7 @@ class RestaurantBatchingManagerTest {
     when(routeService.getRouteDirections(eq(ADDRESS), eq(List.of(cooked1.destination)), eq(false)))
         .thenReturn(routeResp);
     when(dbOrderService.createBatch(any(Batch.class))).thenReturn(200L);
-    Batch createdBatch = new Batch(200L, driver.id, "poly", now, now.plusSeconds(300));
+    Batch createdBatch = new Batch(200L, driver.id, "poly", now, now.plusSeconds(300), false);
     when(dbOrderService.getBatch(200L)).thenReturn(createdBatch);
 
     when(dbOrderService.getOrder(1L)).thenReturn(cooked1);

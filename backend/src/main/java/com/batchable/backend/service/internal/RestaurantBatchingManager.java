@@ -189,13 +189,22 @@ public class RestaurantBatchingManager {
    */
   private void initializeOrders() {
     List<Order> orders = restaurantService.getRestaurantOrders(restaurantId);
-    System.out.println("\n\n\n\n\nGOT " + orders.size() + " ORDERS!!!\n\n\n\n\n");
     for (Order order : orders) {
-      System.out.println("REMAKING ORDER ON STARTUP");
-      Log.printAsJson(order);
       dbOrderService.remakeOrder(order.id);
       addOrder(dbOrderService.getOrder(order.id));
+      // if (order.batchId != null) {
+      //   Batch batch = dbOrderService.getBatch(order.batchId);
+      //   if (batch.driverId != null) {
+      //     orderService.update
+      //   }
+      // }
     }
+    // dbOrderService.
+    // List<Batch> restaruantBatches = restaurantService.
+    // List<Driver> drivers = restaurantService.getRestaurantDrivers(restaurantId);
+    // for (Driver driver : drivers) {
+    //   driverService.
+    // }
   }
 
   /**
@@ -353,7 +362,8 @@ public class RestaurantBatchingManager {
    * @param updateMillis how much to delay delivery times for unassigned ready batches
    */
   public void checkExpiredBatches(final long updateMillis) {
-    Log.printAsJson(batches);
+    System.out.println("\n\n\n");
+    debugPrintBatches();
     Instant now = Instant.now();
 
     List<Order> toBeReAdded = moveExpiredTentativeBatches(now);
@@ -510,7 +520,7 @@ public class RestaurantBatchingManager {
     Instant dispatchTime = Instant.now();
     Instant expectedCompletionTime = dispatchTime.plusSeconds(resp.getDurationSeconds());
     Long batchId = dbOrderService.createBatch(
-        new Batch(-1, driver.id, resp.getPolyline(), dispatchTime, expectedCompletionTime));
+        new Batch(-1, driver.id, resp.getPolyline(), dispatchTime, expectedCompletionTime, false));
 
     updateBatchOrders(readyBatch.batch, batchId);
     return dbOrderService.getBatch(batchId);
@@ -589,5 +599,66 @@ public class RestaurantBatchingManager {
   // returns the Instant 'seconds' seconds after the given time
   private Instant secondsAfter(Instant time, long seconds) {
     return millisAfter(time, seconds * 1000);
+  }
+
+
+
+  public void debugPrintBatches() {
+    Instant now = Instant.now();
+    System.out.printf("=== Restaurant %d batch state at %s ===%n", restaurantId, now);
+
+    // ----- Tentative Batches -----
+    System.out.printf("--- Tentative Batches (%d) ---%n", batches.tentativeBatches.size());
+    int tbIdx = 0;
+    for (TentativeBatch tb : batches.tentativeBatches) {
+      String lastAllowed = formatMinutes(now, tb.getLastAllowedCookedTime());
+      System.out.printf("  Tentative Batch %d (lastAllowedCookedTime=%s min):%n", tbIdx++,
+          lastAllowed);
+      int orderIdx = 0;
+      for (Order order : tb.getBatch()) {
+        String cookedMin = formatMinutes(now, order.cookedTime);
+        String deliveryMin = formatMinutes(now, order.deliveryTime);
+        System.out.printf("    Order[%d] id=%-6d (%s) cooked=%s min, delivery=%s min%n", orderIdx++,
+            order.id, order.state.name(), cookedMin, deliveryMin);
+      }
+    }
+
+    // ----- Ready Batches -----
+    System.out.printf("--- Ready Batches (%d) ---%n", batches.readyBatches.size());
+    int rbIdx = 0;
+    for (ReadyBatch rb : batches.readyBatches) {
+      System.out.printf("  Ready Batch %d:%n", rbIdx++);
+      int orderIdx = 0;
+      for (Order order : rb.getBatch()) {
+        String cookedMin = formatMinutes(now, order.cookedTime);
+        String deliveryMin = formatMinutes(now, order.deliveryTime);
+        System.out.printf("    Order[%d] id=%-6d (%s) cooked=%s min, delivery=%s min%n", orderIdx++,
+            order.id, order.state.name(), cookedMin, deliveryMin);
+      }
+    }
+
+    // ----- Active Batches -----
+    System.out.printf("--- Active Batches (%d) ---%n", batches.activeBatches.size());
+    int abIdx = 0;
+    for (Batch batch : batches.activeBatches) {
+      System.out.printf("  Active Batch %d (id=%d):%n", abIdx++, batch.id);
+      List<Order> orders = dbOrderService.getBatchOrders(batch.id); // you need this method
+      int orderIdx = 0;
+      for (Order order : orders) {
+        String cookedMin = formatMinutes(now, order.cookedTime);
+        String deliveryMin = formatMinutes(now, order.deliveryTime);
+        System.out.printf("    Order[%d] id=%-6d (%s) cooked=%s min, delivery=%s min%n", orderIdx++,
+            order.id, order.state.name(), cookedMin, deliveryMin);
+      }
+    }
+  }
+
+  /** Returns minutes from 'now' to 'time' as a formatted string with one decimal place. */
+  private String formatMinutes(Instant now, Instant time) {
+    if (time == null)
+      return "null";
+    double minutes = (time.toEpochMilli() - now.toEpochMilli()) / (1000.0 * 60.0);
+    // Show sign and one decimal
+    return String.format("%+.1f", minutes);
   }
 }

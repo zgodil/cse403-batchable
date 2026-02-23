@@ -113,18 +113,18 @@ public class OrderServiceIT_CI extends PostgresTestBase {
     }
   }
 
-  /** Creates a batch row for the given driver and returns its ID. */
   private long createBatchRow(long driverId) throws SQLException {
     final String sql =
-        "INSERT INTO Batch(driver_id, route, dispatch_time, expected_completion_time) "
-            + "VALUES (?, ?, ?, ?) RETURNING id;";
+        "INSERT INTO Batch(driver_id, route, dispatch_time, completion_time, finished) "
+            + "VALUES (?, ?, ?, ?, ?) RETURNING id;";
     try (PreparedStatement ps = c.prepareStatement(sql)) {
       ps.setLong(1, driverId);
       ps.setString(2, "");
       Instant dispatch = Instant.now();
-      Instant expected = dispatch.plusSeconds(600);
+      Instant completion = dispatch.plusSeconds(600);
       ps.setTimestamp(3, Timestamp.from(dispatch));
-      ps.setTimestamp(4, Timestamp.from(expected));
+      ps.setTimestamp(4, Timestamp.from(completion));
+      ps.setBoolean(5, false);
       try (ResultSet rs = ps.executeQuery()) {
         rs.next();
         return rs.getLong("id");

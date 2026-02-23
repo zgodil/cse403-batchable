@@ -123,7 +123,7 @@ class BatchingAlgorithmTest {
 
   /** Tests that adding a single order creates a batch containing that order. */
   @Test
-  void testAddSingleOrderCreatesNewBatch() throws Exception {
+  void testAddSingleOrderCreatesNewBatch() throws Exception { 
     when(mockRouteService.getSecondsBetween(anyString(), anyString())).thenReturn(120);
     Order order = getOrder(futureMinutes(0), futureMinutes(5),
         futureMinutes(5 + 2 + CEIL_MINS_TO_HAND_DELIVER));
