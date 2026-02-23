@@ -24,7 +24,7 @@ export const OrderRefreshContext = createContext<RefreshMonitor | null>(null);
 export default function OrderRefreshProvider({
   children,
 }: React.PropsWithChildren<{}>) {
-  const restaurant = useContext(RestaurantContext);
+  const {restaurant} = useContext(RestaurantContext);
   const [monitor, setMonitor] = useState<RefreshMonitor | null>(null);
 
   useEffect(() => {

@@ -8,7 +8,7 @@ import {useLoader} from '~/util/query';
 import {anyModalOpen} from '../Modal';
 
 export default function OrderList() {
-  const restaurant = useContext(RestaurantContext);
+  const {restaurant} = useContext(RestaurantContext);
   const monitor = useContext(OrderRefreshContext);
 
   useEffect(() => {
@@ -19,7 +19,7 @@ export default function OrderList() {
 
   const loader = useLoader(async () => {
     if (!restaurant) return null;
-    const orders = await restaurantApi.getOrders(restaurant);
+    const orders = await restaurantApi.getOrders(restaurant.id);
     if (!orders) throw new Error('Failed to load orders');
     return orders;
   }, [restaurant]);

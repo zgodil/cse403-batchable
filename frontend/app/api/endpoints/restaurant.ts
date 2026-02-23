@@ -1,23 +1,35 @@
 import * as json from '~/domain/json';
 import {CrudApi} from '../crud';
 import type {Driver, MenuItem, Order, Restaurant} from '~/domain/objects';
-import {fetchJSON} from '../common';
+import {fetchEndpoint, fetchJSON} from '../common';
 
 class RestaurantApi extends CrudApi<Restaurant> {
   constructor() {
     super('/api/restaurant', json.restaurant);
   }
 
-  /** Get the current user's restaurant (requires auth). */
-  async getMyRestaurant(): Promise<Restaurant['id'] | null> {
+  /** Get the current user's restaurant (requires auth). Creates one if none exists. */
+  async getMyRestaurant(): Promise<Restaurant | null> {
     try {
       const r = await fetchJSON('GET', '/api/restaurant/me');
-      return json.restaurant.parse(r).id;
+      return json.restaurant.parse(r);
     } catch (err) {
       console.error('Cannot get my restaurant', err);
       return null;
     }
   }
+
+  /** Update the current user's restaurant (name, location). Uses PUT /api/restaurant/me. */
+  async updateMyRestaurant(restaurant: Restaurant): Promise<boolean> {
+    try {
+      await fetchEndpoint('PUT', '/api/restaurant/me', json.restaurant.unparse(restaurant));
+      return true;
+    } catch (err) {
+      console.error('Cannot update my restaurant', err);
+      return false;
+    }
+  }
+
   async getDrivers({id}: Restaurant['id']) {
     try {
       const drivers: json.JSONDomainObject<Driver>[] = await fetchJSON(

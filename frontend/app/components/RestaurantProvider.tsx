@@ -1,18 +1,31 @@
-import {createContext, useEffect, useState} from 'react';
+import {createContext, useCallback, useEffect, useState} from 'react';
 import {useAuth0} from '@auth0/auth0-react';
 import {restaurantApi} from '~/api/endpoints/restaurant';
 import type {Restaurant} from '~/domain/objects';
 
-export const RestaurantContext = createContext<Restaurant['id'] | null>(null);
+export type RestaurantContextValue = {
+  restaurant: Restaurant | null;
+  refreshRestaurant: () => Promise<void>;
+};
+
+export const RestaurantContext = createContext<RestaurantContextValue>({
+  restaurant: null,
+  refreshRestaurant: async () => {},
+});
 
 /**
- * Provides the ID of the restaurant associated with the current user (from Auth0 JWT).
+ * Provides the current user's restaurant (from GET /api/restaurant/me) and a refresh callback.
  */
 export default function RestaurantProvider({
   children,
 }: React.PropsWithChildren<{}>) {
   const {isAuthenticated} = useAuth0();
-  const [restaurant, setRestaurant] = useState<Restaurant['id'] | null>(null);
+  const [restaurant, setRestaurant] = useState<Restaurant | null>(null);
+
+  const refreshRestaurant = useCallback(async () => {
+    const r = await restaurantApi.getMyRestaurant();
+    setRestaurant(r ?? null);
+  }, []);
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -23,12 +36,11 @@ export default function RestaurantProvider({
     const load = (retries = 2) => {
       restaurantApi
         .getMyRestaurant()
-        .then(id => {
-          if (!cancelled) setRestaurant(id);
+        .then(r => {
+          if (!cancelled) setRestaurant(r ?? null);
         })
         .catch(err => {
           if (cancelled) return;
-          // 401 = token not ready yet or wrong audience; retry once after a short delay
           const is401 =
             String(err?.message || err).includes('401') ||
             String(err?.message || err).toLowerCase().includes('unauthorized');
@@ -44,7 +56,7 @@ export default function RestaurantProvider({
   }, [isAuthenticated]);
 
   return (
-    <RestaurantContext.Provider value={restaurant}>
+    <RestaurantContext.Provider value={{restaurant, refreshRestaurant}}>
       {children}
     </RestaurantContext.Provider>
   );

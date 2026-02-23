@@ -11,7 +11,7 @@ interface Props {
 }
 
 export default function AddDriverModal({state, onCreate}: Props) {
-  const restaurant = useContext(RestaurantContext);
+  const {restaurant} = useContext(RestaurantContext);
   const submitNewDriver = (data: {
     name: string;
     phoneNumber: string;
@@ -24,7 +24,7 @@ export default function AddDriverModal({state, onCreate}: Props) {
 
     const driver: Driver = {
       id: fakeId('Driver'),
-      restaurant,
+      restaurant: restaurant.id,
       name: data.name,
       phoneNumber: {compact: data.phoneNumber},
       onShift: !!data.onShift,

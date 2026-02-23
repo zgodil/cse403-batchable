@@ -25,7 +25,8 @@ function MenuItemsSection({
   isEditing,
   setIsEditing,
 }: MenuItemsSectionProps) {
-  const restaurantId = useContext(RestaurantContext);
+  const {restaurant} = useContext(RestaurantContext);
+  const restaurantId = restaurant?.id ?? null;
   const [menuItems, setMenuItems] = useState<MenuItem[]>(initialMenuItems);
   const addMenuItemModal = useModal();
   const [editingMenuItemId, setEditingMenuItemId] = useState<number | null>(

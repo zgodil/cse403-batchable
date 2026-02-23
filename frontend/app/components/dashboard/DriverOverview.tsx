@@ -6,11 +6,11 @@ import {restaurantApi} from '~/api/endpoints/restaurant';
 import {useLoader} from '~/util/query';
 
 export default function DriverOverview() {
-  const restaurant = useContext(RestaurantContext);
+  const {restaurant} = useContext(RestaurantContext);
 
   const loader = useLoader(async () => {
     if (!restaurant) return null;
-    const drivers = await restaurantApi.getDrivers(restaurant);
+    const drivers = await restaurantApi.getDrivers(restaurant.id);
     if (!drivers) throw new Error('Failed to load drivers');
     return drivers.filter(driver => driver.onShift);
   }, [restaurant]);

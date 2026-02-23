@@ -12,7 +12,7 @@ interface Props {
 }
 
 export default function AddOrderModal({modal}: Props) {
-  const restaurant = useContext(RestaurantContext);
+  const {restaurant} = useContext(RestaurantContext);
 
   const addOrder = async (data: {
     address: string;
@@ -35,7 +35,7 @@ export default function AddOrderModal({modal}: Props) {
 
     const order: Order = {
       id: fakeId('Order'),
-      restaurant,
+      restaurant: restaurant.id,
       destination: {
         address: data.address,
       },

@@ -25,7 +25,8 @@ function DriversSection({
   isEditing,
   setIsEditing,
 }: DriversSectionProps) {
-  const restaurantId = useContext(RestaurantContext);
+  const {restaurant} = useContext(RestaurantContext);
+  const restaurantId = restaurant?.id ?? null;
   const [drivers, setDrivers] = useState<Driver[]>(initialDrivers);
   const addDriverModal = useModal();
   const [editingDriverId, setEditingDriverId] = useState<number | null>(null);

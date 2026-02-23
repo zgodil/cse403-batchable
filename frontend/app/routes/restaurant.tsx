@@ -21,7 +21,8 @@ type RestaurantPageData = {
 };
 
 function RestaurantPage() {
-  const restaurantId = useContext(RestaurantContext);
+  const {restaurant: contextRestaurant, refreshRestaurant} =
+    useContext(RestaurantContext);
   const [data, setData] = useState<RestaurantPageData | null>(null);
   const [isLoadingData, setIsLoadingData] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -30,7 +31,7 @@ function RestaurantPage() {
   >(null);
 
   useEffect(() => {
-    if (!restaurantId) {
+    if (!contextRestaurant) {
       setData(null);
       setLoadError('Could not determine restaurant.');
       setIsLoadingData(false);
@@ -43,23 +44,26 @@ function RestaurantPage() {
       setIsLoadingData(true);
       setLoadError(null);
       try {
-        const [restaurant, drivers, menuItems] = await Promise.all([
-          restaurantApi.read(restaurantId),
-          restaurantApi.getDrivers(restaurantId),
-          restaurantApi.getMenuItems(restaurantId),
+        const [drivers, menuItems] = await Promise.all([
+          restaurantApi.getDrivers(contextRestaurant.id),
+          restaurantApi.getMenuItems(contextRestaurant.id),
         ]);
 
         if (cancelled) {
           return;
         }
 
-        if (!restaurant || !drivers || !menuItems) {
+        if (!drivers || !menuItems) {
           setData(null);
           setLoadError('Could not load restaurant data from the backend.');
           return;
         }
 
-        setData({restaurant, drivers, menuItems});
+        setData({
+          restaurant: contextRestaurant,
+          drivers,
+          menuItems,
+        });
       } catch (error) {
         if (cancelled) {
           return;
@@ -79,7 +83,7 @@ function RestaurantPage() {
     return () => {
       cancelled = true;
     };
-  }, [restaurantId]);
+  }, [contextRestaurant]);
 
   const setIsEditingDriversExclusive: Dispatch<
     SetStateAction<boolean>
@@ -129,7 +133,10 @@ function RestaurantPage() {
           />
 
           <div className="grid grid-cols-1 gap-6 lg:grid-cols-2 lg:items-stretch">
-            <RestaurantDetailsSection initialRestaurant={data.restaurant} />
+            <RestaurantDetailsSection
+            initialRestaurant={data.restaurant}
+            onUpdateSuccess={refreshRestaurant}
+          />
 
             <MenuItemsSection
               initialMenuItems={data.menuItems}
