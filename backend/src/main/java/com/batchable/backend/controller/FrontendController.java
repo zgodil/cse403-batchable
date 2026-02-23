@@ -1,4 +1,5 @@
 package com.batchable.backend.controller;
+
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
 
@@ -7,9 +8,9 @@ import org.springframework.web.bind.annotation.RequestMapping;
 public class FrontendController {
 
     @RequestMapping(value = {
-        "/",
-        "/{x:[\\w\\-]+}",
-        "/{x:[\\w\\-]+}/**"
+            "/",
+            "/restaurant",
+            "/restaurant/**"
     })
     public String forward() {
         return "forward:/index.html";
