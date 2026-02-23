@@ -1,15 +1,14 @@
-import type {Dispatch, SetStateAction} from 'react';
-import type {MenuItem} from '~/domain/objects';
+import {useEffect, useState} from 'react';
+import {restaurantApi} from '~/api/endpoints/restaurant';
+import type {MenuItem, Restaurant} from '~/domain/objects';
 import FormField from './FormField';
 import LoadError from './LoadError';
 import Loading from './Loading';
 
 interface Props {
-  menuItems: MenuItem[];
-  selectedItemNames: string[];
-  setSelectedItemNames: Dispatch<SetStateAction<string[]>>;
-  loadingMenuItems: boolean;
-  menuItemsLoadFailed: boolean;
+  restaurant: Restaurant['id'] | null;
+  open: boolean;
+  onItemsChange: (selectedItemNames: string[]) => void;
   label?: string;
   loadingMessage?: string;
   errorMessage?: string;
@@ -17,16 +16,75 @@ interface Props {
 }
 
 export default function MenuItemSelector({
-  menuItems,
-  selectedItemNames,
-  setSelectedItemNames,
-  loadingMenuItems,
-  menuItemsLoadFailed,
+  restaurant,
+  open,
+  onItemsChange,
   label = 'Menu Items',
   loadingMessage = 'Loading menu items...',
   errorMessage = 'Could not load menu items. Try opening the modal again.',
   emptyMessage = 'No menu items available yet. Add items from Restaurant Page first.',
 }: Props) {
+  const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
+  const [selectedItemNames, setSelectedItemNames] = useState<string[]>([]);
+  const [loadingMenuItems, setLoadingMenuItems] = useState(false);
+  const [menuItemsLoadFailed, setMenuItemsLoadFailed] = useState(false);
+
+  useEffect(() => {
+    onItemsChange(selectedItemNames);
+  }, [onItemsChange, selectedItemNames]);
+
+  useEffect(() => {
+    if (!open) {
+      setMenuItems([]);
+      setSelectedItemNames([]);
+      setLoadingMenuItems(false);
+      setMenuItemsLoadFailed(false);
+      return;
+    }
+
+    if (!restaurant) {
+      setMenuItems([]);
+      setSelectedItemNames([]);
+      setLoadingMenuItems(false);
+      setMenuItemsLoadFailed(false);
+      return;
+    }
+
+    let cancelled = false;
+
+    const loadMenuItems = async () => {
+      setLoadingMenuItems(true);
+      setMenuItemsLoadFailed(false);
+
+      const loadedMenuItems = await restaurantApi.getMenuItems(restaurant);
+      if (cancelled) {
+        return;
+      }
+
+      if (!loadedMenuItems) {
+        setMenuItems([]);
+        setSelectedItemNames([]);
+        setMenuItemsLoadFailed(true);
+        setLoadingMenuItems(false);
+        return;
+      }
+
+      setMenuItems(loadedMenuItems);
+      setSelectedItemNames(current =>
+        current.filter(selectedItemName =>
+          loadedMenuItems.some(menuItem => menuItem.name === selectedItemName),
+        ),
+      );
+      setLoadingMenuItems(false);
+    };
+
+    void loadMenuItems();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [open, restaurant]);
+
   return (
     <div className="space-y-2">
       <p className="block text-sm font-medium text-gray-700 dark:text-gray-300">
