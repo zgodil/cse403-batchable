@@ -85,16 +85,20 @@ public class BatchDAO {
     }
   }
 
-  /** Returns the most recent batch for a driver (by highest id). */
+  /** 
+   * Returns the current batch assigned to the driver if applicable, otherwise null.
+   * Uses invariant that drivers have at most one unfinished batch at a time.
+   */
   public Optional<Batch> getBatchForDriver(long driverId) throws SQLException {
     final String sql =
         "SELECT id, driver_id, route, dispatch_time, completion_time, finished " +
-        "FROM Batch WHERE driver_id = ? ORDER BY id DESC LIMIT 1;";
+        "FROM Batch WHERE driver_id = ? and finished = ? LIMIT 1;";
 
     try (Connection conn = dataSource.getConnection();
          PreparedStatement ps = conn.prepareStatement(sql)) {
 
       ps.setLong(1, driverId);
+      ps.setBoolean(2, false);
 
       try (ResultSet rs = ps.executeQuery()) {
         if (!rs.next()) return Optional.empty();

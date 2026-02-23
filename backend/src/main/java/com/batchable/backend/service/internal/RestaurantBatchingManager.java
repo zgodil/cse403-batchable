@@ -192,19 +192,7 @@ public class RestaurantBatchingManager {
     for (Order order : orders) {
       dbOrderService.remakeOrder(order.id);
       addOrder(dbOrderService.getOrder(order.id));
-      // if (order.batchId != null) {
-      //   Batch batch = dbOrderService.getBatch(order.batchId);
-      //   if (batch.driverId != null) {
-      //     orderService.update
-      //   }
-      // }
     }
-    // dbOrderService.
-    // List<Batch> restaruantBatches = restaurantService.
-    // List<Driver> drivers = restaurantService.getRestaurantDrivers(restaurantId);
-    // for (Driver driver : drivers) {
-    //   driverService.
-    // }
   }
 
   /**

@@ -5,24 +5,22 @@ import com.twilio.type.PhoneNumber;
 import org.springframework.stereotype.Service;
 
 /**
- * Twilio-backed implementation of {@link TwilioManager}.
- * Sends SMS via the Twilio API using the phone number from {@link TwilioConfig}.
+ * Twilio-backed implementation of {@link TwilioManager}. Sends SMS via the Twilio API using the
+ * phone number from {@link TwilioConfig}.
  */
 @Service
 public class TwilioManagerImpl implements TwilioManager {
 
-    private final TwilioConfig config;
+  private final TwilioConfig config;
 
-    public TwilioManagerImpl(TwilioConfig config) {
-        this.config = config;
-    }
+  public TwilioManagerImpl(TwilioConfig config) {
+    this.config = config;
+  }
 
-    @Override
-    public void sendMessage(String toPhoneNumber, String message) {
-        Message twilioMessage = Message.creator(
-                new PhoneNumber(toPhoneNumber),
-                new PhoneNumber(config.getPhoneNumber()),
-                message
-        ).create();
-    }
+  @Override
+  public void sendMessage(String toPhoneNumber, String message) {
+    Message twilioMessage = Message
+        .creator(new PhoneNumber(toPhoneNumber), new PhoneNumber(config.getPhoneNumber()), message)
+        .create();
+  }
 }
