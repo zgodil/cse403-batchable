@@ -7,7 +7,6 @@ import Loading from './Loading';
 
 interface Props {
   restaurant: Restaurant['id'] | null;
-  open: boolean;
   onItemsChange: (selectedItemNames: string[]) => void;
   label?: string;
   loadingMessage?: string;
@@ -17,7 +16,6 @@ interface Props {
 
 export default function MenuItemSelector({
   restaurant,
-  open,
   onItemsChange,
   label = 'Menu Items',
   loadingMessage = 'Loading menu items...',
@@ -34,14 +32,6 @@ export default function MenuItemSelector({
   }, [onItemsChange, selectedItemNames]);
 
   useEffect(() => {
-    if (!open) {
-      setMenuItems([]);
-      setSelectedItemNames([]);
-      setLoadingMenuItems(false);
-      setMenuItemsLoadFailed(false);
-      return;
-    }
-
     if (!restaurant) {
       setMenuItems([]);
       setSelectedItemNames([]);
@@ -83,7 +73,7 @@ export default function MenuItemSelector({
     return () => {
       cancelled = true;
     };
-  }, [open, restaurant]);
+  }, [restaurant]);
 
   return (
     <div className="space-y-2">
