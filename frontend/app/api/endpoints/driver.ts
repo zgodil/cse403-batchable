@@ -22,7 +22,7 @@ class DriverApi extends CrudApi<Driver> {
   async getBatch({id}: Driver['id']) {
     try {
       const batch: json.JSONDomainObject<Batch> | null = await fetchJSON(
-        'PUT',
+        'GET',
         `${this.resource}/${id}/batch`,
       );
       return batch === null ? null : json.batch.parse(batch);
