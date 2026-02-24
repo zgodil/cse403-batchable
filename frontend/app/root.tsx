@@ -28,16 +28,14 @@ export const links: Route.LinksFunction = () => [
 ];
 
 const redirectUri = typeof window !== 'undefined' ? window.location.origin : '';
-// Required for API calls: create an API in Auth0 Dashboard (APIs → Create API), then set its Identifier here or in .env as VITE_AUTH0_AUDIENCE
-const audience = import.meta.env.VITE_AUTH0_AUDIENCE ?? undefined;
+const audience =
+  import.meta.env.VITE_AUTH0_AUDIENCE ?? 'https://batchable-api';
 
 function AuthTokenSetter({children}: {children: React.ReactNode}) {
   const {getAccessTokenSilently} = useAuth0();
   useEffect(() => {
     setTokenGetter(() =>
-      getAccessTokenSilently(
-        audience ? {authorizationParams: {audience}} : undefined,
-      )
+      getAccessTokenSilently({authorizationParams: {audience}})
         .then(t => t ?? null)
         .catch(() => null),
     );
