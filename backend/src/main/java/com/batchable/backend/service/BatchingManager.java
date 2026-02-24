@@ -10,7 +10,6 @@ import org.springframework.stereotype.Service;
 import com.batchable.backend.db.models.Order;
 import com.batchable.backend.db.models.Restaurant;
 import com.batchable.backend.service.internal.RestaurantBatchingManager;
-import com.batchable.backend.twilio.SmsService;
 import com.batchable.backend.twilio.TwilioManagerImpl;
 import com.batchable.backend.websocket.OrderWebSocketPublisher;
 import jakarta.annotation.PostConstruct;
