@@ -11,6 +11,7 @@ import OrderState from '../OrderState';
 import {MS_PER_MINUTE} from '~/util/time';
 import {formatOrderName, formatTimeInterval} from '~/util/format';
 import {orderApi} from '~/api/endpoints/order';
+import Button from '../Button';
 
 interface Props {
   order: Order;
@@ -46,6 +47,16 @@ export default function EditOrderModal({order, state}: Props) {
     }
   };
 
+  const remake = async () => {
+    await orderApi.remake(order.id);
+    state.setOpen(false);
+  };
+
+  const cancel = async () => {
+    await orderApi.delete(order.id);
+    state.setOpen(false);
+  };
+
   return (
     <FormModal
       title={`Edit ${formatOrderName(order)}`}
@@ -53,6 +64,14 @@ export default function EditOrderModal({order, state}: Props) {
       apply={applyChanges}
       confirm={canChangeCookTime || canChangeState ? 'Apply Changes' : 'OK'}
     >
+      <div className="flex gap-3">
+        <Button style="red" onClick={cancel} tw="grow flex-0">
+          Cancel Order
+        </Button>
+        <Button style="amber" onClick={remake} tw="grow flex-0">
+          Remake Order
+        </Button>
+      </div>
       <div className="text-sm text-gray-500">
         <p>Items: {order.itemNames.join(', ')}</p>
         <p>
