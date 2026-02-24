@@ -22,8 +22,8 @@ public class TwilioConfig {
   @Value("${twilio.phone-number}")
   private String phoneNumber;
 
-  @Value("${twilio.driver-phone-number}")
-  private String driverPhoneNumber;
+  // @Value("${twilio.driver-phone-number}")
+  // private String driverPhoneNumber;
 
   /** Initializes the Twilio client with account SID and auth token after the bean is created. */
   @PostConstruct
@@ -38,6 +38,7 @@ public class TwilioConfig {
 
   /** Returns the configured Twilio phone number used for receiving SMS. */
   public String getDriverPhoneNumber() {
-    return driverPhoneNumber;
+    // return driverPhoneNumber;
+    return "+1234567899";
   }
 }
