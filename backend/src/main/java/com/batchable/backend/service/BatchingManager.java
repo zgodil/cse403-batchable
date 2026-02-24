@@ -26,7 +26,7 @@ import jakarta.annotation.PostConstruct;
 @Service
 public class BatchingManager {
 
-    private final TwilioManagerImpl twilioManagerImpl;
+  private final TwilioManagerImpl twilioManagerImpl;
 
   private final DbOrderService dbOrderService;
 
@@ -76,15 +76,16 @@ public class BatchingManager {
   private void initialize() {
     String ciEnv = System.getenv("CI"); // GitHub Actions automatically sets CI=true
     if (!"true".equalsIgnoreCase(ciEnv)) {
-        // this causes issue in CI because the db is not set up
-        dbOrderService.removeAllUnfinishedBatches();
+      dbOrderService.removeAllUnfinishedBatches();
+    } else {
+      System.out.println("CI detected: skipping removeAllUnfinishedBatches()");
     }
     List<Restaurant> restaurants = restaurantService.getAllRestaurants();
     for (Restaurant restaurant : restaurants) {
       addManager(restaurant.id);
     }
   }
- 
+
   /**
    * Retrieves the batching manager for a restaurant, throwing an exception if it does not exist.
    *
@@ -95,7 +96,7 @@ public class BatchingManager {
   private RestaurantBatchingManager getManager(long restaurantId) {
     if (!restaurantManagers.containsKey(restaurantId)) {
       throw new IllegalArgumentException("Cannot get RestaurantBatchingManager for id "
-      + restaurantId + "because it does not exist.");
+          + restaurantId + "because it does not exist.");
     }
     return restaurantManagers.get(restaurantId);
   }
@@ -116,7 +117,8 @@ public class BatchingManager {
     String address = restaurant.location;
     restaurantManagers.put(restaurantId,
         new RestaurantBatchingManager(restaurantId, address, publisher, batchingAlgorithm,
-            routeService, dbOrderService, driverService, restaurantService, twilioManagerImpl, null));
+            routeService, dbOrderService, driverService, restaurantService, twilioManagerImpl,
+            null));
   }
 
   /**
