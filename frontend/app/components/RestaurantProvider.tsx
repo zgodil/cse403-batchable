@@ -1,5 +1,6 @@
 import {createContext, useCallback, useEffect, useState} from 'react';
 import {useAuth0} from '@auth0/auth0-react';
+import {getToken} from '~/api/authToken';
 import {restaurantApi} from '~/api/endpoints/restaurant';
 import type {Restaurant} from '~/domain/objects';
 
@@ -33,7 +34,15 @@ export default function RestaurantProvider({
       return;
     }
     let cancelled = false;
-    const load = (retries = 2) => {
+    const load = async (tokenRetries = 5) => {
+      const token = await getToken();
+      if (cancelled) return;
+      if (!token) {
+        if (tokenRetries > 0) {
+          setTimeout(() => load(tokenRetries - 1), 300);
+        }
+        return;
+      }
       restaurantApi
         .getMyRestaurant()
         .then(r => {
@@ -44,9 +53,7 @@ export default function RestaurantProvider({
           const is401 =
             String(err?.message || err).includes('401') ||
             String(err?.message || err).toLowerCase().includes('unauthorized');
-          if (retries > 0 && is401) {
-            setTimeout(() => load(retries - 1), 800);
-          }
+          if (is401) setTimeout(() => load(0), 800);
         });
     };
     load();
