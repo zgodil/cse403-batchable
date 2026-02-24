@@ -199,7 +199,7 @@
 						</limit>
 						</limits>
 						<includes>
-							<include>com.batachable.backend.controller.*</include>
+							<include>com.batchable.backend.controller.*</include>
 						</includes>
 					</rule>
 					<!-- Services should have 75% coverage -->
