@@ -72,6 +72,7 @@ public class BatchingManager {
   }
 
   /** Initializes the managers corresponding to pre-populated data */
+  // TODO: remove this once we have a way to test the batching manager without CI
   @PostConstruct
   private void initialize() {
     String ciEnv = System.getenv("CI"); // GitHub Actions automatically sets CI=true
