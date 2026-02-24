@@ -3,7 +3,6 @@ package com.batchable.backend.service;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.function.Consumer;
 
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
@@ -11,6 +10,8 @@ import org.springframework.stereotype.Service;
 import com.batchable.backend.db.models.Order;
 import com.batchable.backend.db.models.Restaurant;
 import com.batchable.backend.service.internal.RestaurantBatchingManager;
+import com.batchable.backend.twilio.SmsService;
+import com.batchable.backend.twilio.TwilioManagerImpl;
 import com.batchable.backend.websocket.OrderWebSocketPublisher;
 import jakarta.annotation.PostConstruct;
 
@@ -25,6 +26,8 @@ import jakarta.annotation.PostConstruct;
  */
 @Service
 public class BatchingManager {
+
+    private final TwilioManagerImpl twilioManagerImpl;
 
   private final DbOrderService dbOrderService;
 
@@ -59,18 +62,20 @@ public class BatchingManager {
    */
   public BatchingManager(OrderWebSocketPublisher publisher, BatchingAlgorithm batchingAlgorithm,
       RestaurantService restaurantService, RouteService routeService, DbOrderService dbOrderService,
-      DriverService driverService) {
+      DriverService driverService, TwilioManagerImpl twilioManagerImpl) {
     this.publisher = publisher;
     this.batchingAlgorithm = batchingAlgorithm;
     this.restaurantService = restaurantService;
     this.routeService = routeService;
     this.dbOrderService = dbOrderService;
     this.driverService = driverService;
+    this.twilioManagerImpl = twilioManagerImpl;
   }
 
   /** Initializes the managers corresponding to pre-populated data */
   @PostConstruct
-  private void initializeManagers() {
+  private void initialize() {
+    dbOrderService.removeAllUnfinishedBatches();
     List<Restaurant> restaurants = restaurantService.getAllRestaurants();
     for (Restaurant restaurant : restaurants) {
       addManager(restaurant.id);
@@ -108,7 +113,7 @@ public class BatchingManager {
     String address = restaurant.location;
     restaurantManagers.put(restaurantId,
         new RestaurantBatchingManager(restaurantId, address, publisher, batchingAlgorithm,
-            routeService, dbOrderService, driverService, restaurantService, null));
+            routeService, dbOrderService, driverService, restaurantService, twilioManagerImpl, null));
   }
 
   /**
@@ -141,26 +146,6 @@ public class BatchingManager {
           + restaurantId + " because it does not exist.");
     }
     restaurantManagers.remove(restaurantId);
-  }
-
-  /**
-   * Registers a listener for when batches change for a specific restaurant.
-   *
-   * @param restaurantId the restaurant ID
-   * @param handler callback invoked with the restaurant's batch state
-   */
-  public void onBatchesChange(long restaurantId, Consumer<Long> handler) {
-    getManager(restaurantId).onBatchChange(handler);
-  }
-
-  /**
-   * Registers a listener for when a batch becomes active for a restaurant.
-   *
-   * @param restaurantId the restaurant ID
-   * @param handler callback invoked with the newly active batch
-   */
-  public void onBatchBecomeActive(long restaurantId, Consumer<Long> handler) {
-    getManager(restaurantId).onBatchBecomeActive(handler);
   }
 
   /**

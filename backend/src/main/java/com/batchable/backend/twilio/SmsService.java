@@ -12,7 +12,7 @@ import com.twilio.type.PhoneNumber;
  */
 @Service
 public class SmsService {
-
+  
   /** Twilio phone number used as the "from" number for outgoing SMS (from application config). */
   @Value("${twilio.phone-number}")
   private String fromNumber;

@@ -243,14 +243,16 @@ public class DbOrderService {
     if (order.state == Order.State.DELIVERED) {
       throw new IllegalStateException("Delivered orders cannot be remade");
     }
-    
+
     Instant newInitialTime = Instant.now();
-    Instant newCookedTime = newInitialTime.plus(Duration.between(order.initialTime, order.cookedTime));
-    Instant newDeliveryTime = newInitialTime.plus(Duration.between(order.initialTime, order.deliveryTime));
+    Instant newCookedTime =
+        newInitialTime.plus(Duration.between(order.initialTime, order.cookedTime));
+    Instant newDeliveryTime =
+        newInitialTime.plus(Duration.between(order.initialTime, order.deliveryTime));
 
     try {
-      orderDAO.remakeOrder(orderId, Order.State.COOKING, newInitialTime, 
-                           newDeliveryTime, newCookedTime, true);
+      orderDAO.remakeOrder(orderId, Order.State.COOKING, newInitialTime, newDeliveryTime,
+          newCookedTime, true);
       // Push update to frontend via WebSocket
       publisher.refreshOrderData(order.restaurantId);
 
@@ -342,6 +344,17 @@ public class DbOrderService {
       return id;
     } catch (SQLException e) {
       throw new RuntimeException("Failed to create batch", e);
+    }
+  }
+
+  /**
+   * Deletes all unfinished batches in the database (useful for startup).
+   */
+  public void removeAllUnfinishedBatches() {
+    try {
+      batchDAO.removeAllUnfinishedBatches();
+    } catch (SQLException e) {
+      throw new RuntimeException("Failed to remove unfinished batches", e);
     }
   }
 

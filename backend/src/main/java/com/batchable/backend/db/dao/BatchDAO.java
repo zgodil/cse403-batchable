@@ -1,5 +1,6 @@
 package com.batchable.backend.db.dao;
 
+import com.batchable.backend.BackendApplication;
 import com.batchable.backend.db.models.Batch;
 
 import javax.sql.DataSource;
@@ -15,8 +16,7 @@ import java.util.Optional;
 /**
  * Data Access Object for Batch table.
  *
- * Responsible ONLY for direct database interaction.
- * No business logic should live here.
+ * Responsible ONLY for direct database interaction. No business logic should live here.
  */
 @Repository
 public class BatchDAO {
@@ -25,8 +25,7 @@ public class BatchDAO {
   private final DataSource dataSource;
 
   /**
-   * Constructor injection of DataSource.
-   * Spring will provide this automatically.
+   * Constructor injection of DataSource. Spring will provide this automatically.
    */
   public BatchDAO(DataSource dataSource) {
     this.dataSource = dataSource;
@@ -44,15 +43,15 @@ public class BatchDAO {
   }
 
   /** Creates a new batch row and returns the generated ID. */
-  public long createBatch(long driverId, String routePolyline, Instant dispatchTime, Instant completionTime)
-      throws SQLException {
+  public long createBatch(long driverId, String routePolyline, Instant dispatchTime,
+      Instant completionTime) throws SQLException {
 
     final String sql =
-        "INSERT INTO Batch(driver_id, route, dispatch_time, completion_time, finished) " +
-        "VALUES (?, ?, ?, ?, ?) RETURNING id;";
+        "INSERT INTO Batch(driver_id, route, dispatch_time, completion_time, finished) "
+            + "VALUES (?, ?, ?, ?, ?) RETURNING id;";
 
     try (Connection conn = dataSource.getConnection();
-         PreparedStatement ps = conn.prepareStatement(sql)) {
+        PreparedStatement ps = conn.prepareStatement(sql)) {
 
       ps.setLong(1, driverId);
       ps.setString(2, routePolyline);
@@ -69,39 +68,66 @@ public class BatchDAO {
 
   /** Retrieves a batch by ID. Returns Optional.empty() if not found. */
   public Optional<Batch> getBatch(long batchId) throws SQLException {
-    final String sql =
-        "SELECT id, driver_id, route, dispatch_time, completion_time, finished " +
-        "FROM Batch WHERE id = ?;";
+    final String sql = "SELECT id, driver_id, route, dispatch_time, completion_time, finished "
+        + "FROM Batch WHERE id = ?;";
 
     try (Connection conn = dataSource.getConnection();
-         PreparedStatement ps = conn.prepareStatement(sql)) {
+        PreparedStatement ps = conn.prepareStatement(sql)) {
 
       ps.setLong(1, batchId);
 
       try (ResultSet rs = ps.executeQuery()) {
-        if (!rs.next()) return Optional.empty();
+        if (!rs.next())
+          return Optional.empty();
         return Optional.of(mapBatch(rs));
       }
     }
   }
 
-  /** 
-   * Returns the current batch assigned to the driver if applicable, otherwise null.
-   * Uses invariant that drivers have at most one unfinished batch at a time.
+  /**
+   * Removes all unfinished batches from the database.
+   * This is a destructive cleanup operation.
+   *
+   * This method operates strictly at the persistence layer:
+   * No business logic is applied
+   * No events are emitted
+   * No external systems (e.g., Twilio) are notified
+   * 
+   * Callers are responsible for coordinating any higher-level effects (such as notifying drivers or
+   * refreshing in-memory state).
+   */
+  public void removeAllUnfinishedBatches() throws SQLException {
+
+    final String sql = "DELETE FROM Batch WHERE finished = false;";
+
+    // Execute the delete in a single SQL statement.
+    // This operation is atomic at the database level.
+    try (Connection conn = dataSource.getConnection();
+        PreparedStatement ps = conn.prepareStatement(sql)) {
+
+      // We intentionally ignore the number of rows deleted.
+      // Callers typically only care that the cleanup occurred.
+      ps.executeUpdate();
+    }
+  }
+
+  /**
+   * Returns the current batch assigned to the driver if applicable, otherwise null. Uses invariant
+   * that drivers have at most one unfinished batch at a time.
    */
   public Optional<Batch> getBatchForDriver(long driverId) throws SQLException {
-    final String sql =
-        "SELECT id, driver_id, route, dispatch_time, completion_time, finished " +
-        "FROM Batch WHERE driver_id = ? and finished = ? LIMIT 1;";
+    final String sql = "SELECT id, driver_id, route, dispatch_time, completion_time, finished "
+        + "FROM Batch WHERE driver_id = ? and finished = ? LIMIT 1;";
 
     try (Connection conn = dataSource.getConnection();
-         PreparedStatement ps = conn.prepareStatement(sql)) {
+        PreparedStatement ps = conn.prepareStatement(sql)) {
 
       ps.setLong(1, driverId);
       ps.setBoolean(2, false);
 
       try (ResultSet rs = ps.executeQuery()) {
-        if (!rs.next()) return Optional.empty();
+        if (!rs.next())
+          return Optional.empty();
         return Optional.of(mapBatch(rs));
       }
     }
@@ -109,14 +135,13 @@ public class BatchDAO {
 
   /** Lists all batches for a driver ordered by id. */
   public List<Batch> listBatchesForDriver(long driverId) throws SQLException {
-    final String sql =
-        "SELECT id, driver_id, route, dispatch_time, completion_time, finished " +
-        "FROM Batch WHERE driver_id = ? ORDER BY id;";
+    final String sql = "SELECT id, driver_id, route, dispatch_time, completion_time, finished "
+        + "FROM Batch WHERE driver_id = ? ORDER BY id;";
 
     List<Batch> out = new ArrayList<>();
 
     try (Connection conn = dataSource.getConnection();
-         PreparedStatement ps = conn.prepareStatement(sql)) {
+        PreparedStatement ps = conn.prepareStatement(sql)) {
 
       ps.setLong(1, driverId);
 
@@ -131,17 +156,17 @@ public class BatchDAO {
   }
 
   /**
-   * Updates mutable batch fields (route, dispatch_time, completion_time).
-   * Returns true iff one row updated.
+   * Updates mutable batch fields (route, dispatch_time, completion_time). Returns true iff one row
+   * updated.
    */
-  public boolean updateBatch(long batchId, String routePolyline, Instant dispatchTime, Instant completionTime)
-      throws SQLException {
+  public boolean updateBatch(long batchId, String routePolyline, Instant dispatchTime,
+      Instant completionTime) throws SQLException {
 
     final String sql =
         "UPDATE Batch SET route = ?, dispatch_time = ?, completion_time = ? WHERE id = ?;";
 
     try (Connection conn = dataSource.getConnection();
-         PreparedStatement ps = conn.prepareStatement(sql)) {
+        PreparedStatement ps = conn.prepareStatement(sql)) {
 
       ps.setString(1, routePolyline);
       ps.setTimestamp(2, ts(dispatchTime));
@@ -157,7 +182,7 @@ public class BatchDAO {
     final String sql = "UPDATE Batch SET finished = true WHERE id = ?;";
 
     try (Connection conn = dataSource.getConnection();
-         PreparedStatement ps = conn.prepareStatement(sql)) {
+        PreparedStatement ps = conn.prepareStatement(sql)) {
 
       ps.setLong(1, batchId);
       return ps.executeUpdate() == 1;
@@ -169,7 +194,7 @@ public class BatchDAO {
     final String sql = "UPDATE Batch SET finished = ? WHERE id = ?;";
 
     try (Connection conn = dataSource.getConnection();
-         PreparedStatement ps = conn.prepareStatement(sql)) {
+        PreparedStatement ps = conn.prepareStatement(sql)) {
 
       ps.setBoolean(1, finished);
       ps.setLong(2, batchId);
@@ -182,7 +207,7 @@ public class BatchDAO {
     final String sql = "UPDATE Batch SET driver_id = ? WHERE id = ?;";
 
     try (Connection conn = dataSource.getConnection();
-         PreparedStatement ps = conn.prepareStatement(sql)) {
+        PreparedStatement ps = conn.prepareStatement(sql)) {
 
       ps.setLong(1, driverId);
       ps.setLong(2, batchId);
@@ -196,7 +221,7 @@ public class BatchDAO {
     final String sql = "DELETE FROM Batch WHERE id = ?;";
 
     try (Connection conn = dataSource.getConnection();
-         PreparedStatement ps = conn.prepareStatement(sql)) {
+        PreparedStatement ps = conn.prepareStatement(sql)) {
 
       ps.setLong(1, batchId);
       return ps.executeUpdate() == 1;
@@ -208,7 +233,7 @@ public class BatchDAO {
     final String sql = "SELECT 1 FROM Batch WHERE id = ? LIMIT 1;";
 
     try (Connection conn = dataSource.getConnection();
-         PreparedStatement ps = conn.prepareStatement(sql)) {
+        PreparedStatement ps = conn.prepareStatement(sql)) {
 
       ps.setLong(1, batchId);
 
@@ -223,7 +248,7 @@ public class BatchDAO {
     final String sql = "SELECT 1 FROM Batch WHERE driver_id = ? LIMIT 1;";
 
     try (Connection conn = dataSource.getConnection();
-         PreparedStatement ps = conn.prepareStatement(sql)) {
+        PreparedStatement ps = conn.prepareStatement(sql)) {
 
       ps.setLong(1, driverId);
 
@@ -235,13 +260,7 @@ public class BatchDAO {
 
   /** Maps the current ResultSet row to a Batch model object. */
   private static Batch mapBatch(ResultSet rs) throws SQLException {
-    return new Batch(
-        rs.getLong("id"),
-        rs.getLong("driver_id"),
-        rs.getString("route"),
-        instant(rs, "dispatch_time"),
-        instant(rs, "completion_time"),
-        rs.getBoolean("finished")
-    );
+    return new Batch(rs.getLong("id"), rs.getLong("driver_id"), rs.getString("route"),
+        instant(rs, "dispatch_time"), instant(rs, "completion_time"), rs.getBoolean("finished"));
   }
 }

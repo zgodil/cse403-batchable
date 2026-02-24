@@ -1,12 +1,15 @@
 package com.batchable.backend.service.internal;
 
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
+// import java.net.URLEncoder;
+// import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Queue;
-import java.util.function.Consumer;
 import com.batchable.backend.db.models.Batch;
 import com.batchable.backend.db.models.Driver;
 import com.batchable.backend.db.models.Order;
@@ -15,6 +18,7 @@ import com.batchable.backend.exception.InvalidRouteException;
 import com.batchable.backend.model.dto.RouteDirectionsResponse;
 import com.batchable.backend.service.BatchingAlgorithm;
 import com.batchable.backend.service.RouteService;
+import com.batchable.backend.twilio.TwilioManagerImpl;
 import com.batchable.backend.service.BatchingAlgorithm.TentativeBatch;
 import com.batchable.backend.util.Log;
 import com.batchable.backend.service.DbOrderService;
@@ -35,15 +39,15 @@ public class RestaurantBatchingManager {
   private String restaurantAddress;
   private final OrderWebSocketPublisher publisher;
   private final BatchingAlgorithm batchingAlgorithm;
-  private final List<Consumer<Long>> batchChangeListeners = new ArrayList<>();
-  private final List<Consumer<Long>> batchBecomeActiveListeners = new ArrayList<>();
   private final Batches batches;
   private final RouteService routeService;
   private final DbOrderService dbOrderService;
   private final DriverService driverService;
   private final RestaurantService restaurantService;
+  private final TwilioManagerImpl twilioManagerImpl;
   // time to add when an order isn't ready when it should be for batching
-  private static final long SECONDS_ADDITIONAL_COOK_TIME = 180;
+  private static final long SECONDS_ADDITIONAL_COOK_TIME = 6;
+  private boolean updated = false; // flag for if checkExpiredBatches() made any changes to batches
 
   /**
    * Constructs a batching manager for a single restaurant.
@@ -57,7 +61,7 @@ public class RestaurantBatchingManager {
   public RestaurantBatchingManager(long restaurantId, String restaurantAddress,
       OrderWebSocketPublisher publisher, BatchingAlgorithm batchingAlgorithm,
       RouteService routeService, DbOrderService dbOrderService, DriverService driverService,
-      RestaurantService restaurantService, Batches batches) {
+      RestaurantService restaurantService, TwilioManagerImpl twilioManagerImpl, Batches batches) {
     this.restaurantId = restaurantId;
     this.restaurantAddress = restaurantAddress;
     this.publisher = publisher;
@@ -66,6 +70,7 @@ public class RestaurantBatchingManager {
     this.dbOrderService = dbOrderService;
     this.driverService = driverService;
     this.restaurantService = restaurantService;
+    this.twilioManagerImpl = twilioManagerImpl;
     this.batches = (batches != null) ? batches : new Batches();
 
     initializeOrders();
@@ -195,44 +200,16 @@ public class RestaurantBatchingManager {
     }
   }
 
-  /**
-   * Registers a listener that will be called whenever an active batch changes.
-   *
-   * @param handler callback receiving the id of the batch that changed
-   * @throws IllegalArgumentException if handler is null
-   */
-  public void onBatchChange(Consumer<Long> handler) {
-    if (handler == null) {
-      throw new IllegalArgumentException("Handler cannot be null");
-    }
-    batchChangeListeners.add(handler);
+  /** Handles an active batch changing by calling the appropriate dependencies. */
+  private void handleActiveBatchChange(long batchId) {
+    twilioManagerImpl.handleBatchChange(batchId, restaurantAddress);
+    updated = true;
   }
 
-  /**
-   * Registers a listener that will be called whenever a batch becomes active.
-   *
-   * @param handler callback receiving the id of the newly active batch
-   * @throws IllegalArgumentException if handler is null
-   */
-  public void onBatchBecomeActive(Consumer<Long> handler) {
-    if (handler == null) {
-      throw new IllegalArgumentException("Handler cannot be null");
-    }
-    batchBecomeActiveListeners.add(handler);
-  }
-
-  /** Emits batch change events to all registered listeners. */
-  private void emitBatchChange(long batchId) {
-    for (Consumer<Long> listener : batchChangeListeners) {
-      listener.accept(batchId);
-    }
-  }
-
-  /** Emits a batch become active event and also refreshes batch state. */
-  private void emitBatchBecomeActive(long batchId) {
-    for (Consumer<Long> listener : batchBecomeActiveListeners) {
-      listener.accept(batchId);
-    }
+  /** Handles a new batch becoming active by calling the appropriate dependencies. */
+  private void handleNewActiveBatch(long batchId) {
+    twilioManagerImpl.handleNewBatch(batchId, restaurantAddress);
+    updated = true;
   }
 
   /**
@@ -254,7 +231,7 @@ public class RestaurantBatchingManager {
     Order order = dbOrderService.getOrder(orderId);
     if (order.batchId != null) {
       // in active batch
-      emitBatchChange(order.batchId);
+      handleActiveBatchChange(order.batchId);
     } else if (!findAndUpdateReadyBatchOrder(orderId, true)) {
       batchingAlgorithm.removeOrder(batches.tentativeBatches, orderId, restaurantAddress);
     }
@@ -276,7 +253,7 @@ public class RestaurantBatchingManager {
     Order order = dbOrderService.getOrder(orderId);
     if (order.batchId != null) {
       // in active batch
-      emitBatchChange(order.batchId);
+      handleActiveBatchChange(order.batchId);
     } else if (!findAndUpdateReadyBatchOrder(orderId, false)) {
       if (rebatchIfTentative) {
         rebatchTentativeOrder(order);
@@ -350,6 +327,7 @@ public class RestaurantBatchingManager {
    * @param updateMillis how much to delay delivery times for unassigned ready batches
    */
   public void checkExpiredBatches(final long updateMillis) {
+    updated = false;
     System.out.println("\n\n\n");
     debugPrintBatches();
     Instant now = Instant.now();
@@ -359,7 +337,10 @@ public class RestaurantBatchingManager {
 
     assignReadyBatchesToDrivers();
     delayRemainingReadyBatches(updateMillis);
-    publisher.refreshOrderData(restaurantId);
+
+    if (updated) {
+      publisher.refreshOrderData(restaurantId);
+    }
   }
 
   /**
@@ -383,6 +364,7 @@ public class RestaurantBatchingManager {
       if (now.isBefore(tentativeBatch.getLastAllowedCookedTime())) {
         break; // sorted by expiration
       }
+      updated = true;
       tentativeBatches.remove(i);
       List<Order> orders = tentativeBatch.getBatch();
       removeUncookedOrders(orders, toBeReAdded);
@@ -426,7 +408,7 @@ public class RestaurantBatchingManager {
 
       Batch batch = createAndPersistBatch(readyBatch, driver);
       batches.activeBatches.add(batch);
-      emitBatchBecomeActive(batch.id);
+      handleNewActiveBatch(batch.id);
     }
   }
 
@@ -451,6 +433,7 @@ public class RestaurantBatchingManager {
             millisAfter(order.deliveryTime, updateMillis));
 
         orders.set(i, dbOrderService.getOrder(order.id));
+        updated = true;
       }
     }
   }
