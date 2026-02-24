@@ -32,6 +32,7 @@ describe('<OrderCard>', () => {
     const order = await createOrder({
       cookedTime: new Date(now + 15 * MS_PER_MINUTE),
       deliveryTime: new Date(now + 30 * MS_PER_MINUTE),
+      highPriority: false,
     });
     render(<OrderCard order={order} />);
 
@@ -42,6 +43,16 @@ describe('<OrderCard>', () => {
     expect(
       screen.getByText(/prepared in.*?(29|30).*?min/i),
     ).toBeInTheDocument();
+  });
+
+  it('shows order priority', async () => {
+    const order = await createOrder({
+      highPriority: true,
+    });
+
+    render(<OrderCard order={order} />);
+
+    expect(screen.getByText(`Order #${order.id.id} ❗`)).toBeInTheDocument();
   });
 
   it('opens the associated edit modal', async () => {
