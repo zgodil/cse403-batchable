@@ -118,8 +118,9 @@ public class OrderService {
    * @param orderId ID of the order to remove
    */
   public void removeOrder(long orderId) {
+    Order order = dbOrderService.getOrder(orderId);
     dbOrderService.removeOrder(orderId);
-    batchingManager.removeOrder(orderId);
+    batchingManager.removeOrder(order);
   }
 
   /**

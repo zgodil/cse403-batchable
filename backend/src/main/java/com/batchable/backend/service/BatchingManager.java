@@ -160,13 +160,11 @@ public class BatchingManager {
   /**
    * Removes an order from the appropriate restaurant batching manager by ID.
    *
-   * @param orderId the order to add
+   * @param order the order to remove
    * @throws IllegalArgumentException if the order id is not found
    */
-  public void removeOrder(Long orderId) {
-    Order order = dbOrderService.getOrder(orderId);
-    long restaurantId = order.restaurantId;
-    getManager(restaurantId).removeOrder(orderId);
+  public void removeOrder(Order order) {
+    getManager(order.restaurantId).removeOrder(order);
   }
 
   /**
