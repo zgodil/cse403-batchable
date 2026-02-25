@@ -9,13 +9,12 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNotNull;
 import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.*;
-
+import com.batchable.backend.EventSource.SsePublisher;
 import com.batchable.backend.db.dao.BatchDAO;
 import com.batchable.backend.db.dao.OrderDAO;
 import com.batchable.backend.db.models.Batch;
 import com.batchable.backend.db.models.Order;
 import com.batchable.backend.service.DbOrderService;
-import com.batchable.backend.websocket.OrderWebSocketPublisher;
 import java.sql.SQLException;
 import java.time.Duration;
 import java.time.Instant;
@@ -47,7 +46,7 @@ public class OrderServiceTest {
   @Mock
   private BatchDAO batchDAO;
   @Mock
-  private OrderWebSocketPublisher publisher;
+  private SsePublisher publisher;
 
   private DbOrderService service;
 

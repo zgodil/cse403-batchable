@@ -1,10 +1,10 @@
 package com.batchable.backend.service;
 
+import com.batchable.backend.EventSource.SsePublisher;
 import com.batchable.backend.db.dao.BatchDAO;
 import com.batchable.backend.db.dao.OrderDAO;
 import com.batchable.backend.db.models.Batch;
 import com.batchable.backend.db.models.Order;
-import com.batchable.backend.websocket.OrderWebSocketPublisher;
 import java.sql.SQLException;
 import java.time.Duration;
 import java.time.Instant;
@@ -25,9 +25,9 @@ public class DbOrderService {
 
   private final OrderDAO orderDAO;
   private final BatchDAO batchDAO;
-  private final OrderWebSocketPublisher publisher;
+  private final SsePublisher publisher;
 
-  public DbOrderService(OrderDAO orderDAO, BatchDAO batchDAO, OrderWebSocketPublisher publisher) {
+  public DbOrderService(OrderDAO orderDAO, BatchDAO batchDAO, SsePublisher publisher) {
     this.orderDAO = orderDAO;
     this.batchDAO = batchDAO;
     this.publisher = publisher;

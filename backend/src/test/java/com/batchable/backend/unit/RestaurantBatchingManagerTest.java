@@ -18,7 +18,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-
+import com.batchable.backend.EventSource.SsePublisher;
 import com.batchable.backend.db.models.Batch;
 import com.batchable.backend.db.models.Driver;
 import com.batchable.backend.db.models.Order;
@@ -35,7 +35,6 @@ import com.batchable.backend.service.internal.RestaurantBatchingManager;
 import com.batchable.backend.service.internal.RestaurantBatchingManager.Batches;
 import com.batchable.backend.service.internal.RestaurantBatchingManager.ReadyBatch;
 import com.batchable.backend.twilio.TwilioManager;
-import com.batchable.backend.websocket.OrderWebSocketPublisher;
 
 /**
  * Unit tests for RestaurantBatchingManager using Mockito.
@@ -52,7 +51,7 @@ import com.batchable.backend.websocket.OrderWebSocketPublisher;
 class RestaurantBatchingManagerTest {
 
   @Mock
-  private OrderWebSocketPublisher publisher;
+  private SsePublisher publisher;
   @Mock
   private BatchingAlgorithm batchingAlgorithm;
   @Mock

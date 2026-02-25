@@ -2,6 +2,8 @@ package com.batchable.backend.integration;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
+import com.batchable.backend.EventSource.SseController;
+import com.batchable.backend.EventSource.SsePublisher;
 import com.batchable.backend.db.PostgresTestBase;
 import com.batchable.backend.db.TestDataSource;
 import com.batchable.backend.db.dao.BatchDAO;
@@ -10,8 +12,6 @@ import com.batchable.backend.db.dao.RestaurantDAO;
 import com.batchable.backend.db.models.Order;
 import com.batchable.backend.service.BatchingManager;
 import com.batchable.backend.service.DbOrderService;
-import com.batchable.backend.websocket.OrderWebSocketPublisher;
-import com.batchable.backend.websocket.SseController;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -46,7 +46,7 @@ public class OrderServiceIT_CI extends PostgresTestBase {
   @Mock
   private SseController sseController;
 
-  private OrderWebSocketPublisher publisher; // real, but with mocked template
+  private SsePublisher publisher; // real, but with mocked template
   private DbOrderService service; // the service under test
 
   private TestDataSource ds;
@@ -65,7 +65,7 @@ public class OrderServiceIT_CI extends PostgresTestBase {
     orderDAO = new OrderDAO(ds);
     batchDAO = new BatchDAO(ds);
 
-    publisher = new OrderWebSocketPublisher(sseController);
+    publisher = new SsePublisher(sseController);
     service = new DbOrderService(orderDAO, batchDAO, publisher);
 
     // Clean all tables before each test to ensure isolation.

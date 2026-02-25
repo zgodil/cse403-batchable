@@ -6,12 +6,11 @@ import java.util.Map;
 
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
-
+import com.batchable.backend.EventSource.SsePublisher;
 import com.batchable.backend.db.models.Order;
 import com.batchable.backend.db.models.Restaurant;
 import com.batchable.backend.service.internal.RestaurantBatchingManager;
 import com.batchable.backend.twilio.TwilioManager;
-import com.batchable.backend.websocket.OrderWebSocketPublisher;
 import jakarta.annotation.PostConstruct;
 
 /**
@@ -31,7 +30,7 @@ public class BatchingManager {
   private final DbOrderService dbOrderService;
 
   // Publishes updates to clients when batches change
-  private final OrderWebSocketPublisher publisher;
+  private final SsePublisher publisher;
 
   // Algorithm used to form and update tentative batches
   private final BatchingAlgorithm batchingAlgorithm;
@@ -59,7 +58,7 @@ public class BatchingManager {
    * @param routeService service for route calculations
    * @param orderService service for order and batch operations
    */
-  public BatchingManager(OrderWebSocketPublisher publisher, BatchingAlgorithm batchingAlgorithm,
+  public BatchingManager(SsePublisher publisher, BatchingAlgorithm batchingAlgorithm,
       RestaurantService restaurantService, RouteService routeService, DbOrderService dbOrderService,
       DriverService driverService, TwilioManager twilioManager) {
     this.publisher = publisher;

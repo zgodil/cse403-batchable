@@ -8,6 +8,7 @@ import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Queue;
+import com.batchable.backend.EventSource.SsePublisher;
 import com.batchable.backend.db.models.Batch;
 import com.batchable.backend.db.models.Driver;
 import com.batchable.backend.db.models.Order;
@@ -22,7 +23,6 @@ import com.batchable.backend.util.Log;
 import com.batchable.backend.service.DbOrderService;
 import com.batchable.backend.service.DriverService;
 import com.batchable.backend.service.RestaurantService;
-import com.batchable.backend.websocket.OrderWebSocketPublisher;
 
 /**
  * Manages order batching for a single restaurant.
@@ -35,7 +35,7 @@ public class RestaurantBatchingManager {
 
   private final long restaurantId;
   private String restaurantAddress;
-  private final OrderWebSocketPublisher publisher;
+  private final SsePublisher publisher;
   private final BatchingAlgorithm batchingAlgorithm;
   private final Batches batches;
   private final RouteService routeService;
@@ -57,7 +57,7 @@ public class RestaurantBatchingManager {
    * @param routeService service for computing route polylines and duration
    */
   public RestaurantBatchingManager(long restaurantId, String restaurantAddress,
-      OrderWebSocketPublisher publisher, BatchingAlgorithm batchingAlgorithm,
+      SsePublisher publisher, BatchingAlgorithm batchingAlgorithm,
       RouteService routeService, DbOrderService dbOrderService, DriverService driverService,
       RestaurantService restaurantService, TwilioManager twilioManager, Batches batches) {
     this.restaurantId = restaurantId;

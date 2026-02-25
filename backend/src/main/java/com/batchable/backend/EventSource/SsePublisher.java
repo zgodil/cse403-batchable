@@ -1,12 +1,12 @@
-package com.batchable.backend.websocket;
+package com.batchable.backend.EventSource;
 
 import org.springframework.stereotype.Service;
 
 @Service
-public class OrderWebSocketPublisher {
+public class SsePublisher {
   private final SseController sseController;
 
-  public OrderWebSocketPublisher(SseController sseController) {
+  public SsePublisher(SseController sseController) {
     this.sseController = sseController;
   }
 

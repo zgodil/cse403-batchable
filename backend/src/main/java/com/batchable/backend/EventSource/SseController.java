@@ -1,4 +1,4 @@
-package com.batchable.backend.websocket;
+package com.batchable.backend.EventSource;
 
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
