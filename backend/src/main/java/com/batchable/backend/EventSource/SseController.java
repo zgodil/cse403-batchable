@@ -21,7 +21,7 @@ public class SseController {
   @GetMapping("/sse/orders/{restaurantId}")
   public SseEmitter subscribe(@PathVariable Long restaurantId) {
     SseEmitter emitter = new SseEmitter(Long.MAX_VALUE); // no timeout
-    emitters.getOrDefault(restaurantId, new CopyOnWriteArrayList<SseEmitter>()).add(emitter);
+    emitters.computeIfAbsent(restaurantId, a -> new CopyOnWriteArrayList<SseEmitter>()).add(emitter);
 
     // Remove emitter when completed or times out
     emitter.onCompletion(() -> findAndRemove(restaurantId, emitter));
@@ -44,11 +44,15 @@ public class SseController {
   }
 
   /** Removes the emitter 'emitter' specified by 'restaurantId' in 'emitters' */
-  private void findAndRemove(long restaurantId, SseEmitter emitter) {
+  public void findAndRemove(long restaurantId, SseEmitter emitter) {
     List<SseEmitter> emitterList = emitters.get(restaurantId);
     emitterList.remove(emitter);
     if (emitterList.isEmpty()) {
       emitters.remove(restaurantId);
     }
+  }
+
+  public Map<Long, List<SseEmitter>> getEmitters() {
+    return this.emitters;
   }
 }
