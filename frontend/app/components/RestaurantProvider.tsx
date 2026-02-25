@@ -34,12 +34,17 @@ export default function RestaurantProvider({
       return;
     }
     let cancelled = false;
-    const load = async (tokenRetries = 5) => {
+    const load = async (tokenRetries = 25) => {
       const token = await getToken();
       if (cancelled) return;
       if (!token) {
         if (tokenRetries > 0) {
-          setTimeout(() => load(tokenRetries - 1), 300);
+          setTimeout(() => load(tokenRetries - 1), 400);
+        } else {
+          // Auth may still be initializing after redirect; try once more after a delay
+          setTimeout(() => {
+            if (!cancelled) load(15);
+          }, 2000);
         }
         return;
       }
@@ -53,7 +58,7 @@ export default function RestaurantProvider({
           const is401 =
             String(err?.message || err).includes('401') ||
             String(err?.message || err).toLowerCase().includes('unauthorized');
-          if (is401) setTimeout(() => load(0), 800);
+          if (is401) setTimeout(() => load(10), 800);
         });
     };
     load();
