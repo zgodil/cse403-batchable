@@ -204,7 +204,7 @@ public class DriverServiceTest {
     when(driverDAO.getDriver(5L)).thenReturn(Optional.of(existing));
     when(batchDAO.batchExistsForDriver(5L)).thenReturn(true);
     when(batchDAO.getBatchForDriver(5L))
-        .thenReturn(Optional.of(new Batch(777L, 5L, "poly", Instant.now(), Instant.now())));
+        .thenReturn(Optional.of(new Batch(777L, 5L, "poly", Instant.now(), Instant.now(), false)));
 
     IllegalStateException ex =
         assertThrows(IllegalStateException.class, () -> service.updateDriverOnShift(5L, false));
@@ -281,7 +281,7 @@ public class DriverServiceTest {
     when(driverDAO.getDriver(1L)).thenReturn(Optional.of(d));
     when(batchDAO.batchExistsForDriver(1L)).thenReturn(true);
     when(batchDAO.getBatchForDriver(1L))
-        .thenReturn(Optional.of(new Batch(9L, 1L, "poly", Instant.now(), Instant.now())));
+        .thenReturn(Optional.of(new Batch(9L, 1L, "poly", Instant.now(), Instant.now(), false)));
 
     IllegalStateException ex =
         assertThrows(IllegalStateException.class, () -> service.removeDriver(1L));
@@ -324,7 +324,7 @@ public class DriverServiceTest {
     Driver d = new Driver(1, 10, "Alice", "206-555-0101", false);
     when(driverDAO.getDriver(1L)).thenReturn(Optional.of(d));
 
-    Batch b = new Batch(3L, 1L, "poly", Instant.now(), Instant.now());
+    Batch b = new Batch(3L, 1L, "poly", Instant.now(), Instant.now(), false);
     when(batchDAO.getBatchForDriver(1L)).thenReturn(Optional.of(b));
 
     Optional<Batch> got = service.getDriverBatch(1L);

@@ -21,7 +21,12 @@ export async function fetchEndpoint(
     method,
     headers,
   });
-  if (!response.ok) throw new Error(response.statusText);
+  if (!response.ok) {
+    const bodyText = await response.text();
+    throw new Error(
+      `[${method} ${path}] ${response.status} (${response.statusText}): ${bodyText}`,
+    );
+  }
   return response;
 }
 
