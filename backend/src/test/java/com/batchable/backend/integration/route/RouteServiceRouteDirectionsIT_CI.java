@@ -4,8 +4,10 @@ import com.batchable.backend.exception.InvalidRouteException;
 import com.batchable.backend.model.dto.RouteDirectionsResponse;
 import com.batchable.backend.model.dto.RouteDirectionsResponse.Leg;
 import com.batchable.backend.service.RouteService;
+import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -29,11 +31,16 @@ class RouteServiceRouteDirectionsIT_CI {
   @Autowired
   private RouteService routeService;
 
+  @Value("${google.routes.api-key}")
+  private String apiKey;
+
   /**
    * Runs the route test twice: once with leg details disabled, once with them enabled.
    */
   @Test
   void testGetRouteDirections() throws InvalidRouteException {
+    Assumptions.assumeTrue(apiKey != null && !"test-api-key".equals(apiKey),
+        "GOOGLE_ROUTES_API_KEY must be set to a valid key for this integration test");
     String restaurantAddress = "Seattle, WA";
     List<String> stops = Arrays.asList("Bellevue, WA", "Redmond, WA", "Tacoma, WA");
 
