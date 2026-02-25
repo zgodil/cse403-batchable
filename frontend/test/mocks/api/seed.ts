@@ -1,4 +1,10 @@
-import {initialDrivers, initialMenuItems, initialRestaurant} from './seedData';
+import {
+  initialBatches,
+  initialDrivers,
+  initialMenuItems,
+  initialOrders,
+  initialRestaurant,
+} from './seedData';
 import * as json from '~/domain/json';
 import {db, resetMockDatabase} from './common';
 
@@ -11,5 +17,11 @@ export function seedMockDatabaseForBrowser() {
   });
   initialMenuItems.forEach(menuItem => {
     db.menuItems.insert(json.menuItem.unparse(menuItem));
+  });
+  initialBatches.forEach(batch => {
+    db.batches.insert(json.batch.unparse(batch));
+  });
+  initialOrders.forEach(order => {
+    db.orders.insert(json.order.unparse(order));
   });
 }
