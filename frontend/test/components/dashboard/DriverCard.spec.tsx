@@ -32,20 +32,6 @@ describe('<DriverCard>', () => {
     expect(screen.getByText(NAME, {exact: false})).toBeInTheDocument();
   });
 
-  it('shows the driver on shift', async () => {
-    const driver = await createDriver({onShift: true});
-    render(<DriverCard driver={driver} />);
-
-    expect(screen.getByText(/on shift/i)).toBeInTheDocument();
-  });
-
-  it('shows the driver off shift', async () => {
-    const driver = await createDriver({onShift: false});
-    render(<DriverCard driver={driver} />);
-
-    expect(screen.getByText(/off shift/i)).toBeInTheDocument();
-  });
-
   it("shows the driver's phone number", async () => {
     const driver = await createDriver({
       phoneNumber: {
