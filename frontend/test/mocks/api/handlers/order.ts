@@ -11,6 +11,9 @@ import {isStateBefore, nextStateAfter, type Order} from '~/domain/objects';
 import * as json from '~/domain/json';
 import {StatusCodes} from 'http-status-codes';
 
+// this allows the server-side portion of the MSW SSE mock to run without error
+Object.defineProperty(globalThis, 'EventSource', {value: class EventSource {}});
+
 export const orderHandlers = [
   ...makeCrudHandlers('/order', db.orders, ['create', 'read', 'delete']),
   http.put(endpoint('/order/:id/advance'), req => {
