@@ -89,8 +89,8 @@ async function tryCreateOrder(
 }
 
 describe('<AddOrderModal>', () => {
-  window.alert = () => {};
-  vi.spyOn(window, 'alert');
+  vi.spyOn(window, 'alert').mockImplementation(() => {});
+  vi.spyOn(console, 'log').mockImplementation(() => {});
 
   it('has the input elements', async () => {
     const restaurant = await checkedCreate(restaurantApi, getFakeRestaurant());

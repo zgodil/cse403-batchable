@@ -64,8 +64,8 @@ const renderModal = (order: Order) => {
 };
 
 describe('<EditOrderModal>', () => {
-  window.alert = () => {};
-  vi.spyOn(window, 'alert');
+  vi.spyOn(window, 'alert').mockImplementation(() => {});
+  vi.spyOn(console, 'log').mockImplementation(() => {});
 
   it('contains appropriate UI', async () => {
     const order = await createOrder();
