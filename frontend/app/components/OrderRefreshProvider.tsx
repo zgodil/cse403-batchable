@@ -31,7 +31,7 @@ export default function OrderRefreshProvider({
 
   useEffect(() => {
     if (!restaurant) return;
-    const newMonitor = new RefreshMonitor(restaurant);
+    const newMonitor = new RefreshMonitor(restaurant.id);
     setMonitor(newMonitor);
     return () => newMonitor?.close();
   }, [restaurant]);
