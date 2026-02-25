@@ -114,12 +114,14 @@ public class OrderService {
 
   /**
    * Removes an order (if not delivered) and notifies the batching manager.
+   * Batching manager is notified first (while the order still exists in DB) so it can look up
+   * restaurantId; then the order is removed from the DB.
    *
    * @param orderId ID of the order to remove
    */
   public void removeOrder(long orderId) {
-    dbOrderService.removeOrder(orderId);
     batchingManager.removeOrder(orderId);
+    dbOrderService.removeOrder(orderId);
   }
 
   /**

@@ -19,8 +19,9 @@ import com.batchable.backend.service.BatchingAlgorithm;
 import com.batchable.backend.service.RouteService;
 import com.batchable.backend.twilio.TwilioManager;
 import com.batchable.backend.service.BatchingAlgorithm.TentativeBatch;
-import com.batchable.backend.util.Log;
 import com.batchable.backend.service.DbOrderService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import com.batchable.backend.service.DriverService;
 import com.batchable.backend.service.RestaurantService;
 
@@ -32,6 +33,8 @@ import com.batchable.backend.service.RestaurantService;
  * become active. - Periodically checks for expired tentative batches.
  */
 public class RestaurantBatchingManager {
+
+  private static final Logger log = LoggerFactory.getLogger(RestaurantBatchingManager.class);
 
   private final long restaurantId;
   private String restaurantAddress;
@@ -189,12 +192,18 @@ public class RestaurantBatchingManager {
   /**
    * Initializes the orders for this restaurant by fetching all orders from the restaurant service,
    * remaking each order via the database order service, and then adding them to the local state.
+   * Orders that fail route validation (e.g. invalid or missing address) are skipped so startup can
+   * succeed; they can be fixed in the UI.
    */
   private void initializeOrders() {
     List<Order> orders = restaurantService.getRestaurantOrders(restaurantId);
     for (Order order : orders) {
-      dbOrderService.remakeOrder(order.id);
-      addOrder(dbOrderService.getOrder(order.id));
+      try {
+        dbOrderService.remakeOrder(order.id);
+        addOrder(dbOrderService.getOrder(order.id));
+      } catch (IllegalStateException | IllegalArgumentException e) {
+        log.warn("Skipping order id {} during batching init: {}", order.id, e.getMessage());
+      }
     }
   }
 
@@ -225,10 +234,10 @@ public class RestaurantBatchingManager {
   }
 
   /**
-   * Removes an order from restaurant's batches by ID.
+   * Removes an order from restaurant's batches by ID. If the order is not in any batch (e.g. it was
+   * skipped during startup due to invalid address), this is a no-op so delete can still succeed.
    *
    * @param orderId the id of the order to remove
-   * @throws IllegalArgumentException if the order id is not found
    */
   public void removeOrder(Long orderId) {
     Order order = dbOrderService.getOrder(orderId);
@@ -236,7 +245,12 @@ public class RestaurantBatchingManager {
       // in active batch
       handleActiveBatchChange(order.batchId);
     } else if (!findAndUpdateReadyBatchOrder(orderId, true)) {
-      batchingAlgorithm.removeOrder(batches.tentativeBatches, orderId, restaurantAddress);
+      try {
+        batchingAlgorithm.removeOrder(batches.tentativeBatches, orderId, restaurantAddress);
+      } catch (IllegalArgumentException e) {
+        // Order not in tentative batches (e.g. skipped at init); allow delete to proceed
+        log.debug("Order {} not in tentative batches during remove: {}", orderId, e.getMessage());
+      }
     }
   }
 
