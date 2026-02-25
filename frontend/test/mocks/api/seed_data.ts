@@ -1,33 +1,34 @@
-import type {
-  Batch,
-  Driver,
-  MenuItem,
-  Order,
-  Restaurant,
+import {
+  fakeId,
+  type Batch,
+  type Driver,
+  type MenuItem,
+  type Order,
+  type Restaurant,
 } from '~/domain/objects';
 
-const restaurantId = {type: 'Restaurant' as const, id: 1};
+const restaurantId: Restaurant['id'] = {type: 'Restaurant', id: 1};
 const now = Date.now();
 
 const minutesFromNow = (minutes: number) => new Date(now + minutes * 60 * 1000);
 
 export const initialDrivers: Driver[] = [
   {
-    id: {type: 'Driver', id: 1},
+    id: fakeId('Driver'),
     name: 'Ben',
     phoneNumber: {compact: '2061234567'},
     restaurant: restaurantId,
     onShift: true,
   },
   {
-    id: {type: 'Driver', id: 2},
+    id: fakeId('Driver'),
     name: 'Delano',
     phoneNumber: {compact: '2067891234'},
     restaurant: restaurantId,
     onShift: true,
   },
   {
-    id: {type: 'Driver', id: 3},
+    id: fakeId('Driver'),
     name: 'H',
     phoneNumber: {compact: '2061231234'},
     restaurant: restaurantId,
@@ -45,17 +46,17 @@ export const initialRestaurant: Restaurant = {
 
 export const initialMenuItems: MenuItem[] = [
   {
-    id: {type: 'MenuItem', id: 1},
+    id: fakeId('MenuItem'),
     restaurant: restaurantId,
     name: 'Burger',
   },
   {
-    id: {type: 'MenuItem', id: 2},
+    id: fakeId('MenuItem'),
     restaurant: restaurantId,
     name: 'Pizza',
   },
   {
-    id: {type: 'MenuItem', id: 3},
+    id: fakeId('MenuItem'),
     restaurant: restaurantId,
     name: 'Sandwich',
   },

@@ -4,7 +4,7 @@ import {
   initialMenuItems,
   initialOrders,
   initialRestaurant,
-} from './seedData';
+} from './seed_data';
 import * as json from '~/domain/json';
 import {db, resetMockDatabase} from './common';
 
