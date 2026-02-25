@@ -1,38 +1,17 @@
 package com.batchable.backend.websocket;
 
-import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 
-/**
- * OrderWebSocketPublisher handles broadcasting real-time updates to connected frontend clients over
- * WebSockets.
- *
- * Responsibilities: - Expose refreshOrderData() for pushing updates - Encapsulate the
- * SimpMessagingTemplate so other services don't talk to WebSockets directly
- *
- * Usage: - Inject this into BatchingManager or OrderService - Call refreshOrderData(payload)
- * whenever orders or batches change
- */
 @Service
 public class OrderWebSocketPublisher {
+  private final SseController sseController;
 
-  private final SimpMessagingTemplate messagingTemplate;
-
-  public OrderWebSocketPublisher(SimpMessagingTemplate messagingTemplate) {
-    this.messagingTemplate = messagingTemplate;
+  public OrderWebSocketPublisher(SseController sseController) {
+    this.sseController = sseController;
   }
 
-  /**
-   * Notifies websocket listeners that order or batch data has been updated.
-   *
-   * Behavior: - Sends an empty payload ("") to all clients subscribed to "/topic/orders" - Clients
-   * should interpret this as a signal to refresh data via REST API
-   *
-   * Design decision: - Payload is intentionally empty because we only need a "change signal" -
-   * Keeps WebSocket simple and decouples it from the actual data structure
-   */
+  // Notify SSE clients to refresh order data for the restaurant specified by the given id
   public void refreshOrderData(Long restaurantId) {
-    String destination = "/topic/orders/" + restaurantId;
-    messagingTemplate.convertAndSend(destination, "");
+    sseController.refreshOrderData(restaurantId);
   }
 }

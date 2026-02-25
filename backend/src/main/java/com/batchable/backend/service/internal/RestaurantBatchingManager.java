@@ -216,6 +216,11 @@ public class RestaurantBatchingManager {
    * @param order the order to add
    */
   public void addOrder(Order order) {
+    if (order.state != State.COOKING || order.cookedTime.isBefore(Instant.now())) {
+      throw new IllegalArgumentException("Orders must be COOKING and have a" 
+        + " cookedTime in the future when being added to the batching algorithm"
+        + " for the first time. False for order id " + order.id);
+    }
     batchingAlgorithm.addOrder(batches.tentativeBatches, order, restaurantAddress);
   }
 
@@ -253,6 +258,7 @@ public class RestaurantBatchingManager {
       // in active batch
       handleActiveBatchChange(order.batchId);
     } else if (!findAndUpdateReadyBatchOrder(orderId, false)) {
+      System.out.println("rebatchIfTentative: " + rebatchIfTentative);
       if (rebatchIfTentative) {
         rebatchTentativeOrder(order);
       } else {

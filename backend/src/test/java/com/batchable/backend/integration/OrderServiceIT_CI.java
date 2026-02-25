@@ -2,7 +2,6 @@ package com.batchable.backend.integration;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
-
 import com.batchable.backend.db.PostgresTestBase;
 import com.batchable.backend.db.TestDataSource;
 import com.batchable.backend.db.dao.BatchDAO;
@@ -12,6 +11,7 @@ import com.batchable.backend.db.models.Order;
 import com.batchable.backend.service.BatchingManager;
 import com.batchable.backend.service.DbOrderService;
 import com.batchable.backend.websocket.OrderWebSocketPublisher;
+import com.batchable.backend.websocket.SseController;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -23,7 +23,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
-import org.springframework.messaging.simp.SimpMessagingTemplate;
 
 /**
  * Integration tests for OrderService using real Postgres (Testcontainers) and real DAOs. This test
@@ -44,8 +43,9 @@ public class OrderServiceIT_CI extends PostgresTestBase {
   private RestaurantDAO restaurantDAO;
   private OrderDAO orderDAO;
   private BatchDAO batchDAO;
+  @Mock
+  private SseController sseController;
 
-  private SimpMessagingTemplate messagingTemplate; // mock
   private OrderWebSocketPublisher publisher; // real, but with mocked template
   private DbOrderService service; // the service under test
 
@@ -65,8 +65,7 @@ public class OrderServiceIT_CI extends PostgresTestBase {
     orderDAO = new OrderDAO(ds);
     batchDAO = new BatchDAO(ds);
 
-    messagingTemplate = mock(SimpMessagingTemplate.class);
-    publisher = new OrderWebSocketPublisher(messagingTemplate);
+    publisher = new OrderWebSocketPublisher(sseController);
     service = new DbOrderService(orderDAO, batchDAO, publisher);
 
     // Clean all tables before each test to ensure isolation.
@@ -154,7 +153,7 @@ public class OrderServiceIT_CI extends PostgresTestBase {
     assertEquals("[\"Burger\",\"Fries\"]", got.itemNamesJson);
     assertEquals(Order.State.COOKING, got.state);
 
-    verify(messagingTemplate, times(1)).convertAndSend("/topic/orders/" + rid, "");
+    verify(sseController, times(1)).refreshOrderData(rid);
   }
 
   /**
@@ -177,7 +176,7 @@ public class OrderServiceIT_CI extends PostgresTestBase {
     assertEquals(Order.State.DELIVERED, delivered.state);
     assertNotNull(delivered.deliveryTime);
 
-    verify(messagingTemplate, times(5)).convertAndSend("/topic/orders/" + rid, "");
+    verify(sseController, times(5)).refreshOrderData(rid);
   }
 
   /**
@@ -192,7 +191,7 @@ public class OrderServiceIT_CI extends PostgresTestBase {
     service.updateOrderCookedTime(oid, cooked);
 
     assertEquals(cooked, service.getOrder(oid).cookedTime);
-    verify(messagingTemplate, times(1)).convertAndSend("/topic/orders/" + rid, "");
+    verify(sseController, times(1)).refreshOrderData(rid);
   }
 
   /**
@@ -213,7 +212,7 @@ public class OrderServiceIT_CI extends PostgresTestBase {
     assertNotNull(got.deliveryTime);
     assertNull(got.batchId);
 
-    verify(messagingTemplate, times(1)).convertAndSend("/topic/orders/" + rid, "");
+    verify(sseController, times(1)).refreshOrderData(rid);
   }
 
   /**
@@ -227,7 +226,7 @@ public class OrderServiceIT_CI extends PostgresTestBase {
     service.removeOrder(oid);
 
     assertThrows(IllegalArgumentException.class, () -> service.getOrder(oid));
-    verify(messagingTemplate, times(1)).convertAndSend("/topic/orders/" + rid, "");
+    verify(sseController, times(1)).refreshOrderData(rid);
   }
 
   /**
@@ -247,6 +246,6 @@ public class OrderServiceIT_CI extends PostgresTestBase {
     assertNotNull(got.batchId);
     assertEquals(batchId, got.batchId.longValue());
 
-    verify(messagingTemplate, times(1)).convertAndSend("/topic/orders/" + rid, "");
+    verify(sseController, times(1)).refreshOrderData(rid);
   }
 }

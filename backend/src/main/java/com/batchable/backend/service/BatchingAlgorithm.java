@@ -205,11 +205,7 @@ public class BatchingAlgorithm {
       throw new IllegalStateException(
           "Must have initialTime <= cookedTime <= deliveryTime. Order id " + order.id + " failed");
     }
-    if (order.state != State.COOKING || now.isAfter(order.cookedTime)) {
-      throw new IllegalStateException(
-          "Orders must be before their cooked time/be cooking when entering the batching algorithm, "
-              + "failed for order id " + order.id);
-    }
+
     Instant lastAllowedCookedTime;
     try {
       lastAllowedCookedTime = getLastAllowedCookedTime(order, restaurantAddress);
