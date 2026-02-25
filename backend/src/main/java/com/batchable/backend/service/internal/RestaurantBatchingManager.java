@@ -257,7 +257,6 @@ public class RestaurantBatchingManager {
       // in active batch
       handleActiveBatchChange(order.batchId);
     } else if (!findAndUpdateReadyBatchOrder(orderId, false)) {
-      System.out.println("rebatchIfTentative: " + rebatchIfTentative);
       if (rebatchIfTentative) {
         rebatchTentativeOrder(order);
       } else {
@@ -331,8 +330,8 @@ public class RestaurantBatchingManager {
    */
   public void checkExpiredBatches(final long updateMillis) {
     updated = false;
-    System.out.println("\n\n\n");
-    debugPrintBatches();
+    // System.out.println("\n\n\n"); useful when you want to see the backend state
+    // debugPrintBatches();
     Instant now = Instant.now();
 
     List<Order> toBeReAdded = moveExpiredTentativeBatches(now);

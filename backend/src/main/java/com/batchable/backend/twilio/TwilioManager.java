@@ -72,8 +72,8 @@ public class TwilioManager {
         + ".\n Route link: " + batchRouteLink;
 
     // Temporary logging for debugging / verification
-    System.out.println(
-        "BATCH ACTIVATED TWILIO MESSAGE, would be sent to " + driverPhoneNumber + ": " + message);
+    // System.out.println(
+    //     "BATCH ACTIVATED TWILIO MESSAGE, would be sent to " + driverPhoneNumber + ": " + message);
     sendMessage(driverPhoneNumber, message);
   }
 
