@@ -32,11 +32,25 @@ chmod +x ./build.sh
 and go to: http://localhost:5173
 
 ## 4. How to test the software
-Still filling in
+To run tests locally, after running `./build.sh` in the root of the project, run `npm test` from within the `frontend` folder. This will run all tests and, if successful, print a code coverage report after completion.
+
+To get a prettier view of the testing infrastructure, run `npm test -- --ui` instead, which will provide a link (with a 5-ish digit port number) to view live test results. Very detailed code coverage information can be found via an icon in the upper right of the left panel of the Vitest Web UI.
+
+To see test results (and code coverage information) in the GitHub CI, look into the CI run details for the "Frontend CI / Build", and look under the step "Run Tests". This will show the code coverage report, or test failure reasons. PRs with under 80% branch and statement coverage should not be merged (unless those branches can be reasonably be shown to be impossible but required by the style guide), and new features need to adhere to these guidelines.
 
 
 ## 5. How to add new tests
-Still filling in
+For front-end:
+
+To add a new test to the front-end, simply add a new file within frontend/test, ending in .spec.ts for normal unit tests or .spec.tsx for component and UI tests. If the feature you are testing is related to a specific file within frontend/app, place your testing file in the same place relative to frontend/test (e.g. tests for frontend/app/components/Modal.tsx should be in frontend/test/components/Modal.spec.tsx).
+
+Almost every new test will need imports from our testing frameworks: Vitest and React Testing Library.
+import {describe, it, expect} from 'vitest';
+import {render, screen, /* etc */} from '@testing-library/react';
+
+We follow the typical patterns for these tools, whose documentation websites can be found here for Vitest and here for RTL. Just like the rest of the front-end, please follow the Google TypeScript Style Guide.
+
+Miscellaneous Advice: re-usable mock domain objects (Orders, Drivers, etc.) can be found in frontend/test/mocks/domain_objects.ts, and due to our mocking system, back-end API calls can be made using the normal interfaces (restaurantApi, orderApi, etc.). Thank you in advance for adding tests for your features!
 
 
 ## 6. How to build a release of the software
