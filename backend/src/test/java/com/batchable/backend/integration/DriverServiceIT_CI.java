@@ -78,13 +78,14 @@ public class DriverServiceIT_CI extends PostgresTestBase {
    */
   private long insertBatchRow(long driverId) throws Exception {
     final String sql =
-        "INSERT INTO Batch(driver_id, route, dispatch_time, expected_completion_time) "
-            + "VALUES (?, ?, ?, ?) RETURNING id;";
+        "INSERT INTO Batch(driver_id, route, dispatch_time, completion_time, finished) "
+            + "VALUES (?, ?, ?, ?, ?) RETURNING id;";
     try (PreparedStatement ps = conn.prepareStatement(sql)) {
       ps.setLong(1, driverId);
       ps.setString(2, "encoded_polyline");
       ps.setObject(3, java.sql.Timestamp.from(Instant.now()));
       ps.setObject(4, java.sql.Timestamp.from(Instant.now().plusSeconds(600)));
+      ps.setBoolean(5, false);
       try (ResultSet rs = ps.executeQuery()) {
         assertTrue(rs.next());
         return rs.getLong("id");

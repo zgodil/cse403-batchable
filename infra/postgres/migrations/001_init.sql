@@ -78,7 +78,8 @@ CREATE TABLE Batch (
   driver_id INTEGER NOT NULL,
   route TEXT NOT NULL,
   dispatch_time TIMESTAMP NOT NULL,
-  expected_completion_time TIMESTAMP NOT NULL,
+  completion_time TIMESTAMP NOT NULL,
+  finished BOOLEAN NOT NULL,
   FOREIGN KEY (driver_id) REFERENCES Driver(id)
 );
 
