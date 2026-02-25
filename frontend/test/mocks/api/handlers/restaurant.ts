@@ -27,9 +27,9 @@ export const restaurantHandlers = [
     return new HttpResponse(null, {status: 204});
   }),
   http.get(endpoint('/api/restaurant/:id/drivers'), req => {
-    return HttpResponse.json(
-      db.drivers.findMatching('restaurant', asId<Restaurant>(req.params.id)),
-    );
+    const id = asId<Restaurant>(req.params.id);
+    if (!db.restaurants.get(id)) return notFound('/restaurant');
+    return HttpResponse.json(db.drivers.findMatching('restaurant', id));
   }),
   http.get(endpoint('/api/restaurant/:id/orders'), req => {
     const id = asId<Restaurant>(req.params.id);
