@@ -153,15 +153,18 @@ public class BatchingManager {
   }
 
   /**
-   * Removes an order from the appropriate restaurant batching manager by ID.
+   * Removes an order from the appropriate restaurant batching manager by ID. If there is no manager
+   * for the order's restaurant (e.g. restaurant was created after startup for a new Auth0 user),
+   * this is a no-op so the caller can still delete the order from the DB.
    *
-   * @param orderId the order to add
-   * @throws IllegalArgumentException if the order id is not found
+   * @param orderId the order to remove
    */
   public void removeOrder(Long orderId) {
     Order order = dbOrderService.getOrder(orderId);
     long restaurantId = order.restaurantId;
-    getManager(restaurantId).removeOrder(orderId);
+    if (restaurantManagers.containsKey(restaurantId)) {
+      restaurantManagers.get(restaurantId).removeOrder(orderId);
+    }
   }
 
   /**
