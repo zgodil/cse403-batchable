@@ -32,7 +32,7 @@ chmod +x ./build.sh
 and go to: http://localhost:5173
 
 ## 4. How to test the software
-To run tests locally, after running `./build.sh` in the root of the project, run `npm test` from within the `frontend` folder. This will run all tests and, if successful, print a code coverage report after completion.
+To run the frontend tests locally, after running `./build.sh` in the root of the project, run `npm test` from within the `frontend` folder. This will run all tests and, if successful, print a code coverage report after completion.
 
 To get a prettier view of the testing infrastructure, run `npm test -- --ui` instead, which will provide a link (with a 5-ish digit port number) to view live test results. Very detailed code coverage information can be found via an icon in the upper right of the left panel of the Vitest Web UI.
 
@@ -50,8 +50,11 @@ For front-end:
 To add a new test to the front-end, simply add a new file within frontend/test, ending in .spec.ts for normal unit tests or .spec.tsx for component and UI tests. If the feature you are testing is related to a specific file within frontend/app, place your testing file in the same place relative to frontend/test (e.g. tests for frontend/app/components/Modal.tsx should be in frontend/test/components/Modal.spec.tsx).
 
 Almost every new test will need imports from our testing frameworks: Vitest and React Testing Library.
-import {describe, it, expect} from 'vitest';
-import {render, screen, /* etc */} from '@testing-library/react';
+
+```ts
+import { describe, it, expect } from 'vitest';
+import { render, screen } from '@testing-library/react';
+```
 
 We follow the typical patterns for these tools, whose documentation websites can be found here for Vitest and here for RTL. Just like the rest of the front-end, please follow the Google TypeScript Style Guide.
 
