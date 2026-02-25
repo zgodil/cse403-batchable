@@ -39,16 +39,16 @@ export default function RestaurantProvider({
       if (cancelled) return;
       if (!token) {
         if (tokenRetries > 0) {
-          setTimeout(() => load(tokenRetries - 1), 400);
+          setTimeout(() => void load(tokenRetries - 1), 400);
         } else {
           // Auth may still be initializing after redirect; try once more after a delay
           setTimeout(() => {
-            if (!cancelled) load(15);
+            if (!cancelled) void load(15);
           }, 2000);
         }
         return;
       }
-      restaurantApi
+      void restaurantApi
         .getMyRestaurant()
         .then(r => {
           if (!cancelled) setRestaurant(r ?? null);
@@ -57,11 +57,13 @@ export default function RestaurantProvider({
           if (cancelled) return;
           const is401 =
             String(err?.message || err).includes('401') ||
-            String(err?.message || err).toLowerCase().includes('unauthorized');
-          if (is401) setTimeout(() => load(10), 800);
+            String(err?.message || err)
+              .toLowerCase()
+              .includes('unauthorized');
+          if (is401) setTimeout(() => void load(10), 800);
         });
     };
-    load();
+    void load();
     return () => {
       cancelled = true;
     };

@@ -65,7 +65,7 @@ export default function AddOrderModal({modal}: Props) {
 
     try {
       const id = await orderApi.create(order);
-      if (id != null) modal.setOpen(false);
+      if (id !== null && id !== undefined) modal.setOpen(false);
     } catch (err) {
       const message =
         err instanceof Error ? err.message : 'Failed to create order';

@@ -49,7 +49,9 @@ function Home() {
               </span>
             )}
             <Button
-              onClick={() => logout({logoutParams: {returnTo: window.location.origin}})}
+              onClick={() =>
+                logout({logoutParams: {returnTo: window.location.origin}})
+              }
               style="dark"
             >
               Log out

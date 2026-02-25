@@ -34,11 +34,14 @@ export default function OrderRefreshProvider({
   useEffect(() => {
     if (!restaurant) return;
     let closed = false;
-    getToken().then(token => {
+
+    void (async () => {
+      const token = await getToken();
       if (closed || !restaurant || !token) return;
       const newMonitor = new RefreshMonitor(restaurant.id, token);
       setMonitor(newMonitor);
-    });
+    })();
+
     return () => {
       closed = true;
       setMonitor(m => {

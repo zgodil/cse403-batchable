@@ -134,9 +134,9 @@ function RestaurantPage() {
 
           <div className="grid grid-cols-1 gap-6 lg:grid-cols-2 lg:items-stretch">
             <RestaurantDetailsSection
-            initialRestaurant={data.restaurant}
-            onUpdateSuccess={refreshRestaurant}
-          />
+              initialRestaurant={data.restaurant}
+              onUpdateSuccess={refreshRestaurant}
+            />
 
             <MenuItemsSection
               initialMenuItems={data.menuItems}

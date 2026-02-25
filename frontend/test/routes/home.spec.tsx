@@ -11,14 +11,18 @@ describe('Home Dashboard', () => {
     render(<HomeStub />);
     expect(screen.getByText(/Batchable Dashboard/i)).toBeInTheDocument();
     await waitFor(() => {
-      expect(screen.getByRole('heading', {name: /Active Orders/i})).toBeInTheDocument();
+      expect(
+        screen.getByRole('heading', {name: /Active Orders/i}),
+      ).toBeInTheDocument();
     });
   });
 
   it('opens the modal on button click', async () => {
     render(<HomeStub />);
     await waitFor(() => {
-      expect(screen.getByRole('button', {name: /\+ Add New Order/i})).toBeInTheDocument();
+      expect(
+        screen.getByRole('button', {name: /\+ Add New Order/i}),
+      ).toBeInTheDocument();
     });
     fireEvent.click(screen.getByRole('button', {name: /\+ Add New Order/i}));
     expect(screen.getByText(/Customer Address/i)).toBeInTheDocument();

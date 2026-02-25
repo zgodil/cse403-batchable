@@ -22,7 +22,11 @@ class RestaurantApi extends CrudApi<Restaurant> {
   /** Update the current user's restaurant (name, location). Uses PUT /api/restaurant/me. */
   async updateMyRestaurant(restaurant: Restaurant): Promise<boolean> {
     try {
-      await fetchEndpoint('PUT', '/api/restaurant/me', json.restaurant.unparse(restaurant));
+      await fetchEndpoint(
+        'PUT',
+        '/api/restaurant/me',
+        json.restaurant.unparse(restaurant),
+      );
       return true;
     } catch (err) {
       console.error('Cannot update my restaurant', err);

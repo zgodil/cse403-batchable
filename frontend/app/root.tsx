@@ -28,8 +28,7 @@ export const links: Route.LinksFunction = () => [
 ];
 
 const redirectUri = typeof window !== 'undefined' ? window.location.origin : '';
-const audience =
-  import.meta.env.VITE_AUTH0_AUDIENCE ?? 'https://batchable-api';
+const audience = import.meta.env.VITE_AUTH0_AUDIENCE ?? 'https://batchable-api';
 
 function AuthTokenSetter({children}: {children: React.ReactNode}) {
   const {getAccessTokenSilently} = useAuth0();
@@ -66,7 +65,7 @@ export function Layout({children}: {children: React.ReactNode}) {
           <AuthTokenSetter>
             <RestaurantProvider>{children}</RestaurantProvider>
           </AuthTokenSetter>
-          </Auth0Provider>
+        </Auth0Provider>
         <ScrollRestoration />
         <Scripts />
       </body>

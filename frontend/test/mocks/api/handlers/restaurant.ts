@@ -20,7 +20,8 @@ export const restaurantHandlers = [
     return HttpResponse.json(all[0]!);
   }),
   http.put(endpoint('/api/restaurant/me'), async req => {
-    const body = (await req.request.json()) as json.JSONDomainObject<Restaurant>;
+    const body =
+      (await req.request.json()) as json.JSONDomainObject<Restaurant>;
     const existing = db.restaurants.findAll()[0];
     if (!existing) return HttpResponse.json(null, {status: 404});
     db.restaurants.update({...body, id: existing.id});
