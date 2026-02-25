@@ -8,20 +8,18 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/twilio")
 public class TwilioWebhookController {
 
-    // Create a logger for this class
-    private static final Logger logger = LoggerFactory.getLogger(TwilioWebhookController.class);
+  // Create a logger for this class
+  private static final Logger logger = LoggerFactory.getLogger(TwilioWebhookController.class);
 
-    @PostMapping("/incoming")
-    public String receiveSms(
-            @RequestParam("From") String from,
-            @RequestParam("Body") String body) {
+  @PostMapping("/incoming")
+  public String receiveSms(@RequestParam("From") String from, @RequestParam("Body") String body) {
 
-        logger.info("Incoming SMS from: {}", from);
-        logger.info("Message body: {}", body);
+    logger.info("Incoming SMS from: {}", from);
+    logger.info("Message body: {}", body);
 
-        // Later this will call BatchingManager
-        // For now just log
+    // Later this will call BatchingManager
+    // For now just log
 
-        return "Received";
-    }
+    return "Received";
+  }
 }

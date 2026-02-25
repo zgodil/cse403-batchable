@@ -7,14 +7,10 @@ import org.springframework.web.bind.annotation.RequestMapping;
 @Controller
 public class FrontendController {
 
-    // Only forward SPA routes to index.html; do not match /assets/* or other static
-    // paths
-    @RequestMapping(value = {
-            "/",
-            "/restaurant",
-            "/restaurant/**"
-    })
-    public String forward() {
-        return "forward:/index.html";
-    }
+  // Only forward SPA routes to index.html; do not match /assets/* or other static
+  // paths
+  @RequestMapping(value = {"/", "/restaurant", "/restaurant/**"})
+  public String forward() {
+    return "forward:/index.html";
+  }
 }
