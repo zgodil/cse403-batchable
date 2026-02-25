@@ -1,6 +1,6 @@
 import {http, HttpResponse} from 'msw';
 import * as json from '~/domain/json';
-import {asId, db, endpoint, makeCrudHandlers} from '../common';
+import {asId, db, endpoint, makeCrudHandlers, notFound} from '../common';
 import type {Restaurant} from '~/domain/objects';
 
 const defaultRestaurant: json.JSONDomainObject<Restaurant> = {
@@ -32,15 +32,17 @@ export const restaurantHandlers = [
     );
   }),
   http.get(endpoint('/api/restaurant/:id/orders'), req => {
+    const id = asId<Restaurant>(req.params.id);
+    if (!db.restaurants.get(id)) return notFound('/restaurant');
     return HttpResponse.json(
       db.orders
-        .findMatching('restaurant', asId<Restaurant>(req.params.id))
+        .findMatching('restaurant', id)
         .filter(order => order.state !== 'DELIVERED'),
     );
   }),
   http.get(endpoint('/api/restaurant/:id/menu'), req => {
-    return HttpResponse.json(
-      db.menuItems.findMatching('restaurant', asId<Restaurant>(req.params.id)),
-    );
+    const id = asId<Restaurant>(req.params.id);
+    if (!db.restaurants.get(id)) return notFound('/restaurant');
+    return HttpResponse.json(db.menuItems.findMatching('restaurant', id));
   }),
 ];
