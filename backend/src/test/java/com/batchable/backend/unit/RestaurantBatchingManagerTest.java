@@ -151,7 +151,8 @@ class RestaurantBatchingManagerTest {
 
     Order order =
         createOrder(42L, State.DRIVING, Instant.now(), Instant.now().plusSeconds(300), 100L);
-    mgr.removeOrder(order);
+    when(dbOrderService.getOrder(42L)).thenReturn(order);
+    mgr.removeOrder(order.id);
 
     verify(twilioManager).handleBatchChange(100L, ADDRESS);
     verify(batchingAlgorithm, never()).removeOrder(anyList(), anyLong(), anyString());
@@ -172,7 +173,8 @@ class RestaurantBatchingManagerTest {
     RestaurantBatchingManager mgr = new RestaurantBatchingManager(RESTAURANT_ID, ADDRESS, publisher,
         batchingAlgorithm, routeService, dbOrderService, driverService, restaurantService,
         twilioManager, customBatches);
-    mgr.removeOrder(order);
+    when(dbOrderService.getOrder(42L)).thenReturn(order);
+    mgr.removeOrder(order.id);
 
     assertTrue(mgr.getBatches().getReadyBatches().peek().getBatch().isEmpty());
     verify(batchingAlgorithm, never()).removeOrder(anyList(), anyLong(), anyString());
@@ -187,8 +189,9 @@ class RestaurantBatchingManagerTest {
         twilioManager, emptyBatches);
 
     Order order = createOrder(42L, State.COOKING, Instant.now(), Instant.now().plusSeconds(300));
+    when(dbOrderService.getOrder(42L)).thenReturn(order);
 
-    mgr.removeOrder(order);
+    mgr.removeOrder(order.id);
 
     verify(batchingAlgorithm).removeOrder(emptyBatches.getTentativeBatches(), 42L, ADDRESS);
   }
