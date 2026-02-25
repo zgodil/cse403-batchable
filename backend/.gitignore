@@ -1,8 +1,12 @@
 HELP.md
+# Ignore all target directories
 target/
-.mvn/wrapper/maven-wrapper.jar
-!**/src/main/**/target/
-!**/src/test/**/target/
+
+# Allow backend JaCoCo report
+!backend/target/
+!backend/target/site/
+!backend/target/site/jacoco/
+!backend/target/site/jacoco/index.html
 
 ### STS ###
 .apt_generated
