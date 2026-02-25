@@ -11,8 +11,8 @@ import {nextStateAfter, type Order} from '~/domain/objects';
 import * as json from '~/domain/json';
 
 export const orderHandlers = [
-  ...makeCrudHandlers('/order', db.orders, ['create', 'read', 'delete']),
-  http.put(endpoint('/order/:id/advance'), req => {
+  ...makeCrudHandlers('/api/order', db.orders, ['create', 'read', 'delete']),
+  http.put(endpoint('/api/order/:id/advance'), req => {
     const order = db.orders.get(asId<Order>(req.params.id));
     if (!order) return notFound('order');
     const parsedState = json.order.field('state').parse(order.state);
@@ -24,7 +24,7 @@ export const orderHandlers = [
     }
     return noContent();
   }),
-  http.put(endpoint('/order/:id/cookedTime'), async req => {
+  http.put(endpoint('/api/order/:id/cookedTime'), async req => {
     const order = db.orders.get(asId<Order>(req.params.id));
     if (!order) return notFound('order');
     const time = (await req.request.json()) as string;
@@ -34,7 +34,7 @@ export const orderHandlers = [
     });
     return noContent();
   }),
-  http.put(endpoint('/order/:id/remake'), async req => {
+  http.put(endpoint('/api/order/:id/remake'), async req => {
     const order = db.orders.get(asId<Order>(req.params.id));
     if (!order) return notFound('order');
 

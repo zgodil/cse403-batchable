@@ -1,18 +1,24 @@
 import {describe, it, expect} from 'vitest';
-import {render, screen, fireEvent} from '@testing-library/react';
+import {render, screen, fireEvent, waitFor} from '@testing-library/react';
 import {createRoutesStub} from 'react-router';
 import Home from '../../app/routes/home';
 
 describe('Home Dashboard', () => {
   const HomeStub = createRoutesStub([{path: '/', Component: Home}]);
 
-  it('renders the dashboard and components', () => {
+  it('renders the dashboard and components', async () => {
     render(<HomeStub />);
     expect(screen.getByText(/Batchable Dashboard/i)).toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.getByRole('heading', {name: /Active Orders/i})).toBeInTheDocument();
+    });
   });
 
-  it('opens the modal on button click', () => {
+  it('opens the modal on button click', async () => {
     render(<HomeStub />);
+    await waitFor(() => {
+      expect(screen.getByRole('button', {name: /\+ Add New Order/i})).toBeInTheDocument();
+    });
     fireEvent.click(screen.getByRole('button', {name: /\+ Add New Order/i}));
     expect(screen.getByText(/Customer Address/i)).toBeInTheDocument();
     expect(screen.getByText(/Item Name\(s\)/i)).toBeInTheDocument();

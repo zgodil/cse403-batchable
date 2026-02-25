@@ -1,22 +1,44 @@
 import {http, HttpResponse} from 'msw';
+import * as json from '~/domain/json';
 import {asId, db, endpoint, makeCrudHandlers} from '../common';
 import type {Restaurant} from '~/domain/objects';
 
+const defaultRestaurant: json.JSONDomainObject<Restaurant> = {
+  id: 1,
+  name: 'Test Restaurant',
+  location: '123 Test St',
+};
+
 export const restaurantHandlers = [
-  ...makeCrudHandlers('/restaurant', db.restaurants),
-  http.get(endpoint('/restaurant/:id/drivers'), req => {
+  ...makeCrudHandlers('/api/restaurant', db.restaurants),
+  http.get(endpoint('/api/restaurant/me'), () => {
+    const all = db.restaurants.findAll();
+    if (all.length === 0) {
+      db.restaurants.insert(defaultRestaurant);
+      return HttpResponse.json(db.restaurants.findAll()[0]!);
+    }
+    return HttpResponse.json(all[0]!);
+  }),
+  http.put(endpoint('/api/restaurant/me'), async req => {
+    const body = (await req.request.json()) as json.JSONDomainObject<Restaurant>;
+    const existing = db.restaurants.findAll()[0];
+    if (!existing) return HttpResponse.json(null, {status: 404});
+    db.restaurants.update({...body, id: existing.id});
+    return new HttpResponse(null, {status: 204});
+  }),
+  http.get(endpoint('/api/restaurant/:id/drivers'), req => {
     return HttpResponse.json(
       db.drivers.findMatching('restaurant', asId<Restaurant>(req.params.id)),
     );
   }),
-  http.get(endpoint('/restaurant/:id/orders'), req => {
+  http.get(endpoint('/api/restaurant/:id/orders'), req => {
     return HttpResponse.json(
       db.orders
         .findMatching('restaurant', asId<Restaurant>(req.params.id))
         .filter(order => order.state !== 'DELIVERED'),
     );
   }),
-  http.get(endpoint('/restaurant/:id/menu'), req => {
+  http.get(endpoint('/api/restaurant/:id/menu'), req => {
     return HttpResponse.json(
       db.menuItems.findMatching('restaurant', asId<Restaurant>(req.params.id)),
     );
