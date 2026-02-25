@@ -1,6 +1,6 @@
 import {fakeId, type Order} from '~/domain/objects';
 import {type ModalState} from '../Modal';
-import {useContext, useEffect, useState} from 'react';
+import {useContext, useState} from 'react';
 import {RestaurantContext} from '../RestaurantProvider';
 import FormField from '../FormField';
 import FormModal from '../FormModal';
@@ -16,11 +16,9 @@ export default function AddOrderModal({modal}: Props) {
   const restaurant = useContext(RestaurantContext);
   const [selectedItemNames, setSelectedItemNames] = useState<string[]>([]);
 
-  useEffect(() => {
-    if (!modal.open) {
-      setSelectedItemNames([]);
-    }
-  }, [modal.open]);
+  if (!modal.open && selectedItemNames.length) {
+    setSelectedItemNames([]);
+  }
 
   const addOrder = async (data: {
     address: string;
