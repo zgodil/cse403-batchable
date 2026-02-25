@@ -32,17 +32,13 @@ chmod +x ./build.sh
 and go to: http://localhost:5173
 
 ## 4. How to test the software
-All automated tests for the backend are located in src/test/java. All automated tests for the frontend are located in frontend/test. To execute the full test suite, run mvn test from the root directory. This will execute all tests.
-
-Test coverage reports can be generated using the Maven build lifecycle and reviewed in the generated target/site directory. Developers should ensure that all tests pass before committing changes or opening a pull request.
+Still filling in
 
 
 ## 5. How to add new tests
-New backend tests must be added under backend/src/test/java/ and should mirror the package structure of the code being tested. Test classes should follow the naming convention ClassNameTest. Backend tests should validate service-layer logic, controller behavior, batching algorithm functionality, database interactions, and external integrations such as Twilio where applicable. Mocking should be used when isolating external dependencies. All new backend features or bug fixes must include corresponding test coverage before being merged into main.
-
-New frontend tests must be placed under frontend/test/ and follow the same structure as frontend/app/. Domain logic tests belong in frontend/test/domain/, route tests in frontend/test/routes/, and utility tests in frontend/test/util/. Shared test mocks should be placed in frontend/test/mocks/. Test files must follow the existing naming convention (e.g., *.test.ts) to ensure automatic discovery by the test runner. All new UI components and client-side logic must include appropriate tests.
+Still filling in
 
 
 ## 6. How to build a release of the software
-Releases must be built from the main branch after all tests pass. Before packaging, update the version number in pom.xml and any relevant documentation. To build the backend, run mvn clean package to generate the deployable artifact. To build the frontend, navigate to the frontend/ directory and run npm install. followed by npm run build to produce the production bundle.
+Still filling in
 
