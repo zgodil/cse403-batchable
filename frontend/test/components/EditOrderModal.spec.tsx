@@ -6,7 +6,10 @@ import {
   screen,
   waitFor,
 } from '@testing-library/react';
-import {describe, it, expect} from 'vitest';
+import {http} from 'msw';
+import {badRequest, endpoint} from 'test/mocks/api/common';
+import {server} from 'test/mocks/api/server';
+import {describe, it, expect, vi} from 'vitest';
 import {orderApi} from '~/api/endpoints/order';
 import {restaurantApi} from '~/api/endpoints/restaurant';
 import EditOrderModal from '~/components/dashboard/EditOrderModal';
@@ -61,6 +64,9 @@ const renderModal = (order: Order) => {
 };
 
 describe('<EditOrderModal>', () => {
+  window.alert = () => {};
+  vi.spyOn(window, 'alert');
+
   it('contains appropriate UI', async () => {
     const order = await createOrder();
     renderModal(order);
@@ -125,6 +131,28 @@ describe('<EditOrderModal>', () => {
     });
   });
 
+  it('can fail to update order cooked time', async () => {
+    const order = await createOrder();
+    const getState = renderModal(order);
+
+    const prepMins = 300;
+    fireEvent.change(screen.getByLabelText(/prep time/i), {
+      target: {value: String(prepMins)},
+    });
+
+    server.use(
+      http.put(endpoint(`/order/${order.id.id}/cookedTime`), () =>
+        badRequest(),
+      ),
+    );
+    fireEvent.click(screen.getByText(/Apply Changes/i));
+
+    await waitFor(async () => {
+      expect(getState().open).toBe(false);
+      expect(window.alert).toHaveBeenCalled();
+    });
+  });
+
   it('can update order state', async () => {
     const order = await createOrder();
     const getState = renderModal(order);
@@ -146,6 +174,28 @@ describe('<EditOrderModal>', () => {
       }
 
       expect(changed.state).toBe('cooked');
+    });
+  });
+
+  it('can fail to update order state', async () => {
+    const order = await createOrder();
+    const getState = renderModal(order);
+
+    fireEvent.click(screen.getByLabelText(/^cooked$/i));
+
+    await waitFor(() => {
+      expect(screen.getByLabelText(/^cooked$/i)).toBeChecked();
+    });
+
+    server.use(
+      http.put(endpoint(`/order/${order.id.id}/advance`), () => badRequest()),
+    );
+    fireEvent.click(screen.getByRole('button', {name: /Apply Changes/i}));
+
+    await waitFor(async () => {
+      expect(getState().open).toBe(false);
+
+      expect(window.alert).toHaveBeenCalled();
     });
   });
 
@@ -192,6 +242,34 @@ describe('<EditOrderModal>', () => {
 
       const changed = await orderApi.read(order.id);
       expect(changed).toEqual(order);
+    });
+  });
+
+  it('can fail to remake', async () => {
+    const order = await createOrder({state: 'cooked'});
+    renderModal(order);
+
+    server.use(
+      http.put(endpoint(`/order/${order.id.id}/remake`), () => badRequest()),
+    );
+    fireEvent.click(screen.getByRole('button', {name: /remake order/i}));
+
+    await waitFor(() => {
+      expect(window.alert).toHaveBeenCalled();
+    });
+  });
+
+  it('can fail to cancel', async () => {
+    const order = await createOrder({state: 'cooking'});
+    renderModal(order);
+
+    server.use(
+      http.delete(endpoint(`/order/${order.id.id}`), () => badRequest()),
+    );
+    fireEvent.click(screen.getByRole('button', {name: /cancel order/i}));
+
+    await waitFor(() => {
+      expect(window.alert).toHaveBeenCalled();
     });
   });
 });

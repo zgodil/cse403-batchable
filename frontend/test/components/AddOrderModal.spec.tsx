@@ -89,6 +89,9 @@ async function tryCreateOrder(
 }
 
 describe('<AddOrderModal>', () => {
+  window.alert = () => {};
+  vi.spyOn(window, 'alert');
+
   it('has the input elements', async () => {
     const restaurant = await checkedCreate(restaurantApi, getFakeRestaurant());
     renderOpenModal(restaurant);
@@ -128,8 +131,6 @@ describe('<AddOrderModal>', () => {
   });
 
   it('fails to add order with no items', async () => {
-    window.alert = () => {};
-    vi.spyOn(window, 'alert');
     await tryCreateOrder(
       {
         address: 'New York City, NY',
@@ -144,8 +145,6 @@ describe('<AddOrderModal>', () => {
   });
 
   it('fails to add order on API failure', async () => {
-    window.alert = () => {};
-    vi.spyOn(window, 'alert');
     await tryCreateOrder(
       {
         address: 'New York City, NY',
@@ -186,7 +185,6 @@ describe('<AddOrderModal>', () => {
   });
 
   it('fails without a restaurant', async () => {
-    vi.spyOn(window, 'alert');
     const restaurant = await checkedCreate(restaurantApi, getFakeRestaurant());
     const menuItem = getFakeMenuItem(restaurant);
     await menuApi.create(menuItem);
