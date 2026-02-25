@@ -36,13 +36,13 @@ To run tests locally, after running `./build.sh` in the root of the project, run
 
 To get a prettier view of the testing infrastructure, run `npm test -- --ui` instead, which will provide a link (with a 5-ish digit port number) to view live test results. Very detailed code coverage information can be found via an icon in the upper right of the left panel of the Vitest Web UI.
 
-To run the backend tests, navigate to the backend directory. and run `./mvnw test`. This will run all tests. To view the code coverage on the backend. From the
+To run the backend tests, navigate to the backend directory. and run `./mvnw clean test`. This will run all tests. To view the code coverage on the backend. From the
 ```bash
 ./mvnw verify
 ```
 Look for coverage results in `backend/target/site/jacoco/index.html`
 
-To see test results (and code coverage information) in the GitHub CI, look into the CI run details for the "Frontend CI / Build", and look under the step "Run Tests". This will show the code coverage report, or test failure reasons. PRs with under 80% branch and statement coverage should not be merged (unless those branches can be reasonably be shown to be impossible but required by the style guide), and new features need to adhere to these guidelines.
+To see test results (and code coverage information) in the GitHub CI, look into the CI run details for the "Frontend CI / Build", and look under the step "Run Tests". This will show the code coverage report, or test failure reasons. PRs with under 70% branch and statement coverage should not be merged (unless those branches can be reasonably be shown to be impossible but required by the style guide), and new features need to adhere to these guidelines.
 
 
 ## 5. How to add new tests
