@@ -16,10 +16,7 @@ import {http} from 'msw';
 import {badRequest, endpoint} from 'test/mocks/api/common';
 
 async function renderOverview(orders: Partial<Order>[]) {
-  const restaurantId = await checkedCreate(
-    restaurantApi,
-    getFakeRestaurant2(),
-  );
+  const restaurantId = await checkedCreate(restaurantApi, getFakeRestaurant2());
   for (const order of orders) {
     await checkedCreate(orderApi, {
       ...getFakeOrder(restaurantId),
@@ -29,11 +26,11 @@ async function renderOverview(orders: Partial<Order>[]) {
   const restaurant = {
     id: restaurantId,
     name: 'Test',
-    location: { address: '' },
+    location: {address: ''},
   };
   render(
     <RestaurantContext.Provider
-      value={{ restaurant, refreshRestaurant: async () => {} }}
+      value={{restaurant, refreshRestaurant: async () => {}}}
     >
       <OrderOverview />
     </RestaurantContext.Provider>,

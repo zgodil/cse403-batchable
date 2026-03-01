@@ -16,10 +16,7 @@ import {server} from 'test/mocks/api/server';
 import {http} from 'msw';
 
 async function renderOverview(drivers: Partial<Driver>[]) {
-  const restaurantId = await checkedCreate(
-    restaurantApi,
-    getFakeRestaurant2(),
-  );
+  const restaurantId = await checkedCreate(restaurantApi, getFakeRestaurant2());
   for (const driver of drivers) {
     await checkedCreate(driverApi, {
       ...getFakeDriver(restaurantId),
@@ -29,11 +26,11 @@ async function renderOverview(drivers: Partial<Driver>[]) {
   const restaurant = {
     id: restaurantId,
     name: 'Test',
-    location: { address: '' },
+    location: {address: ''},
   };
   render(
     <RestaurantContext.Provider
-      value={{ restaurant, refreshRestaurant: async () => {} }}
+      value={{restaurant, refreshRestaurant: async () => {}}}
     >
       <DriverOverview />
     </RestaurantContext.Provider>,

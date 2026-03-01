@@ -28,9 +28,7 @@ import {badRequest, endpoint} from 'test/mocks/api/common';
 
 function toContextValue(rid: Restaurant['id'] | null): RestaurantContextValue {
   return {
-    restaurant: rid
-      ? { id: rid, name: 'Test', location: { address: '' } }
-      : null,
+    restaurant: rid ? {id: rid, name: 'Test', location: {address: ''}} : null,
     refreshRestaurant: async () => {},
   };
 }
