@@ -60,7 +60,7 @@ From the `backend` directory:
 ./mvnw verify
 ```
 
-Look for coverage results in `backend/target/site/jacoco/index.html`
+Look for coverage results locally in `backend/target/site/jacoco/index.html`
 
 ## Editor/Git Configuration
 
