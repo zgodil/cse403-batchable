@@ -18,26 +18,38 @@ import {
   getFakeRestaurant,
 } from 'test/mocks/domain_objects';
 import type {MenuItem, Restaurant} from '~/domain/objects';
-import {RestaurantContext} from '~/components/RestaurantProvider';
+import {
+  RestaurantContext,
+  type RestaurantContextValue,
+} from '~/components/RestaurantProvider';
 import {server} from 'test/mocks/api/server';
 import {http} from 'msw';
 import {badRequest, endpoint} from 'test/mocks/api/common';
+
+function toContextValue(rid: Restaurant['id'] | null): RestaurantContextValue {
+  return {
+    restaurant: rid
+      ? { id: rid, name: 'Test', location: { address: '' } }
+      : null,
+    refreshRestaurant: async () => {},
+  };
+}
 
 function renderOpenModal(restaurant: Restaurant['id'] | null) {
   const hook = renderHook(() => useModal());
   act(() => hook.result.current.setOpen(true));
   const rendered = render(
-    <RestaurantContext value={restaurant}>
+    <RestaurantContext.Provider value={toContextValue(restaurant)}>
       <AddOrderModal modal={hook.result.current} />
-    </RestaurantContext>,
+    </RestaurantContext.Provider>,
   );
   return {
     modal: () => hook.result.current,
     rerender: (rid: Restaurant['id'] | null = restaurant) =>
       rendered.rerender(
-        <RestaurantContext value={rid}>
+        <RestaurantContext.Provider value={toContextValue(rid)}>
           <AddOrderModal modal={hook.result.current} />
-        </RestaurantContext>,
+        </RestaurantContext.Provider>,
       ),
   };
 }
