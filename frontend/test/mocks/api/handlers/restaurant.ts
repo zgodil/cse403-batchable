@@ -10,7 +10,7 @@ const defaultRestaurant: json.JSONDomainObject<Restaurant> = {
 };
 
 export const restaurantHandlers = [
-  ...makeCrudHandlers('/api/restaurant', db.restaurants),
+  // /me must come before crud so GET /api/restaurant/me is not matched by /:id
   http.get(endpoint('/api/restaurant/me'), () => {
     const all = db.restaurants.findAll();
     if (all.length === 0) {
@@ -27,6 +27,7 @@ export const restaurantHandlers = [
     db.restaurants.update({...body, id: existing.id});
     return new HttpResponse(null, {status: 204});
   }),
+  ...makeCrudHandlers('/api/restaurant', db.restaurants),
   http.get(endpoint('/api/restaurant/:id/drivers'), req => {
     const id = asId<Restaurant>(req.params.id);
     if (!db.restaurants.get(id)) return notFound('/restaurant');

@@ -1,13 +1,14 @@
-import {describe, it, expect} from 'vitest';
+import {beforeEach, describe, it, expect} from 'vitest';
 import {render, screen, waitFor} from '@testing-library/react';
 import {useContext} from 'react';
 import RestaurantProvider, {
   RestaurantContext,
 } from '~/components/RestaurantProvider';
+import {setTokenGetter} from '~/api/authToken';
 import {restaurantApi} from '~/api/endpoints/restaurant';
 import type {Restaurant} from '~/domain/objects';
 import {checkedCreate, getFakeRestaurant} from 'test/mocks/domain_objects';
-import {db} from 'test/mocks/api/common';
+import {db, resetMockDatabase} from 'test/mocks/api/common';
 
 // fake component to extract context value
 function RestaurantId() {
@@ -29,6 +30,11 @@ const restaurantId: Restaurant['id'] = {
 };
 
 describe('<RestaurantProvider>', () => {
+  beforeEach(() => {
+    resetMockDatabase();
+    setTokenGetter(() => Promise.resolve('test-token'));
+  });
+
   it("creates restaurant 1 if there isn't one", async () => {
     const initiallyExists = await restaurantApi.exists(restaurantId);
     expect(initiallyExists).toBe(false);

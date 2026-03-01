@@ -141,7 +141,7 @@ describe('<EditOrderModal>', () => {
     });
 
     server.use(
-      http.put(endpoint(`/order/${order.id.id}/cookedTime`), () =>
+      http.put(endpoint(`/api/order/${order.id.id}/cookedTime`), () =>
         badRequest(),
       ),
     );
@@ -188,7 +188,9 @@ describe('<EditOrderModal>', () => {
     });
 
     server.use(
-      http.put(endpoint(`/order/${order.id.id}/advance`), () => badRequest()),
+      http.put(endpoint(`/api/order/${order.id.id}/advance`), () =>
+        badRequest(),
+      ),
     );
     fireEvent.click(screen.getByRole('button', {name: /Apply Changes/i}));
 
@@ -250,7 +252,9 @@ describe('<EditOrderModal>', () => {
     renderModal(order);
 
     server.use(
-      http.put(endpoint(`/order/${order.id.id}/remake`), () => badRequest()),
+      http.put(endpoint(`/api/order/${order.id.id}/remake`), () =>
+        badRequest(),
+      ),
     );
     fireEvent.click(screen.getByRole('button', {name: /remake order/i}));
 
@@ -264,7 +268,7 @@ describe('<EditOrderModal>', () => {
     renderModal(order);
 
     server.use(
-      http.delete(endpoint(`/order/${order.id.id}`), () => badRequest()),
+      http.delete(endpoint(`/api/order/${order.id.id}`), () => badRequest()),
     );
     fireEvent.click(screen.getByRole('button', {name: /cancel order/i}));
 
