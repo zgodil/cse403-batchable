@@ -57,8 +57,8 @@ public class RestaurantBatchingManager {
    * @param routeService service for computing route polylines and duration
    */
   public RestaurantBatchingManager(long restaurantId, String restaurantAddress,
-      SsePublisher publisher, BatchingAlgorithm batchingAlgorithm,
-      RouteService routeService, DbOrderService dbOrderService, DriverService driverService,
+      SsePublisher publisher, BatchingAlgorithm batchingAlgorithm, RouteService routeService,
+      DbOrderService dbOrderService, DriverService driverService,
       RestaurantService restaurantService, TwilioManager twilioManager, Batches batches) {
     this.restaurantId = restaurantId;
     this.restaurantAddress = restaurantAddress;
@@ -217,9 +217,9 @@ public class RestaurantBatchingManager {
    */
   public void addOrder(Order order) {
     if (order.state != State.COOKING || order.cookedTime.isBefore(Instant.now())) {
-      throw new IllegalArgumentException("Orders must be COOKING and have a" 
-        + " cookedTime in the future when being added to the batching algorithm"
-        + " for the first time. False for order id " + order.id);
+      throw new IllegalArgumentException("Orders must be COOKING and have a"
+          + " cookedTime in the future when being added to the batching algorithm"
+          + " for the first time. False for order id " + order.id);
     }
     batchingAlgorithm.addOrder(batches.tentativeBatches, order, restaurantAddress);
   }
@@ -227,16 +227,15 @@ public class RestaurantBatchingManager {
   /**
    * Removes an order from restaurant's batches by ID.
    *
-   * @param orderId the id of the order to remove
+   * @param order the order to remove
    * @throws IllegalArgumentException if the order id is not found
    */
-  public void removeOrder(Long orderId) {
-    Order order = dbOrderService.getOrder(orderId);
+  public void removeOrder(Order order) {
     if (order.batchId != null) {
       // in active batch
       handleActiveBatchChange(order.batchId);
-    } else if (!findAndUpdateReadyBatchOrder(orderId, true)) {
-      batchingAlgorithm.removeOrder(batches.tentativeBatches, orderId, restaurantAddress);
+    } else if (!findAndUpdateReadyBatchOrder(order.id, true)) {
+      batchingAlgorithm.removeOrder(batches.tentativeBatches, order.id, restaurantAddress);
     }
   }
 
@@ -258,7 +257,6 @@ public class RestaurantBatchingManager {
       // in active batch
       handleActiveBatchChange(order.batchId);
     } else if (!findAndUpdateReadyBatchOrder(orderId, false)) {
-      System.out.println("rebatchIfTentative: " + rebatchIfTentative);
       if (rebatchIfTentative) {
         rebatchTentativeOrder(order);
       } else {
@@ -332,8 +330,8 @@ public class RestaurantBatchingManager {
    */
   public void checkExpiredBatches(final long updateMillis) {
     updated = false;
-    System.out.println("\n\n\n");
-    debugPrintBatches();
+    // System.out.println("\n\n\n"); useful when you want to see the backend state
+    // debugPrintBatches();
     Instant now = Instant.now();
 
     List<Order> toBeReAdded = moveExpiredTentativeBatches(now);

@@ -46,10 +46,22 @@ function makeOrder(id: number, state: Order['state'] = 'driving'): Order {
   };
 }
 
-describe('DriverCard', () => {
+describe('<DriverCard>', () => {
   beforeEach(() => {
     db.restaurants.insert(json.restaurant.unparse(testRestaurant));
     db.drivers.insert(json.driver.unparse(testDriver));
+  });
+
+  it("shows the driver's name", () => {
+    render(<DriverCard driver={testDriver} />);
+
+    expect(screen.getByText('Ben (Driver)')).toBeInTheDocument();
+  });
+
+  it("shows the driver's phone number", () => {
+    render(<DriverCard driver={testDriver} />);
+
+    expect(screen.getByText('(206) 111-2222')).toBeInTheDocument();
   });
 
   it('shows assigned batch orders as circular route steps', async () => {
@@ -66,6 +78,6 @@ describe('DriverCard', () => {
   it('shows no assigned orders when driver has no active batch', async () => {
     render(<DriverCard driver={testDriver} />);
 
-    expect(await screen.findByText('No assigned orders')).toBeTruthy();
+    expect(await screen.findByText('No assigned orders')).toBeInTheDocument();
   });
 });
