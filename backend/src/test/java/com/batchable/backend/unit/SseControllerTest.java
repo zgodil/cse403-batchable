@@ -79,21 +79,22 @@ class SseControllerTest {
   }
 
   @Test
-  void refreshOrderData_shouldCompleteEmitterAndRemoveItWhenSendFails() throws IOException {
-    // given
+  void refreshOrderData_shouldRemoveEmitterWhenSendFails() throws IOException {
+    // given: send fails
     Long restaurantId = 1L;
     SseEmitter failingEmitter = mock(SseEmitter.class);
     doThrow(new IOException("Connection lost")).when(failingEmitter)
         .send(any(SseEmitter.SseEventBuilder.class));
 
-    controller.getEmitters().put(restaurantId, List.of(failingEmitter));
+    controller.getEmitters().put(restaurantId, new CopyOnWriteArrayList<>(List.of(failingEmitter)));
 
     // when
     controller.refreshOrderData(restaurantId);
 
-    // then
-    verify(failingEmitter).complete(); // should be completed due to IOException
-    // After complete, onCompletion callback should remove it. That removal is tested separately.
+    // then: emitter is removed from list (we do not call complete() to avoid AsyncContext
+    // race when called from a non-container thread after the client has already errored)
+    assertThat(controller.getEmitters().get(restaurantId)).isNull();
+    verify(failingEmitter, never()).complete();
   }
 
   @Test
