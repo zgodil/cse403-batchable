@@ -1,82 +1,74 @@
 import {render, screen} from '@testing-library/react';
-import {beforeEach, describe, expect, it} from 'vitest';
+import {describe, expect, it} from 'vitest';
 import DriverCard from '~/components/dashboard/DriverCard';
-import * as json from '~/domain/json';
-import type {Batch, Driver, Order, Restaurant} from '~/domain/objects';
-import {db} from '../../mocks/api/common';
+import {driverApi} from '~/api/endpoints/driver';
+import {orderApi} from '~/api/endpoints/order';
+import {restaurantApi} from '~/api/endpoints/restaurant';
+import type {Driver} from '~/domain/objects';
+import {
+  checkedCreate,
+  checkedCreateBatch,
+  getFakeDriver,
+  getFakeOrder,
+  getFakeRestaurant,
+} from 'test/mocks/domain_objects';
 
-const restaurantId: Restaurant['id'] = {type: 'Restaurant', id: 1};
-const driverId: Driver['id'] = {type: 'Driver', id: 1};
-const batchId: Batch['id'] = {type: 'Batch', id: 1};
-
-const testRestaurant: Restaurant = {
-  id: restaurantId,
-  name: 'Batchable Restaurant',
-  location: {address: '123 Test Ave, Seattle, WA'},
-};
-
-const testDriver: Driver = {
-  id: driverId,
-  restaurant: restaurantId,
-  name: 'Ben',
-  phoneNumber: {compact: '2061112222'},
-  onShift: true,
-};
-
-const testBatch: Batch = {
-  id: batchId,
-  driver: driverId,
-  route: {encoded: 'iziaHtvkiVwKbS}O`G'},
-  dispatchTime: new Date('2026-01-01T00:00:00.000Z'),
-  expectedCompletionTime: new Date('2026-01-01T01:00:00.000Z'),
-};
-
-function makeOrder(id: number, state: Order['state'] = 'driving'): Order {
-  return {
-    id: {type: 'Order', id},
-    restaurant: restaurantId,
-    destination: {address: `${id} Test St, Seattle, WA`},
-    itemNames: ['Mochi'],
-    initialTime: new Date('2026-01-01T00:00:00.000Z'),
-    cookedTime: new Date('2026-01-01T00:10:00.000Z'),
-    deliveryTime: new Date('2026-01-01T00:30:00.000Z'),
-    state,
-    highPriority: false,
-    currentBatch: batchId,
-  };
+async function createDriver(driverConfig: Partial<Driver> = {}) {
+  const restaurant = await checkedCreate(restaurantApi, getFakeRestaurant());
+  const driver = await checkedCreate(driverApi, {
+    ...getFakeDriver(restaurant),
+    ...driverConfig,
+  });
+  const driverData = await driverApi.read(driver);
+  if (driverData === null) {
+    expect.fail('driver data must not be null');
+  }
+  return {driver: driverData, restaurant};
 }
 
 describe('<DriverCard>', () => {
-  beforeEach(() => {
-    db.restaurants.insert(json.restaurant.unparse(testRestaurant));
-    db.drivers.insert(json.driver.unparse(testDriver));
+  it("shows the driver's name", async () => {
+    const name = 'Xyzw';
+    const {driver} = await createDriver({name});
+    render(<DriverCard driver={driver} />);
+
+    expect(screen.getByText(name, {exact: false})).toBeInTheDocument();
   });
 
-  it("shows the driver's name", () => {
-    render(<DriverCard driver={testDriver} />);
+  it("shows the driver's phone number", async () => {
+    const {driver} = await createDriver({
+      phoneNumber: {
+        compact: '1928731872',
+      },
+    });
+    render(<DriverCard driver={driver} />);
 
-    expect(screen.getByText('Ben (Driver)')).toBeInTheDocument();
-  });
-
-  it("shows the driver's phone number", () => {
-    render(<DriverCard driver={testDriver} />);
-
-    expect(screen.getByText('(206) 111-2222')).toBeInTheDocument();
+    expect(screen.getByText('(192) 873-1872')).toBeInTheDocument();
   });
 
   it('shows assigned batch orders as circular route steps', async () => {
-    db.batches.insert(json.batch.unparse(testBatch));
-    db.orders.insert(json.order.unparse(makeOrder(1, 'driving')));
-    db.orders.insert(json.order.unparse(makeOrder(2, 'delivered')));
+    const {driver, restaurant} = await createDriver();
+    const batch = await checkedCreateBatch(driver.id);
+    await checkedCreate(orderApi, {
+      ...getFakeOrder(restaurant),
+      state: 'driving',
+      currentBatch: batch,
+    });
+    await checkedCreate(orderApi, {
+      ...getFakeOrder(restaurant),
+      state: 'delivered',
+      currentBatch: batch,
+    });
 
-    render(<DriverCard driver={testDriver} />);
+    render(<DriverCard driver={driver} />);
 
     expect(await screen.findByText('1')).toHaveClass('bg-emerald-100');
     expect(await screen.findByText('2')).toHaveClass('bg-gray-200');
   });
 
   it('shows no assigned orders when driver has no active batch', async () => {
-    render(<DriverCard driver={testDriver} />);
+    const {driver} = await createDriver();
+    render(<DriverCard driver={driver} />);
 
     expect(await screen.findByText('No assigned orders')).toBeInTheDocument();
   });
