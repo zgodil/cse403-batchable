@@ -82,7 +82,7 @@ export default function AddOrderModal({modal}: Props) {
         required
       />
       <MenuItemSelector
-        restaurant={restaurant}
+        restaurant={restaurant ?? null}
         onItemsChange={setSelectedItemNames}
       />
       <FormField

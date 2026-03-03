@@ -30,7 +30,13 @@ function RestaurantPage() {
   >(null);
 
   useEffect(() => {
-    if (!restaurantId) {
+    if (restaurantId === undefined) {
+      setIsLoadingData(true);
+      setLoadError(null);
+      return;
+    }
+
+    if (restaurantId === null) {
       setData(null);
       setLoadError('Could not determine restaurant.');
       setIsLoadingData(false);
