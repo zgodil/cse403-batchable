@@ -64,7 +64,7 @@ export const initialMenuItems: MenuItem[] = [
 
 export const initialBatches: Batch[] = [
   {
-    id: {type: 'Batch', id: 1},
+    id: fakeId('Batch'),
     driver: initialDrivers[0].id,
     route: {encoded: 'iziaHtvkiVwKbS}O`G'},
     dispatchTime: minutesFromNow(-5),
@@ -74,7 +74,7 @@ export const initialBatches: Batch[] = [
 
 export const initialOrders: Order[] = [
   {
-    id: {type: 'Order', id: 1},
+    id: fakeId('Order'),
     restaurant: restaurantId,
     destination: {address: '3513 Rainier Ave S, Seattle, WA 98144'},
     itemNames: ['Burger'],
@@ -86,7 +86,7 @@ export const initialOrders: Order[] = [
     currentBatch: initialBatches[0].id,
   },
   {
-    id: {type: 'Order', id: 2},
+    id: fakeId('Order'),
     restaurant: restaurantId,
     destination: {address: '3300 Rainier Ave S, Seattle, WA 98144'},
     itemNames: ['Pizza'],
@@ -98,7 +98,7 @@ export const initialOrders: Order[] = [
     currentBatch: initialBatches[0].id,
   },
   {
-    id: {type: 'Order', id: 3},
+    id: fakeId('Order'),
     restaurant: restaurantId,
     destination: {address: '3201 Hunter Blvd S, Seattle, WA 98144'},
     itemNames: ['Sandwich'],
