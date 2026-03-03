@@ -52,6 +52,17 @@ const RestaurantStub = createRoutesStub([
   },
 ]);
 
+const PendingRestaurantStub = createRoutesStub([
+  {
+    path: '/',
+    Component: () => (
+      <RestaurantContext value={undefined}>
+        <RestaurantPage />
+      </RestaurantContext>
+    ),
+  },
+]);
+
 function getSectionByHeading(name: string) {
   const heading = screen.getByRole('heading', {name});
   const section = heading.closest('section');
@@ -112,6 +123,15 @@ describe('Restaurant page', () => {
       screen.getByDisplayValue('Batchable Restaurant'),
     ).toBeInTheDocument();
     expect(screen.getByText('Mochi')).toBeInTheDocument();
+  });
+
+  it('stays loading while restaurant id is unresolved', () => {
+    render(<PendingRestaurantStub />);
+
+    expect(screen.getByText('Loading restaurant data...')).toBeInTheDocument();
+    expect(
+      screen.queryByText('Could not determine restaurant.'),
+    ).not.toBeInTheDocument();
   });
 
   it('shows load error when backend data is missing', async () => {
