@@ -61,17 +61,9 @@ export default function AddOrderModal({modal}: Props) {
       state: 'cooking',
     };
 
-    try {
-      const id = await orderApi.create(order);
-      if (id !== null && id !== undefined) modal.setOpen(false);
-    } catch (err) {
-      const message =
-        err instanceof Error ? err.message : 'Failed to create order';
-      // Show server message (e.g. invalid address); strip "[POST /api/order] 400 ...: " prefix if present
-      const serverMessage = message.includes(': ')
-        ? message.slice(message.lastIndexOf(': ') + 2)
-        : message;
-      alert(serverMessage);
+    console.log('New Order Data:', order);
+    if (!(await orderApi.create(order))) {
+      alert('Failed to create order');
     }
   };
 
