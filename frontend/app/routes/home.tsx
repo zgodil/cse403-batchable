@@ -13,7 +13,7 @@ function Home() {
   const addOrderModal = useModal();
 
   if (isLoading) {
-    return <Loading>Loading...</Loading>
+    return <Loading>Loading...</Loading>;
   }
 
   if (!isAuthenticated) {
