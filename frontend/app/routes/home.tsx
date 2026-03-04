@@ -4,6 +4,7 @@ import OrderOverview from '../components/dashboard/OrderOverview';
 import DriverOverview from '../components/dashboard/DriverOverview';
 import AddOrderModal from '../components/dashboard/AddOrderModal';
 import Button from '~/components/Button';
+import Loading from '~/components/Loading';
 import {useModal} from '~/components/Modal';
 import OrderRefreshProvider from '~/components/OrderRefreshProvider';
 
@@ -12,11 +13,7 @@ function Home() {
   const addOrderModal = useModal();
 
   if (isLoading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen bg-white dark:bg-gray-950">
-        <p className="text-gray-900 dark:text-gray-100">Loading...</p>
-      </div>
-    );
+    return <Loading>Loading...</Loading>
   }
 
   if (!isAuthenticated) {
