@@ -45,14 +45,14 @@ const RestaurantStub = createRoutesStub([
   {
     path: '/',
     Component: () => (
-      <RestaurantContext.Provider
+      <RestaurantContext
         value={{
           restaurant: testRestaurant,
           refreshRestaurant: async () => {},
         }}
       >
         <RestaurantPage />
-      </RestaurantContext.Provider>
+      </RestaurantContext>
     ),
   },
 ]);
