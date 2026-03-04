@@ -5,12 +5,10 @@ import {restaurantApi} from '~/api/endpoints/restaurant';
 
 type RestaurantDetailsSectionProps = {
   initialRestaurant: Restaurant;
-  onUpdateSuccess?: () => Promise<void>;
 };
 
 function RestaurantDetailsSection({
   initialRestaurant,
-  onUpdateSuccess,
 }: RestaurantDetailsSectionProps) {
   const [restaurant, setRestaurant] = useState(initialRestaurant);
   const [draftRestaurant, setDraftRestaurant] = useState(initialRestaurant);
@@ -34,16 +32,14 @@ function RestaurantDetailsSection({
       return;
     }
 
-    const updated = await restaurantApi.updateMyRestaurant(draftRestaurant);
+    const updated = await restaurantApi.update(draftRestaurant);
     if (!updated) {
       alert('Failed to update restaurant details.');
-      await onUpdateSuccess?.();
       return;
     }
 
     setRestaurant(draftRestaurant);
     setIsEditing(false);
-    await onUpdateSuccess?.();
   };
 
   return (
