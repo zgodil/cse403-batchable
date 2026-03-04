@@ -1,36 +1,31 @@
-import {createContext, useCallback, useEffect, useState} from 'react';
+import {createContext, useEffect, useState} from 'react';
 import {useAuth0} from '@auth0/auth0-react';
 import {getToken} from '~/api/authToken';
 import {restaurantApi} from '~/api/endpoints/restaurant';
 import type {Restaurant} from '~/domain/objects';
 
 export type RestaurantContextValue = {
-  restaurant: Restaurant | null;
-  refreshRestaurant: () => Promise<void>;
+  restaurantId: Restaurant['id'] | null;
 };
 
 export const RestaurantContext = createContext<RestaurantContextValue>({
-  restaurant: null,
-  refreshRestaurant: async () => {},
+  restaurantId: null,
 });
 
 /**
- * Provides the current user's restaurant (from GET /api/restaurant/me) and a refresh callback.
+ * Provides the current user's restaurant id (from GET /api/restaurant/me).
  */
 export default function RestaurantProvider({
   children,
 }: React.PropsWithChildren<{}>) {
   const {isAuthenticated} = useAuth0();
-  const [restaurant, setRestaurant] = useState<Restaurant | null>(null);
-
-  const refreshRestaurant = useCallback(async () => {
-    const r = await restaurantApi.getMyRestaurant();
-    setRestaurant(r ?? null);
-  }, []);
+  const [restaurantId, setRestaurantId] = useState<Restaurant['id'] | null>(
+    null,
+  );
 
   useEffect(() => {
     if (!isAuthenticated) {
-      setRestaurant(null);
+      setRestaurantId(null);
       return;
     }
     let cancelled = false;
@@ -49,9 +44,9 @@ export default function RestaurantProvider({
         return;
       }
       void restaurantApi
-        .getMyRestaurant()
-        .then(r => {
-          if (!cancelled) setRestaurant(r ?? null);
+        .getMyRestaurantId()
+        .then(id => {
+          if (!cancelled) setRestaurantId(id ?? null);
         })
         .catch(err => {
           if (cancelled) return;
@@ -70,8 +65,8 @@ export default function RestaurantProvider({
   }, [isAuthenticated]);
 
   return (
-    <RestaurantContext.Provider value={{restaurant, refreshRestaurant}}>
+    <RestaurantContext value={{restaurantId}}>
       {children}
-    </RestaurantContext.Provider>
+    </RestaurantContext>
   );
 }
