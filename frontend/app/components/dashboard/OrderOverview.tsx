@@ -6,7 +6,7 @@ import {RestaurantContext} from '../RestaurantProvider';
 import {OrderRefreshContext} from '../OrderRefreshProvider';
 import {useLoader} from '~/util/query';
 
-export default function OrderList() {
+export default function OrderOverview() {
   const {restaurant} = useContext(RestaurantContext);
   const monitor = useContext(OrderRefreshContext);
 
