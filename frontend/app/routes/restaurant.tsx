@@ -21,8 +21,7 @@ type RestaurantPageData = {
 };
 
 function RestaurantPage() {
-  const {restaurant: contextRestaurant, refreshRestaurant} =
-    useContext(RestaurantContext);
+  const {restaurantId} = useContext(RestaurantContext);
   const [data, setData] = useState<RestaurantPageData | null>(null);
   const [isLoadingData, setIsLoadingData] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -31,7 +30,7 @@ function RestaurantPage() {
   >(null);
 
   useEffect(() => {
-    if (!contextRestaurant) {
+    if (!restaurantId) {
       setData(null);
       setLoadError('Could not determine restaurant.');
       setIsLoadingData(false);
@@ -44,23 +43,24 @@ function RestaurantPage() {
       setIsLoadingData(true);
       setLoadError(null);
       try {
-        const [drivers, menuItems] = await Promise.all([
-          restaurantApi.getDrivers(contextRestaurant.id),
-          restaurantApi.getMenuItems(contextRestaurant.id),
+        const [restaurant, drivers, menuItems] = await Promise.all([
+          restaurantApi.read(restaurantId),
+          restaurantApi.getDrivers(restaurantId),
+          restaurantApi.getMenuItems(restaurantId),
         ]);
 
         if (cancelled) {
           return;
         }
 
-        if (!drivers || !menuItems) {
+        if (!restaurant || !drivers || !menuItems) {
           setData(null);
           setLoadError('Could not load restaurant data from the backend.');
           return;
         }
 
         setData({
-          restaurant: contextRestaurant,
+          restaurant,
           drivers,
           menuItems,
         });
@@ -83,7 +83,7 @@ function RestaurantPage() {
     return () => {
       cancelled = true;
     };
-  }, [contextRestaurant]);
+  }, [restaurantId]);
 
   const setIsEditingDriversExclusive: Dispatch<
     SetStateAction<boolean>
@@ -133,10 +133,7 @@ function RestaurantPage() {
           />
 
           <div className="grid grid-cols-1 gap-6 lg:grid-cols-2 lg:items-stretch">
-            <RestaurantDetailsSection
-              initialRestaurant={data.restaurant}
-              onUpdateSuccess={refreshRestaurant}
-            />
+            <RestaurantDetailsSection initialRestaurant={data.restaurant} />
 
             <MenuItemsSection
               initialMenuItems={data.menuItems}
