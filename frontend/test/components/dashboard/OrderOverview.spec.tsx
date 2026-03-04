@@ -23,15 +23,8 @@ async function renderOverview(orders: Partial<Order>[]) {
       ...order,
     });
   }
-  const restaurant = {
-    id: restaurantId,
-    name: 'Test',
-    location: {address: ''},
-  };
   render(
-    <RestaurantContext.Provider
-      value={{restaurant, refreshRestaurant: async () => {}}}
-    >
+    <RestaurantContext.Provider value={{restaurantId}}>
       <OrderOverview />
     </RestaurantContext.Provider>,
   );

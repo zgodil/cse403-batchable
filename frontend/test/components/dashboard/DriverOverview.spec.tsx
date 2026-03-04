@@ -23,15 +23,8 @@ async function renderOverview(drivers: Partial<Driver>[]) {
       ...driver,
     });
   }
-  const restaurant = {
-    id: restaurantId,
-    name: 'Test',
-    location: {address: ''},
-  };
   render(
-    <RestaurantContext.Provider
-      value={{restaurant, refreshRestaurant: async () => {}}}
-    >
+    <RestaurantContext.Provider value={{restaurantId}}>
       <DriverOverview />
     </RestaurantContext.Provider>,
   );
