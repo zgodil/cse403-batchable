@@ -65,8 +65,6 @@ export default function RestaurantProvider({
   }, [isAuthenticated]);
 
   return (
-    <RestaurantContext value={{restaurantId}}>
-      {children}
-    </RestaurantContext>
+    <RestaurantContext value={{restaurantId}}>{children}</RestaurantContext>
   );
 }

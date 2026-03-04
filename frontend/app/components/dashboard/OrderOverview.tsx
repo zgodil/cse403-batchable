@@ -7,7 +7,7 @@ import {OrderRefreshContext} from '../OrderRefreshProvider';
 import {useLoader} from '~/util/query';
 
 export default function OrderOverview() {
-  const {restaurant} = useContext(RestaurantContext);
+  const {restaurantId} = useContext(RestaurantContext);
   const monitor = useContext(OrderRefreshContext);
 
   useEffect(() => {
@@ -17,11 +17,11 @@ export default function OrderOverview() {
   }, [monitor]);
 
   const loader = useLoader(async () => {
-    if (!restaurant) return null;
-    const orders = await restaurantApi.getOrders(restaurant.id);
+    if (!restaurantId) return null;
+    const orders = await restaurantApi.getOrders(restaurantId);
     if (!orders) throw new Error('Failed to load orders');
     return orders;
-  }, [restaurant]);
+  }, [restaurantId]);
 
   return (
     <OverviewSection

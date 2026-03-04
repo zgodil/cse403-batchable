@@ -28,17 +28,17 @@ export const OrderRefreshContext = createContext<RefreshMonitor | null>(null);
 export default function OrderRefreshProvider({
   children,
 }: React.PropsWithChildren<{}>) {
-  const {restaurant} = useContext(RestaurantContext);
+  const {restaurantId} = useContext(RestaurantContext);
   const [monitor, setMonitor] = useState<RefreshMonitor | null>(null);
 
   useEffect(() => {
-    if (!restaurant) return;
+    if (!restaurantId) return;
     let closed = false;
 
     void (async () => {
       const token = await getToken();
-      if (closed || !restaurant || !token) return;
-      const newMonitor = new RefreshMonitor(restaurant.id, token);
+      if (closed || !restaurantId || !token) return;
+      const newMonitor = new RefreshMonitor(restaurantId, token);
       setMonitor(newMonitor);
     })();
 
@@ -49,7 +49,7 @@ export default function OrderRefreshProvider({
         return null;
       });
     };
-  }, [restaurant]);
+  }, [restaurantId]);
 
   return <OrderRefreshContext value={monitor}>{children}</OrderRefreshContext>;
 }

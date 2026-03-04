@@ -11,16 +11,16 @@ interface Props {
   onCreated: (menuItem: MenuItem) => void;
 }
 export default function AddMenuItemModal({state, onCreated}: Props) {
-  const {restaurant} = useContext(RestaurantContext);
+  const {restaurantId} = useContext(RestaurantContext);
   const submitNewMenuItem = async (data: {name: string}) => {
-    if (!restaurant) {
+    if (!restaurantId) {
       alert("You're not logged in");
       return;
     }
 
     const newMenuItem: MenuItem = {
       id: fakeId('MenuItem'),
-      restaurant: restaurant.id,
+      restaurant: restaurantId,
       name: data.name,
     };
 
