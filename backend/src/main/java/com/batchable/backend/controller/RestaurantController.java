@@ -37,34 +37,15 @@ public class RestaurantController {
   }
 
   /**
-   * Get the current user's restaurant (from JWT sub). Creates one if none exists.
+   * Get the current user's restaurant id (from JWT sub). Creates one if none exists.
    *
    * GET /restaurant/me
    */
   @GetMapping("/me")
   @ResponseStatus(HttpStatus.OK)
-  public Restaurant getMyRestaurant(@AuthenticationPrincipal Jwt jwt) {
+  public long getMyRestaurantId(@AuthenticationPrincipal Jwt jwt) {
     String sub = jwt == null ? null : jwt.getSubject();
-    return restaurantService.getOrCreateRestaurantForUser(sub);
-  }
-
-  /**
-   * Update the current user's restaurant (name and location). Restaurant is identified by JWT.
-   *
-   * PUT /restaurant/me
-   *
-   * @param jwt the authenticated user's JWT
-   * @param body restaurant payload with name and location (id ignored)
-   */
-  @PutMapping("/me")
-  @ResponseStatus(HttpStatus.NO_CONTENT)
-  public void updateMyRestaurant(
-      @AuthenticationPrincipal Jwt jwt,
-      @RequestBody Restaurant body) {
-    String sub = jwt == null ? null : jwt.getSubject();
-    restaurantService.updateMyRestaurantForUser(sub, body);
-    Restaurant updated = restaurantService.getOrCreateRestaurantForUser(sub);
-    batchingManager.updateManagerAddress(updated);
+    return restaurantService.getOrCreateRestaurantIdForUser(sub);
   }
 
   /**

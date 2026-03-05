@@ -24,7 +24,12 @@ public class SecurityConfig {
         .csrf(csrf -> csrf.disable())
         .authorizeHttpRequests(auth -> auth
             // SPA: allow loading the app and assets
-            .requestMatchers("/", "/restaurant", "/restaurant/**", "/index.html", "/assets/**")
+            .requestMatchers(
+                "/",
+                "/restaurant",
+                "/index.html",
+                "/assets/**",
+                "/favicon.ico")
             .permitAll()
             // Twilio webhooks and SMS endpoints
             .requestMatchers("/send-text", "/receive-text", "/twilio/**")

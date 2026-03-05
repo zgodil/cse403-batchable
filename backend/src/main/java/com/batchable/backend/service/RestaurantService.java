@@ -120,52 +120,19 @@ public class RestaurantService {
     }
   }
 
-  /**
-   * Updates the current user's restaurant (looked up by Auth0 user id).
-   * Only name and location from the body are used; id is ignored.
-   *
-   * @param auth0UserId the JWT sub (Auth0 user id)
-   * @param body restaurant payload with name and location
-   * @throws IllegalArgumentException if auth0UserId is blank or no restaurant exists for that user
-   */
-  public void updateMyRestaurantForUser(String auth0UserId, Restaurant body) {
-    if (auth0UserId == null || auth0UserId.isBlank())
-      throw new IllegalArgumentException("auth0UserId is required");
-    if (body == null)
-      throw new IllegalArgumentException("restaurant data required");
-    if (body.name == null || body.name.trim().isEmpty())
-      throw new IllegalArgumentException("name is required");
-    if (body.location == null || body.location.trim().isEmpty())
-      throw new IllegalArgumentException("location is required");
-
-    try {
-      Restaurant existing = restaurantDAO.getRestaurantByAuth0UserId(auth0UserId)
-          .orElseThrow(() -> new IllegalArgumentException("No restaurant found for this user"));
-      long restaurantId = existing.id;
-
-      if (restaurantDAO.restaurantExistsByNameExcludingId(restaurantId, body.name))
-        throw new IllegalStateException("Another restaurant already uses that name");
-
-      boolean ok = restaurantDAO.updateRestaurant(restaurantId, body.name, body.location);
-      if (!ok)
-        throw new IllegalArgumentException("Restaurant not found: " + restaurantId);
-    } catch (SQLException e) {
-      throw new RuntimeException("Failed to update restaurant", e);
-    }
-  }
-
-  /**
-   * Returns the restaurant for the given Auth0 user (sub), creating one if none exists.
-   */
-  public Restaurant getOrCreateRestaurantForUser(String auth0UserId) {
+  /** Returns the restaurant id for the given Auth0 user (sub), creating one if none exists. */
+  public long getOrCreateRestaurantIdForUser(String auth0UserId) {
     if (auth0UserId == null || auth0UserId.isBlank())
       throw new IllegalArgumentException("auth0UserId is required");
     try {
       return restaurantDAO.getRestaurantByAuth0UserId(auth0UserId)
+          .map(restaurant -> restaurant.id)
           .orElseGet(() -> {
             try {
-              long id = restaurantDAO.createRestaurant("My Restaurant", "Address not set", auth0UserId);
-              return restaurantDAO.getRestaurant(id).orElseThrow();
+              return restaurantDAO.createRestaurant(
+                  "My Restaurant",
+                  "Address not set",
+                  auth0UserId);
             } catch (SQLException e) {
               throw new RuntimeException("Failed to create restaurant for user", e);
             }
