@@ -7,6 +7,21 @@ class RestaurantApi extends CrudApi<Restaurant> {
   constructor() {
     super('/restaurant', json.restaurant);
   }
+
+  /** Get the current user's restaurant id (requires auth). Creates one if none exists. */
+  async getMyRestaurantId(): Promise<Restaurant['id'] | null> {
+    try {
+      const r = await fetchJSON('GET', '/restaurant/me');
+      if (typeof r === 'number') {
+        return json.restaurant.field('id').parse(r);
+      }
+      return json.restaurant.parse(r).id;
+    } catch (err) {
+      console.error('Cannot get my restaurant id', err);
+      return null;
+    }
+  }
+
   async getDrivers({id}: Restaurant['id']) {
     try {
       const drivers: json.JSONDomainObject<Driver>[] = await fetchJSON(

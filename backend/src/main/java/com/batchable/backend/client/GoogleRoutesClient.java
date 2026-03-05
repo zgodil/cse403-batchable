@@ -2,6 +2,7 @@ package com.batchable.backend.client;
 
 import com.batchable.backend.exception.InvalidRouteException;
 import com.batchable.backend.model.dto.*;
+import com.batchable.backend.util.Log;
 import java.util.List;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;

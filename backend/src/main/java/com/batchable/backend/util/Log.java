@@ -8,6 +8,10 @@ import org.slf4j.LoggerFactory;
 
 /**
  * Utility class for logging objects as pretty-printed JSON.
+ *
+ * This class uses SLF4J Logger instead of System.out.println, allowing logs to
+ * respect logging levels and be directed to files or monitoring systems. Useful
+ * for debugging complex objects in a readable JSON format.
  */
 public class Log {
 

@@ -16,15 +16,15 @@ import {server} from 'test/mocks/api/server';
 import {http} from 'msw';
 
 async function renderOverview(drivers: Partial<Driver>[]) {
-  const restaurant = await checkedCreate(restaurantApi, getFakeRestaurant2());
+  const restaurantId = await checkedCreate(restaurantApi, getFakeRestaurant2());
   for (const driver of drivers) {
     await checkedCreate(driverApi, {
-      ...getFakeDriver(restaurant),
+      ...getFakeDriver(restaurantId),
       ...driver,
     });
   }
   render(
-    <RestaurantContext value={restaurant}>
+    <RestaurantContext value={{restaurantId}}>
       <DriverOverview />
     </RestaurantContext>,
   );

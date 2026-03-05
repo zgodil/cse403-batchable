@@ -6,7 +6,7 @@
   "scripts": {
     "db:up": "docker compose up -d db",
     "db:psql": "docker exec -it batchable-postgres psql -U app_user -d appdb",
-    "db:migrate": "docker compose run --rm flyway",
+    "db:migrate": "docker exec -i batchable-postgres psql -U app_user -d appdb -f /docker-entrypoint-initdb.d/001_init.sql && docker exec -i batchable-postgres psql -U app_user -d appdb -f /docker-entrypoint-initdb.d/002_on_delete_cascade.sql && docker exec -i batchable-postgres psql -U app_user -d appdb -f /docker-entrypoint-initdb.d/003_restaurant_auth0_user_id.sql && docker exec -i batchable-postgres psql -U app_user -d appdb -f /docker-entrypoint-initdb.d/004_batch_finished.sql",
     "db:down": "docker compose down",
     "db:reset": "docker compose down -v"
     },

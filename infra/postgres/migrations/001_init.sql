@@ -46,23 +46,28 @@ model MenuItem {
 }
 */
 
--- order state requires new type
-CREATE TYPE order_state AS ENUM (
-  'COOKING',
-  'COOKED',
-  'DRIVING',
-  'DELIVERED'
-);
+-- order state requires new type (idempotent)
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'order_state') THEN
+    CREATE TYPE order_state AS ENUM (
+      'COOKING',
+      'COOKED',
+      'DRIVING',
+      'DELIVERED'
+    );
+  END IF;
+END $$;
 
--- restaurant table
-CREATE TABLE Restaurant (
+-- restaurant table (idempotent)
+CREATE TABLE IF NOT EXISTS Restaurant (
   id SERIAL PRIMARY KEY,
   name VARCHAR(100) NOT NULL,
   location VARCHAR(100) NOT NULL
 );
 
--- driver table
-CREATE TABLE Driver (
+-- driver table (idempotent)
+CREATE TABLE IF NOT EXISTS Driver (
   id SERIAL PRIMARY KEY,
   name VARCHAR(100) NOT NULL,
   phone_number VARCHAR(100) NOT NULL,
@@ -71,9 +76,8 @@ CREATE TABLE Driver (
   FOREIGN KEY (restaurant_id) REFERENCES Restaurant(id)
 );
 
--- create the batches
--- poly line stored as text no size constraint up to a gb
-CREATE TABLE Batch (
+-- create the batches (idempotent)
+CREATE TABLE IF NOT EXISTS Batch (
   id SERIAL PRIMARY KEY,
   driver_id INTEGER NOT NULL,
   route TEXT NOT NULL,
@@ -83,9 +87,8 @@ CREATE TABLE Batch (
   FOREIGN KEY (driver_id) REFERENCES Driver(id)
 );
 
--- create the orders
--- destination assumed to be under 100 chars
-CREATE TABLE "Order" (
+-- create the orders (idempotent)
+CREATE TABLE IF NOT EXISTS "Order" (
   id SERIAL PRIMARY KEY,
   restaurant_id INTEGER NOT NULL,
   destination VARCHAR(100) NOT NULL,
@@ -100,7 +103,7 @@ CREATE TABLE "Order" (
   FOREIGN KEY (batch_id) REFERENCES Batch(id)
 );
 
-CREATE TABLE Menu_Item (
+CREATE TABLE IF NOT EXISTS Menu_Item (
   id SERIAL PRIMARY KEY,
   restaurant_id INTEGER NOT NULL,
   name VARCHAR(100) NOT NULL,
@@ -109,4 +112,5 @@ CREATE TABLE Menu_Item (
 );
 
 INSERT INTO Restaurant (id, name, location)
-VALUES (1, 'applesneeze', 'Lynnwood, WA');
+VALUES (1, 'applesneeze', 'Lynnwood, WA')
+ON CONFLICT (id) DO NOTHING;

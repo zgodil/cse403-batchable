@@ -21,7 +21,7 @@ type RestaurantPageData = {
 };
 
 function RestaurantPage() {
-  const restaurantId = useContext(RestaurantContext);
+  const {restaurantId} = useContext(RestaurantContext);
   const [data, setData] = useState<RestaurantPageData | null>(null);
   const [isLoadingData, setIsLoadingData] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -59,7 +59,11 @@ function RestaurantPage() {
           return;
         }
 
-        setData({restaurant, drivers, menuItems});
+        setData({
+          restaurant,
+          drivers,
+          menuItems,
+        });
       } catch (error) {
         if (cancelled) {
           return;

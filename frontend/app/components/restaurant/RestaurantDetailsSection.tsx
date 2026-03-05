@@ -1,8 +1,7 @@
-import {useContext, useEffect, useState} from 'react';
+import {useEffect, useState} from 'react';
 import type {Restaurant} from '../../domain/objects';
 import Button from '../Button';
 import {restaurantApi} from '~/api/endpoints/restaurant';
-import {RestaurantContext} from '../RestaurantProvider';
 
 type RestaurantDetailsSectionProps = {
   initialRestaurant: Restaurant;
@@ -11,29 +10,20 @@ type RestaurantDetailsSectionProps = {
 function RestaurantDetailsSection({
   initialRestaurant,
 }: RestaurantDetailsSectionProps) {
-  const restaurantId = useContext(RestaurantContext);
   const [restaurant, setRestaurant] = useState(initialRestaurant);
   const [draftRestaurant, setDraftRestaurant] = useState(initialRestaurant);
   const [isEditing, setIsEditing] = useState(false);
+
+  useEffect(() => {
+    setRestaurant(initialRestaurant);
+    setDraftRestaurant(initialRestaurant);
+  }, [initialRestaurant]);
 
   useEffect(() => {
     if (!isEditing) {
       setDraftRestaurant(restaurant);
     }
   }, [restaurant, isEditing]);
-
-  const refreshRestaurant = async () => {
-    if (!restaurantId) {
-      return false;
-    }
-    const latestRestaurant = await restaurantApi.read(restaurantId);
-    if (!latestRestaurant) {
-      return false;
-    }
-    setRestaurant(latestRestaurant);
-    setDraftRestaurant(latestRestaurant);
-    return true;
-  };
 
   const toggleEditing = async () => {
     if (!isEditing) {
@@ -45,7 +35,6 @@ function RestaurantDetailsSection({
     const updated = await restaurantApi.update(draftRestaurant);
     if (!updated) {
       alert('Failed to update restaurant details.');
-      await refreshRestaurant();
       return;
     }
 

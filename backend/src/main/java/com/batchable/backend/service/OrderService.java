@@ -3,6 +3,7 @@ package com.batchable.backend.service;
 import com.batchable.backend.db.models.Batch;
 import com.batchable.backend.db.models.Order;
 import com.batchable.backend.db.models.Order.State;
+import com.batchable.backend.exception.InvalidOrderAddressException;
 import java.time.Instant;
 import java.util.List;
 import org.springframework.stereotype.Service;
@@ -26,10 +27,20 @@ public class OrderService {
    *
    * @param order the order to create (ID must be <= 0)
    * @return the generated order ID
+   * @throws InvalidOrderAddressException if the restaurant or delivery address is invalid (route
+   *         cannot be computed); the order is not persisted in that case
    */
   public long createOrder(Order order) {
     long id = dbOrderService.createOrder(order);
-    batchingManager.addOrder(dbOrderService.getOrder(id));
+    try {
+      batchingManager.addOrder(dbOrderService.getOrder(id));
+    } catch (IllegalStateException e) {
+      // BatchingAlgorithm already removed the order from DB when route failed
+      if (e.getMessage() != null && e.getMessage().contains("Could not add order")) {
+        throw new InvalidOrderAddressException(e.getMessage(), e);
+      }
+      throw e;
+    }
     return id;
   }
 
@@ -114,13 +125,14 @@ public class OrderService {
 
   /**
    * Removes an order (if not delivered) and notifies the batching manager.
+   * Batching manager is notified first (while the order still exists in DB) so it can look up
+   * restaurantId; then the order is removed from the DB.
    *
    * @param orderId ID of the order to remove
    */
   public void removeOrder(long orderId) {
-    Order order = dbOrderService.getOrder(orderId);
+    batchingManager.removeOrder(orderId);
     dbOrderService.removeOrder(orderId);
-    batchingManager.removeOrder(order);
   }
 
   /**

@@ -1,13 +1,15 @@
 import {createContext, useContext, useEffect, useState} from 'react';
+import {getToken} from '~/api/authToken';
 import {RestaurantContext} from './RestaurantProvider';
 import type {Restaurant} from '~/domain/objects';
 
 class RefreshMonitor extends EventTarget {
   private eventSource: EventSource;
 
-  constructor(restaurant: Restaurant['id']) {
+  constructor(restaurant: Restaurant['id'], accessToken: string) {
     super();
-    this.eventSource = new EventSource(`/sse/orders/${restaurant.id}`);
+    const url = `/sse/orders/${restaurant.id}?access_token=${encodeURIComponent(accessToken)}`;
+    this.eventSource = new EventSource(url);
     this.eventSource.addEventListener('refresh', () => {
       this.dispatchEvent(new Event('orderUpdate'));
     });
@@ -26,15 +28,28 @@ export const OrderRefreshContext = createContext<RefreshMonitor | null>(null);
 export default function OrderRefreshProvider({
   children,
 }: React.PropsWithChildren<{}>) {
-  const restaurant = useContext(RestaurantContext);
+  const {restaurantId} = useContext(RestaurantContext);
   const [monitor, setMonitor] = useState<RefreshMonitor | null>(null);
 
   useEffect(() => {
-    if (!restaurant) return;
-    const newMonitor = new RefreshMonitor(restaurant);
-    setMonitor(newMonitor);
-    return () => newMonitor?.close();
-  }, [restaurant]);
+    if (!restaurantId) return;
+    let closed = false;
+
+    void (async () => {
+      const token = await getToken();
+      if (closed || !restaurantId || !token) return;
+      const newMonitor = new RefreshMonitor(restaurantId, token);
+      setMonitor(newMonitor);
+    })();
+
+    return () => {
+      closed = true;
+      setMonitor(m => {
+        m?.close();
+        return null;
+      });
+    };
+  }, [restaurantId]);
 
   return <OrderRefreshContext value={monitor}>{children}</OrderRefreshContext>;
 }

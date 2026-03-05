@@ -81,21 +81,6 @@ public class BatchingManager {
   }
 
   /**
-   * Retrieves the batching manager for a restaurant, throwing an exception if it does not exist.
-   *
-   * @param restaurantId the restaurant's ID
-   * @return the batching manager for the restaurant
-   * @throws IllegalArgumentException if no batching manager corresponds to the ID
-   */
-  private RestaurantBatchingManager getManager(long restaurantId) {
-    if (!restaurantManagers.containsKey(restaurantId)) {
-      throw new IllegalArgumentException("Cannot get RestaurantBatchingManager for id "
-          + restaurantId + "because it does not exist.");
-    }
-    return restaurantManagers.get(restaurantId);
-  }
-
-  /**
    * Adds a new restaurant manager for the given restaurant ID. Creates a RestaurantBatchingManager
    * instance using the restaurant's address and stores it in the internal map.
    *
@@ -116,21 +101,26 @@ public class BatchingManager {
   }
 
   /**
+   * Ensures a batching manager exists for the restaurant (creates one if missing, e.g. for
+   * restaurants created after startup for new Auth0 users).
+   */
+  private void ensureManager(long restaurantId) {
+    if (!restaurantManagers.containsKey(restaurantId)) {
+      addManager(restaurantId);
+    }
+  }
+
+  /**
    * Updates the address of an existing restaurant manager. The change is propagated to the
-   * associated RestaurantBatchingManager.
+   * associated RestaurantBatchingManager. If no manager exists yet (e.g. restaurant was
+   * auto-created for an Auth0 user), one is created first so the update succeeds.
    *
-   * @param restaurantId
    * @param restaurant the restaurant to update
-   * @throws IllegalArgumentException if no manager exists for the given restaurant ID
    */
   public void updateManagerAddress(Restaurant restaurant) {
     long restaurantId = restaurant.id;
-    String restaurantAddress = restaurant.location;
-    if (!restaurantManagers.containsKey(restaurantId)) {
-      throw new IllegalArgumentException("Cannot update RestaurantBatchingManager for id "
-          + restaurantId + " because it does not exist.");
-    }
-    restaurantManagers.get(restaurantId).setRestaurantAddress(restaurantAddress);
+    ensureManager(restaurantId);
+    restaurantManagers.get(restaurantId).setRestaurantAddress(restaurant.location);
   }
 
   /**
@@ -148,23 +138,30 @@ public class BatchingManager {
   }
 
   /**
-   * Adds an order to the appropriate restaurant batching manager.
+   * Adds an order to the appropriate restaurant batching manager. Creates a manager for the
+   * restaurant if none exists (e.g. restaurant was created after startup for a new Auth0 user).
    *
    * @param order the order to add
    */
   public void addOrder(Order order) {
     long restaurantId = order.restaurantId;
-    getManager(restaurantId).addOrder(order);
+    ensureManager(restaurantId);
+    restaurantManagers.get(restaurantId).addOrder(order);
   }
 
   /**
-   * Removes an order from the appropriate restaurant batching manager by ID.
+   * Removes an order from the appropriate restaurant batching manager by ID. If there is no manager
+   * for the order's restaurant (e.g. restaurant was created after startup for a new Auth0 user),
+   * this is a no-op so the caller can still delete the order from the DB.
    *
-   * @param order the order to remove
-   * @throws IllegalArgumentException if the order id is not found
+   * @param orderId the order to remove
    */
-  public void removeOrder(Order order) {
-    getManager(order.restaurantId).removeOrder(order);
+  public void removeOrder(Long orderId) {
+    Order order = dbOrderService.getOrder(orderId);
+    long restaurantId = order.restaurantId;
+    if (restaurantManagers.containsKey(restaurantId)) {
+      restaurantManagers.get(restaurantId).removeOrder(orderId);
+    }
   }
 
   /**
@@ -182,7 +179,8 @@ public class BatchingManager {
   public void updateOrder(Long orderId, boolean rebatchIfTentative) {
     Order order = dbOrderService.getOrder(orderId);
     long restaurantId = order.restaurantId;
-    getManager(restaurantId).updateOrder(orderId, rebatchIfTentative);
+    ensureManager(restaurantId);
+    restaurantManagers.get(restaurantId).updateOrder(orderId, rebatchIfTentative);
   }
 
   /**

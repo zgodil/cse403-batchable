@@ -38,7 +38,8 @@ public class SseController {
       try {
         emitter.send(SseEmitter.event().name("refresh").data("")); // empty payload, just a signal
       } catch (IOException e) {
-        emitter.complete(); // client disconnected
+        // Client disconnected. Only remove from list; do not call emitter.complete()
+        findAndRemove(restaurantId, emitter);
       }
     }
   }
