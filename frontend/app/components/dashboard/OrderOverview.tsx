@@ -5,15 +5,14 @@ import {useContext, useEffect} from 'react';
 import {RestaurantContext} from '../RestaurantProvider';
 import {OrderRefreshContext} from '../OrderRefreshProvider';
 import {useLoader} from '~/util/query';
-import {anyModalOpen} from '../Modal';
 
-export default function OrderList() {
+export default function OrderOverview() {
   const restaurant = useContext(RestaurantContext);
   const monitor = useContext(OrderRefreshContext);
 
   useEffect(() => {
     monitor?.addEventListener('orderUpdate', () => {
-      if (!anyModalOpen()) loader.reload();
+      loader.reload();
     });
   }, [monitor]);
 

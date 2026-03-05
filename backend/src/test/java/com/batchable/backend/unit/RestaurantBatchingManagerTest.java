@@ -11,7 +11,6 @@ import java.util.Comparator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Queue;
-import java.util.function.Consumer;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -19,7 +18,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-
+import com.batchable.backend.EventSource.SsePublisher;
 import com.batchable.backend.db.models.Batch;
 import com.batchable.backend.db.models.Driver;
 import com.batchable.backend.db.models.Order;
@@ -35,7 +34,7 @@ import com.batchable.backend.service.RouteService;
 import com.batchable.backend.service.internal.RestaurantBatchingManager;
 import com.batchable.backend.service.internal.RestaurantBatchingManager.Batches;
 import com.batchable.backend.service.internal.RestaurantBatchingManager.ReadyBatch;
-import com.batchable.backend.websocket.OrderWebSocketPublisher;
+import com.batchable.backend.twilio.TwilioManager;
 
 /**
  * Unit tests for RestaurantBatchingManager using Mockito.
@@ -52,7 +51,7 @@ import com.batchable.backend.websocket.OrderWebSocketPublisher;
 class RestaurantBatchingManagerTest {
 
   @Mock
-  private OrderWebSocketPublisher publisher;
+  private SsePublisher publisher;
   @Mock
   private BatchingAlgorithm batchingAlgorithm;
   @Mock
@@ -63,6 +62,8 @@ class RestaurantBatchingManagerTest {
   private RestaurantService restaurantService;
   @Mock
   private DriverService driverService;
+  @Mock
+  private TwilioManager twilioManager;
 
   @Captor
   private ArgumentCaptor<Instant> instantCaptor;
@@ -104,11 +105,18 @@ class RestaurantBatchingManagerTest {
    * increased by ADDITIONAL_COOK_TIME_SEC.
    */
   private void verifyOrderDelayed(Order order, Instant originalDelivery, Instant originalCooked) {
-    verify(dbOrderService).updateOrderDeliveryTime(eq(order.id), instantCaptor.capture());
-    assertEquals(originalDelivery.plusSeconds(ADDITIONAL_COOK_TIME_SEC), instantCaptor.getValue());
+    Duration between = Duration.between(originalCooked, originalDelivery);
+
 
     verify(dbOrderService).updateOrderCookedTime(eq(order.id), instantCaptor.capture());
-    assertEquals(originalCooked.plusSeconds(ADDITIONAL_COOK_TIME_SEC), instantCaptor.getValue());
+    Instant newCooked = instantCaptor.getValue();
+
+    verify(dbOrderService).updateOrderDeliveryTime(eq(order.id), instantCaptor.capture());
+    Instant newDelivered = instantCaptor.getValue();
+
+    assertTrue(newCooked.isAfter(Instant.now()));
+    assertFalse(newDelivered.isBefore(newCooked));
+    assertTrue(Duration.between(newCooked, newDelivered).equals(between));
   }
 
   // --- Delegation tests for addOrder ---
@@ -119,9 +127,11 @@ class RestaurantBatchingManagerTest {
     Batches emptyBatches = new Batches();
     RestaurantBatchingManager mgr =
         new RestaurantBatchingManager(RESTAURANT_ID, ADDRESS, publisher, batchingAlgorithm,
-            routeService, dbOrderService, driverService, restaurantService, emptyBatches);
+            routeService, dbOrderService, driverService, restaurantService, twilioManager, emptyBatches);
 
-    Order order = mock(Order.class);
+    Order order = new Order(17L, 1L, "Tacoma", "[Tiramisu]", 
+                    Instant.now(), Instant.now().plus(Duration.ofMinutes(10)), 
+                    Instant.now().plus(Duration.ofMinutes(10)), State.COOKING, false, null);
     mgr.addOrder(order);
     verify(batchingAlgorithm).addOrder(emptyBatches.getTentativeBatches(), order, ADDRESS);
   }
@@ -135,20 +145,15 @@ class RestaurantBatchingManagerTest {
   @Test
   void removeOrder_whenOrderInActiveBatch_emitsChangeAndDoesNotDelegateToAlgorithm() {
     Batches emptyBatches = new Batches();
-    RestaurantBatchingManager mgr =
-        new RestaurantBatchingManager(RESTAURANT_ID, ADDRESS, publisher, batchingAlgorithm,
-            routeService, dbOrderService, driverService, restaurantService, emptyBatches);
+    RestaurantBatchingManager mgr = new RestaurantBatchingManager(RESTAURANT_ID, ADDRESS, publisher,
+        batchingAlgorithm, routeService, dbOrderService, driverService, restaurantService,
+        twilioManager, emptyBatches);
 
     Order order =
         createOrder(42L, State.DRIVING, Instant.now(), Instant.now().plusSeconds(300), 100L);
-    when(dbOrderService.getOrder(42L)).thenReturn(order);
+    mgr.removeOrder(order);
 
-    Consumer<Long> changeListener = mock(Consumer.class);
-    mgr.onBatchChange(changeListener);
-
-    mgr.removeOrder(42L);
-
-    verify(changeListener).accept(100L);
+    verify(twilioManager).handleBatchChange(100L, ADDRESS);
     verify(batchingAlgorithm, never()).removeOrder(anyList(), anyLong(), anyString());
   }
 
@@ -164,13 +169,10 @@ class RestaurantBatchingManagerTest {
     List<Batch> active = new ArrayList<>();
     Batches customBatches = new Batches(tentative, ready, active);
 
-    RestaurantBatchingManager mgr =
-        new RestaurantBatchingManager(RESTAURANT_ID, ADDRESS, publisher, batchingAlgorithm,
-            routeService, dbOrderService, driverService, restaurantService, customBatches);
-
-    when(dbOrderService.getOrder(42L)).thenReturn(order);
-
-    mgr.removeOrder(42L);
+    RestaurantBatchingManager mgr = new RestaurantBatchingManager(RESTAURANT_ID, ADDRESS, publisher,
+        batchingAlgorithm, routeService, dbOrderService, driverService, restaurantService,
+        twilioManager, customBatches);
+    mgr.removeOrder(order);
 
     assertTrue(mgr.getBatches().getReadyBatches().peek().getBatch().isEmpty());
     verify(batchingAlgorithm, never()).removeOrder(anyList(), anyLong(), anyString());
@@ -180,14 +182,13 @@ class RestaurantBatchingManagerTest {
   @Test
   void removeOrder_whenOrderInTentativeBatch_delegatesToAlgorithm() {
     Batches emptyBatches = new Batches();
-    RestaurantBatchingManager mgr =
-        new RestaurantBatchingManager(RESTAURANT_ID, ADDRESS, publisher, batchingAlgorithm,
-            routeService, dbOrderService, driverService, restaurantService, emptyBatches);
+    RestaurantBatchingManager mgr = new RestaurantBatchingManager(RESTAURANT_ID, ADDRESS, publisher,
+        batchingAlgorithm, routeService, dbOrderService, driverService, restaurantService,
+        twilioManager, emptyBatches);
 
     Order order = createOrder(42L, State.COOKING, Instant.now(), Instant.now().plusSeconds(300));
-    when(dbOrderService.getOrder(42L)).thenReturn(order);
 
-    mgr.removeOrder(42L);
+    mgr.removeOrder(order);
 
     verify(batchingAlgorithm).removeOrder(emptyBatches.getTentativeBatches(), 42L, ADDRESS);
   }
@@ -198,20 +199,17 @@ class RestaurantBatchingManagerTest {
   @Test
   void updateOrder_whenOrderInActiveBatch_emitsChange() {
     Batches emptyBatches = new Batches();
-    RestaurantBatchingManager mgr =
-        new RestaurantBatchingManager(RESTAURANT_ID, ADDRESS, publisher, batchingAlgorithm,
-            routeService, dbOrderService, driverService, restaurantService, emptyBatches);
+    RestaurantBatchingManager mgr = new RestaurantBatchingManager(RESTAURANT_ID, ADDRESS, publisher,
+        batchingAlgorithm, routeService, dbOrderService, driverService, restaurantService,
+        twilioManager, emptyBatches);
 
     Order order =
         createOrder(42L, State.DRIVING, Instant.now(), Instant.now().plusSeconds(300), 100L);
     when(dbOrderService.getOrder(42L)).thenReturn(order);
 
-    Consumer<Long> changeListener = mock(Consumer.class);
-    mgr.onBatchChange(changeListener);
-
     mgr.updateOrder(42L, false);
 
-    verify(changeListener).accept(100L);
+    verify(twilioManager).handleBatchChange(100L, ADDRESS);
     verify(batchingAlgorithm, never()).rebatchOrder(anyList(), any(), anyString());
     verify(batchingAlgorithm, never()).updateOrderInplace(anyList(), anyLong());
   }
@@ -228,9 +226,9 @@ class RestaurantBatchingManagerTest {
     List<Batch> active = new ArrayList<>();
     Batches customBatches = new Batches(tentative, ready, active);
 
-    RestaurantBatchingManager mgr =
-        new RestaurantBatchingManager(RESTAURANT_ID, ADDRESS, publisher, batchingAlgorithm,
-            routeService, dbOrderService, driverService, restaurantService, customBatches);
+    RestaurantBatchingManager mgr = new RestaurantBatchingManager(RESTAURANT_ID, ADDRESS, publisher,
+        batchingAlgorithm, routeService, dbOrderService, driverService, restaurantService,
+        twilioManager, customBatches);
 
     Order updatedOrder = createOrder(42L, State.COOKED, now, now.plusSeconds(350));
     when(dbOrderService.getOrder(42L)).thenReturn(updatedOrder);
@@ -246,9 +244,9 @@ class RestaurantBatchingManagerTest {
   @Test
   void updateOrder_whenOrderInTentativeAndRebatchTrue_rebatches() {
     Batches emptyBatches = new Batches();
-    RestaurantBatchingManager mgr =
-        new RestaurantBatchingManager(RESTAURANT_ID, ADDRESS, publisher, batchingAlgorithm,
-            routeService, dbOrderService, driverService, restaurantService, emptyBatches);
+    RestaurantBatchingManager mgr = new RestaurantBatchingManager(RESTAURANT_ID, ADDRESS, publisher,
+        batchingAlgorithm, routeService, dbOrderService, driverService, restaurantService,
+        twilioManager, emptyBatches);
 
     Order order = createOrder(42L, State.COOKING, Instant.now(), Instant.now().plusSeconds(300));
     when(dbOrderService.getOrder(42L)).thenReturn(order);
@@ -262,9 +260,9 @@ class RestaurantBatchingManagerTest {
   @Test
   void updateOrder_whenOrderInTentativeAndRebatchFalse_updatesInPlace() {
     Batches emptyBatches = new Batches();
-    RestaurantBatchingManager mgr =
-        new RestaurantBatchingManager(RESTAURANT_ID, ADDRESS, publisher, batchingAlgorithm,
-            routeService, dbOrderService, driverService, restaurantService, emptyBatches);
+    RestaurantBatchingManager mgr = new RestaurantBatchingManager(RESTAURANT_ID, ADDRESS, publisher,
+        batchingAlgorithm, routeService, dbOrderService, driverService, restaurantService,
+        twilioManager, emptyBatches);
 
     Order order = createOrder(42L, State.COOKING, Instant.now(), Instant.now().plusSeconds(300));
     when(dbOrderService.getOrder(42L)).thenReturn(order);
@@ -280,9 +278,9 @@ class RestaurantBatchingManagerTest {
   @Test
   void rebatchTentativeOrder_delegatesToBatchingAlgorithm() {
     Batches emptyBatches = new Batches();
-    RestaurantBatchingManager mgr =
-        new RestaurantBatchingManager(RESTAURANT_ID, ADDRESS, publisher, batchingAlgorithm,
-            routeService, dbOrderService, driverService, restaurantService, emptyBatches);
+    RestaurantBatchingManager mgr = new RestaurantBatchingManager(RESTAURANT_ID, ADDRESS, publisher,
+        batchingAlgorithm, routeService, dbOrderService, driverService, restaurantService,
+        twilioManager, emptyBatches);
 
     Order order = mock(Order.class);
     mgr.rebatchTentativeOrder(order);
@@ -295,9 +293,9 @@ class RestaurantBatchingManagerTest {
   @Test
   void updateTentativeOrderInplace_delegatesToBatchingAlgorithm() {
     Batches emptyBatches = new Batches();
-    RestaurantBatchingManager mgr =
-        new RestaurantBatchingManager(RESTAURANT_ID, ADDRESS, publisher, batchingAlgorithm,
-            routeService, dbOrderService, driverService, restaurantService, emptyBatches);
+    RestaurantBatchingManager mgr = new RestaurantBatchingManager(RESTAURANT_ID, ADDRESS, publisher,
+        batchingAlgorithm, routeService, dbOrderService, driverService, restaurantService,
+        twilioManager, emptyBatches);
 
     mgr.updateTentativeOrderInplace(42L);
     verify(batchingAlgorithm).updateOrderInplace(emptyBatches.getTentativeBatches(), 42L);
@@ -309,9 +307,9 @@ class RestaurantBatchingManagerTest {
   @Test
   void getReadyDrivers_returnsOnlyAvailableDrivers_upToMax() {
     Batches emptyBatches = new Batches();
-    RestaurantBatchingManager mgr =
-        new RestaurantBatchingManager(RESTAURANT_ID, ADDRESS, publisher, batchingAlgorithm,
-            routeService, dbOrderService, driverService, restaurantService, emptyBatches);
+    RestaurantBatchingManager mgr = new RestaurantBatchingManager(RESTAURANT_ID, ADDRESS, publisher,
+        batchingAlgorithm, routeService, dbOrderService, driverService, restaurantService,
+        twilioManager, emptyBatches);
 
     Driver d1 = new Driver(1L, RESTAURANT_ID, "Alice", "111-111-1111", true);
     Driver d2 = new Driver(2L, RESTAURANT_ID, "Bob", "222-222-2222", true);
@@ -334,9 +332,9 @@ class RestaurantBatchingManagerTest {
   @Test
   void getReadyDrivers_returnsFewerIfNotEnoughAvailable() throws InvalidRouteException {
     Batches emptyBatches = new Batches();
-    RestaurantBatchingManager mgr =
-        new RestaurantBatchingManager(RESTAURANT_ID, ADDRESS, publisher, batchingAlgorithm,
-            routeService, dbOrderService, driverService, restaurantService, emptyBatches);
+    RestaurantBatchingManager mgr = new RestaurantBatchingManager(RESTAURANT_ID, ADDRESS, publisher,
+        batchingAlgorithm, routeService, dbOrderService, driverService, restaurantService,
+        twilioManager, emptyBatches);
 
     Driver d1 = new Driver(1L, RESTAURANT_ID, "Alice", "111-111-1111", true);
     Driver d2 = new Driver(2L, RESTAURANT_ID, "Bob", "222-222-2222", true);
@@ -355,9 +353,9 @@ class RestaurantBatchingManagerTest {
   @Test
   void getReadyDrivers_throwsIfMaxNonPositive() {
     Batches emptyBatches = new Batches();
-    RestaurantBatchingManager mgr =
-        new RestaurantBatchingManager(RESTAURANT_ID, ADDRESS, publisher, batchingAlgorithm,
-            routeService, dbOrderService, driverService, restaurantService, emptyBatches);
+    RestaurantBatchingManager mgr = new RestaurantBatchingManager(RESTAURANT_ID, ADDRESS, publisher,
+        batchingAlgorithm, routeService, dbOrderService, driverService, restaurantService,
+        twilioManager, emptyBatches);
 
     assertDoesNotThrow(() -> mgr.getReadyDrivers(0));
     assertThrows(IllegalArgumentException.class, () -> mgr.getReadyDrivers(-1));
@@ -381,9 +379,9 @@ class RestaurantBatchingManagerTest {
     List<Batch> active = new ArrayList<>();
     Batches customBatches = new Batches(tentative, ready, active);
 
-    RestaurantBatchingManager mgr =
-        new RestaurantBatchingManager(RESTAURANT_ID, ADDRESS, publisher, batchingAlgorithm,
-            routeService, dbOrderService, driverService, restaurantService, customBatches);
+    RestaurantBatchingManager mgr = new RestaurantBatchingManager(RESTAURANT_ID, ADDRESS, publisher,
+        batchingAlgorithm, routeService, dbOrderService, driverService, restaurantService,
+        twilioManager, customBatches);
 
     Driver driver = new Driver(10L, RESTAURANT_ID, "D", "", true);
     when(restaurantService.getRestaurantDrivers(RESTAURANT_ID)).thenReturn(List.of(driver));
@@ -392,7 +390,7 @@ class RestaurantBatchingManagerTest {
     RouteDirectionsResponse routeResp = createRouteResponse("poly", 300);
     when(routeService.getRouteDirections(eq(ADDRESS), anyList(), eq(false))).thenReturn(routeResp);
     when(dbOrderService.createBatch(any(Batch.class))).thenReturn(100L);
-    Batch createdBatch = new Batch(100L, driver.id, "poly", now, now.plusSeconds(300));
+    Batch createdBatch = new Batch(100L, driver.id, "poly", now, now.plusSeconds(300), false);
     when(dbOrderService.getBatch(100L)).thenReturn(createdBatch);
 
     when(dbOrderService.getOrder(1L)).thenReturn(order1);
@@ -422,7 +420,7 @@ class RestaurantBatchingManagerTest {
     Instant expiration = now.minusSeconds(5);
     Order cooked = createOrder(1L, State.COOKED, now.minus(Duration.ofMinutes(2)),
         now.plus(Duration.ofMinutes(15)));
-    Order uncooked = createOrder(2L, State.DRIVING, now.plus(Duration.ofMinutes(3)),
+    Order uncooked = createOrder(2L, State.COOKING, now.plus(Duration.ofMinutes(3)),
         now.plus(Duration.ofMinutes(18)));
 
     List<TentativeBatch> tentative = new ArrayList<>();
@@ -431,9 +429,9 @@ class RestaurantBatchingManagerTest {
     List<Batch> active = new ArrayList<>();
     Batches customBatches = new Batches(tentative, ready, active);
 
-    RestaurantBatchingManager mgr =
-        new RestaurantBatchingManager(RESTAURANT_ID, ADDRESS, publisher, batchingAlgorithm,
-            routeService, dbOrderService, driverService, restaurantService, customBatches);
+    RestaurantBatchingManager mgr = new RestaurantBatchingManager(RESTAURANT_ID, ADDRESS, publisher,
+        batchingAlgorithm, routeService, dbOrderService, driverService, restaurantService,
+        twilioManager, customBatches);
 
     Order updatedUncooked =
         createOrder(2L, State.DRIVING, uncooked.cookedTime.plusSeconds(ADDITIONAL_COOK_TIME_SEC),
@@ -463,9 +461,9 @@ class RestaurantBatchingManagerTest {
   void checkExpiredBatches_handlesAllUncooked() {
     Instant now = Instant.now();
     Instant expiration = now.minusSeconds(5);
-    Order uncooked1 = createOrder(1L, State.DRIVING, now.plus(Duration.ofMinutes(5)),
+    Order uncooked1 = createOrder(1L, State.COOKING, now.plus(Duration.ofMinutes(5)),
         now.plus(Duration.ofMinutes(25)));
-    Order uncooked2 = createOrder(2L, State.DELIVERED, now.plus(Duration.ofMinutes(2)),
+    Order uncooked2 = createOrder(2L, State.COOKING, now.plus(Duration.ofMinutes(2)),
         now.plus(Duration.ofMinutes(22)));
 
     List<TentativeBatch> tentative = new ArrayList<>();
@@ -474,9 +472,9 @@ class RestaurantBatchingManagerTest {
     List<Batch> active = new ArrayList<>();
     Batches customBatches = new Batches(tentative, ready, active);
 
-    RestaurantBatchingManager mgr =
-        new RestaurantBatchingManager(RESTAURANT_ID, ADDRESS, publisher, batchingAlgorithm,
-            routeService, dbOrderService, driverService, restaurantService, customBatches);
+    RestaurantBatchingManager mgr = new RestaurantBatchingManager(RESTAURANT_ID, ADDRESS, publisher,
+        batchingAlgorithm, routeService, dbOrderService, driverService, restaurantService,
+        twilioManager, customBatches);
 
     Order updated1 =
         createOrder(1L, State.DRIVING, uncooked1.cookedTime.plusSeconds(ADDITIONAL_COOK_TIME_SEC),
@@ -520,9 +518,9 @@ class RestaurantBatchingManagerTest {
     List<Batch> active = new ArrayList<>();
     Batches customBatches = new Batches(tentative, ready, active);
 
-    RestaurantBatchingManager mgr =
-        new RestaurantBatchingManager(RESTAURANT_ID, ADDRESS, publisher, batchingAlgorithm,
-            routeService, dbOrderService, driverService, restaurantService, customBatches);
+    RestaurantBatchingManager mgr = new RestaurantBatchingManager(RESTAURANT_ID, ADDRESS, publisher,
+        batchingAlgorithm, routeService, dbOrderService, driverService, restaurantService,
+        twilioManager, customBatches);
 
     RestaurantBatchingManager spyMgr = spy(mgr);
     doReturn(new LinkedList<>()).when(spyMgr).getReadyDrivers(anyInt());
@@ -554,9 +552,9 @@ class RestaurantBatchingManagerTest {
     List<Batch> active = new ArrayList<>();
     Batches customBatches = new Batches(tentative, ready, active);
 
-    RestaurantBatchingManager mgr =
-        new RestaurantBatchingManager(RESTAURANT_ID, ADDRESS, publisher, batchingAlgorithm,
-            routeService, dbOrderService, driverService, restaurantService, customBatches);
+    RestaurantBatchingManager mgr = new RestaurantBatchingManager(RESTAURANT_ID, ADDRESS, publisher,
+        batchingAlgorithm, routeService, dbOrderService, driverService, restaurantService,
+        twilioManager, customBatches);
 
     Driver d1 = new Driver(10L, RESTAURANT_ID, "D1", "", true);
     Driver d2 = new Driver(11L, RESTAURANT_ID, "D2", "", true);
@@ -569,18 +567,13 @@ class RestaurantBatchingManagerTest {
     when(routeService.getRouteDirections(eq(ADDRESS), anyList(), eq(false))).thenReturn(routeResp);
     when(dbOrderService.createBatch(any(Batch.class))).thenReturn(100L, 101L);
 
-    Batch batch1 = new Batch(100L, d1.id, "poly1", now, now.plusSeconds(600));
-    Batch batch2 = new Batch(101L, d2.id, "poly2", now, now.plusSeconds(600));
+    Batch batch1 = new Batch(100L, d1.id, "poly1", now, now.plusSeconds(600), false);
+    Batch batch2 = new Batch(101L, d2.id, "poly2", now, now.plusSeconds(600), false);
     when(dbOrderService.getBatch(100L)).thenReturn(batch1);
     when(dbOrderService.getBatch(101L)).thenReturn(batch2);
 
     when(dbOrderService.getOrder(1L)).thenReturn(o1);
     when(dbOrderService.getOrder(2L)).thenReturn(o2);
-
-    Consumer<Long> becomeActiveListener = mock(Consumer.class);
-    mgr.onBatchBecomeActive(becomeActiveListener);
-    Consumer<Long> changeListener = mock(Consumer.class);
-    mgr.onBatchChange(changeListener);
 
     mgr.checkExpiredBatches(UPDATE_MILLIS);
 
@@ -594,9 +587,10 @@ class RestaurantBatchingManagerTest {
     verify(dbOrderService).advanceOrderState(2L);
     verify(dbOrderService, times(2)).getOrder(anyLong());
     verify(dbOrderService, times(2)).createBatch(any(Batch.class));
-    verify(becomeActiveListener, times(2)).accept(anyLong());
-    verify(changeListener, never()).accept(anyLong()); // change listener not called during
-                                                       // activation
+    verify(twilioManager, times(2)).handleNewBatch(anyLong(), anyString());
+    verify(twilioManager, never()).handleBatchChange(anyLong(), anyString()); // change listener not
+                                                                              // called during
+    // activation
     verify(publisher).refreshOrderData(RESTAURANT_ID);
   }
 
@@ -612,9 +606,9 @@ class RestaurantBatchingManagerTest {
     List<Batch> active = new ArrayList<>();
     Batches customBatches = new Batches(tentative, ready, active);
 
-    RestaurantBatchingManager mgr =
-        new RestaurantBatchingManager(RESTAURANT_ID, ADDRESS, publisher, batchingAlgorithm,
-            routeService, dbOrderService, driverService, restaurantService, customBatches);
+    RestaurantBatchingManager mgr = new RestaurantBatchingManager(RESTAURANT_ID, ADDRESS, publisher,
+        batchingAlgorithm, routeService, dbOrderService, driverService, restaurantService,
+        twilioManager, customBatches);
 
     RestaurantBatchingManager spyMgr = spy(mgr);
     doReturn(new LinkedList<>()).when(spyMgr).getReadyDrivers(anyInt());
@@ -645,9 +639,9 @@ class RestaurantBatchingManagerTest {
     List<Batch> active = new ArrayList<>();
     Batches customBatches = new Batches(tentative, ready, active);
 
-    RestaurantBatchingManager mgr =
-        new RestaurantBatchingManager(RESTAURANT_ID, ADDRESS, publisher, batchingAlgorithm,
-            routeService, dbOrderService, driverService, restaurantService, customBatches);
+    RestaurantBatchingManager mgr = new RestaurantBatchingManager(RESTAURANT_ID, ADDRESS, publisher,
+        batchingAlgorithm, routeService, dbOrderService, driverService, restaurantService,
+        twilioManager, customBatches);
 
     Order updatedOrder =
         createOrder(1L, State.COOKED, o1.cookedTime, originalDelivery.plusMillis(UPDATE_MILLIS));
@@ -678,9 +672,9 @@ class RestaurantBatchingManagerTest {
     List<Batch> active = new ArrayList<>();
     Batches customBatches = new Batches(tentative, ready, active);
 
-    RestaurantBatchingManager mgr =
-        new RestaurantBatchingManager(RESTAURANT_ID, ADDRESS, publisher, batchingAlgorithm,
-            routeService, dbOrderService, driverService, restaurantService, customBatches);
+    RestaurantBatchingManager mgr = new RestaurantBatchingManager(RESTAURANT_ID, ADDRESS, publisher,
+        batchingAlgorithm, routeService, dbOrderService, driverService, restaurantService,
+        twilioManager, customBatches);
 
     Driver d = new Driver(10L, RESTAURANT_ID, "D", "", true);
     when(restaurantService.getRestaurantDrivers(RESTAURANT_ID)).thenReturn(List.of(d));
@@ -690,22 +684,18 @@ class RestaurantBatchingManagerTest {
     when(routeService.getRouteDirections(eq(ADDRESS), anyList(), eq(false))).thenReturn(routeResp);
     when(dbOrderService.createBatch(any(Batch.class))).thenReturn(100L);
     when(dbOrderService.getBatch(100L))
-        .thenReturn(new Batch(100L, d.id, "poly", now, now.plusSeconds(120)));
+        .thenReturn(new Batch(100L, d.id, "poly", now, now.plusSeconds(120), false));
 
     when(dbOrderService.getOrder(1L)).thenReturn(o);
-
-    Consumer<Long> listener = mock(Consumer.class);
-    mgr.onBatchBecomeActive(listener);
-
     mgr.checkExpiredBatches(UPDATE_MILLIS);
 
-    verify(listener).accept(100L);
+    verify(twilioManager).handleNewBatch(100L, ADDRESS);
     verify(publisher).refreshOrderData(RESTAURANT_ID);
   }
 
-  /** RemoveUncookedOrders handles all order states and delays them appropriately. */
+  /** RemoveUncookedOrders handles illegal order states and throws appropriate exception. */
   @Test
-  void removeUncookedOrders_handlesAllOrderStates() {
+  void removeUncookedOrders_throwsOnIllegalState() {
     Instant now = Instant.now();
     Order delivered = createOrder(1L, State.DELIVERED, now.plus(Duration.ofMinutes(2)),
         now.plus(Duration.ofMinutes(10)));
@@ -716,32 +706,17 @@ class RestaurantBatchingManagerTest {
     List<Batch> active = new ArrayList<>();
     Batches customBatches = new Batches(tentative, ready, active);
 
-    RestaurantBatchingManager mgr =
-        new RestaurantBatchingManager(RESTAURANT_ID, ADDRESS, publisher, batchingAlgorithm,
-            routeService, dbOrderService, driverService, restaurantService, customBatches);
+    RestaurantBatchingManager mgr = new RestaurantBatchingManager(RESTAURANT_ID, ADDRESS, publisher,
+        batchingAlgorithm, routeService, dbOrderService, driverService, restaurantService,
+        twilioManager, customBatches);
 
-    Order updatedDelivered =
-        createOrder(1L, State.DELIVERED, delivered.cookedTime.plusSeconds(ADDITIONAL_COOK_TIME_SEC),
-            delivered.deliveryTime.plusSeconds(ADDITIONAL_COOK_TIME_SEC));
-    when(dbOrderService.getOrder(1L)).thenReturn(updatedDelivered);
-
-    RestaurantBatchingManager spyMgr = spy(mgr);
-    doReturn(new LinkedList<>()).when(spyMgr).getReadyDrivers(anyInt());
-
-    spyMgr.checkExpiredBatches(UPDATE_MILLIS);
-
-    verify(dbOrderService).updateOrderDeliveryTime(eq(1L), any(Instant.class));
-    verify(dbOrderService).updateOrderCookedTime(eq(1L), any(Instant.class));
-    verify(batchingAlgorithm).addOrder(customBatches.getTentativeBatches(), updatedDelivered,
-        ADDRESS);
-    assertTrue(spyMgr.getBatches().getReadyBatches().isEmpty());
-    verify(publisher).refreshOrderData(RESTAURANT_ID);
+    assertThrows(IllegalStateException.class, () -> mgr.checkExpiredBatches(UPDATE_MILLIS));
   }
 
   /** delayOrder updates both cooked and delivery times by the additional time. */
   @Test
   void delayOrder_updatesBothTimes() {
-    Order order = createOrder(1L, State.DRIVING, Instant.parse("2025-01-01T10:00:00Z"),
+    Order order = createOrder(1L, State.COOKING, Instant.parse("2025-01-01T10:00:00Z"),
         Instant.parse("2025-01-01T10:30:00Z"));
 
     List<TentativeBatch> tentative = new ArrayList<>();
@@ -750,12 +725,12 @@ class RestaurantBatchingManagerTest {
     List<Batch> active = new ArrayList<>();
     Batches customBatches = new Batches(tentative, ready, active);
 
-    RestaurantBatchingManager mgr =
-        new RestaurantBatchingManager(RESTAURANT_ID, ADDRESS, publisher, batchingAlgorithm,
-            routeService, dbOrderService, driverService, restaurantService, customBatches);
+    RestaurantBatchingManager mgr = new RestaurantBatchingManager(RESTAURANT_ID, ADDRESS, publisher,
+        batchingAlgorithm, routeService, dbOrderService, driverService, restaurantService,
+        twilioManager, customBatches);
 
     Order updatedOrder =
-        createOrder(1L, State.DRIVING, order.cookedTime.plusSeconds(ADDITIONAL_COOK_TIME_SEC),
+        createOrder(1L, State.COOKING, order.cookedTime.plusSeconds(ADDITIONAL_COOK_TIME_SEC),
             order.deliveryTime.plusSeconds(ADDITIONAL_COOK_TIME_SEC));
     when(dbOrderService.getOrder(1L)).thenReturn(updatedOrder);
 
@@ -763,13 +738,9 @@ class RestaurantBatchingManagerTest {
     doReturn(new LinkedList<>()).when(spyMgr).getReadyDrivers(anyInt());
 
     spyMgr.checkExpiredBatches(UPDATE_MILLIS);
+    verifyOrderDelayed(order, order.deliveryTime, order.cookedTime);
 
     verify(dbOrderService).updateOrderDeliveryTime(eq(1L), instantCaptor.capture());
-    assertEquals(order.deliveryTime.plusSeconds(ADDITIONAL_COOK_TIME_SEC),
-        instantCaptor.getValue());
-
-    verify(dbOrderService).updateOrderCookedTime(eq(1L), instantCaptor.capture());
-    assertEquals(order.cookedTime.plusSeconds(ADDITIONAL_COOK_TIME_SEC), instantCaptor.getValue());
     verify(publisher).refreshOrderData(RESTAURANT_ID);
   }
 
@@ -780,9 +751,9 @@ class RestaurantBatchingManagerTest {
 
     Order cooked1 = createOrder(1L, State.COOKED, now.minus(Duration.ofMinutes(5)),
         now.plus(Duration.ofMinutes(10)));
-    Order uncooked1 = createOrder(2L, State.DRIVING, now.plus(Duration.ofMinutes(2)),
+    Order uncooked1 = createOrder(2L, State.COOKING, now.plus(Duration.ofMinutes(2)),
         now.plus(Duration.ofMinutes(15)));
-    Order cooked2 = createOrder(3L, State.COOKING, now.plus(Duration.ofMinutes(1)),
+    Order cooked2 = createOrder(3L, State.COOKED, now.plus(Duration.ofMinutes(1)),
         now.plus(Duration.ofMinutes(20)));
 
     List<TentativeBatch> tentative = new ArrayList<>();
@@ -794,9 +765,9 @@ class RestaurantBatchingManagerTest {
     List<Batch> active = new ArrayList<>();
     Batches customBatches = new Batches(tentative, ready, active);
 
-    RestaurantBatchingManager mgr =
-        new RestaurantBatchingManager(RESTAURANT_ID, ADDRESS, publisher, batchingAlgorithm,
-            routeService, dbOrderService, driverService, restaurantService, customBatches);
+    RestaurantBatchingManager mgr = new RestaurantBatchingManager(RESTAURANT_ID, ADDRESS, publisher,
+        batchingAlgorithm, routeService, dbOrderService, driverService, restaurantService,
+        twilioManager, customBatches);
 
     Driver driver = new Driver(100L, RESTAURANT_ID, "Driver", "", true);
     when(restaurantService.getRestaurantDrivers(RESTAURANT_ID)).thenReturn(List.of(driver));
@@ -811,7 +782,7 @@ class RestaurantBatchingManagerTest {
     when(routeService.getRouteDirections(eq(ADDRESS), eq(List.of(cooked1.destination)), eq(false)))
         .thenReturn(routeResp);
     when(dbOrderService.createBatch(any(Batch.class))).thenReturn(200L);
-    Batch createdBatch = new Batch(200L, driver.id, "poly", now, now.plusSeconds(300));
+    Batch createdBatch = new Batch(200L, driver.id, "poly", now, now.plusSeconds(300), false);
     when(dbOrderService.getBatch(200L)).thenReturn(createdBatch);
 
     when(dbOrderService.getOrder(1L)).thenReturn(cooked1);
@@ -850,8 +821,9 @@ class RestaurantBatchingManagerTest {
   /** Constructor creates empty Batches when null is passed. */
   @Test
   void constructor_createsEmptyBatchesWhenNullPassed() {
-    RestaurantBatchingManager mgr = new RestaurantBatchingManager(RESTAURANT_ID, ADDRESS, publisher,
-        batchingAlgorithm, routeService, dbOrderService, driverService, restaurantService, null);
+    RestaurantBatchingManager mgr =
+        new RestaurantBatchingManager(RESTAURANT_ID, ADDRESS, publisher, batchingAlgorithm,
+            routeService, dbOrderService, driverService, restaurantService, twilioManager, null);
     Batches b = mgr.getBatches();
     assertTrue(b.getTentativeBatches().isEmpty());
     assertTrue(b.getReadyBatches().isEmpty());
@@ -866,9 +838,9 @@ class RestaurantBatchingManagerTest {
     List<Batch> ab = new ArrayList<>();
     Batches customBatches = new Batches(tb, rb, ab);
 
-    RestaurantBatchingManager mgr =
-        new RestaurantBatchingManager(RESTAURANT_ID, ADDRESS, publisher, batchingAlgorithm,
-            routeService, dbOrderService, driverService, restaurantService, customBatches);
+    RestaurantBatchingManager mgr = new RestaurantBatchingManager(RESTAURANT_ID, ADDRESS, publisher,
+        batchingAlgorithm, routeService, dbOrderService, driverService, restaurantService,
+        twilioManager, customBatches);
     assertSame(customBatches, mgr.getBatches());
   }
 }

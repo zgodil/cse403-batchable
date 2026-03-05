@@ -1,4 +1,15 @@
-import {db} from 'test/mocks/api/common';
+import {
+  checkedCreate,
+  checkedCreateBatch,
+  checkedDelete,
+  getFakeDriver,
+  getFakeDriver2,
+  getFakeMenuItem,
+  getFakeMenuItem2,
+  getFakeOrder,
+  getFakeRestaurant,
+  getFakeRestaurant2,
+} from 'test/mocks/domain_objects';
 import {describe, it, expect} from 'vitest';
 import {CrudApi} from '~/api/crud';
 import {batchApi} from '~/api/endpoints/batch';
@@ -7,35 +18,7 @@ import {menuApi} from '~/api/endpoints/menu';
 import {orderApi} from '~/api/endpoints/order';
 import {restaurantApi} from '~/api/endpoints/restaurant';
 import * as json from '~/domain/json';
-import {
-  fakeId,
-  type DomainObject,
-  type Driver,
-  type MenuItem,
-  type Order,
-  type Restaurant,
-} from '~/domain/objects';
-
-async function checkedCreate<T extends DomainObject>(
-  api: CrudApi<T>,
-  domainObject: T,
-) {
-  const id = await api.create(domainObject);
-  if (id === null) {
-    expect.fail('created object must have non-null id');
-  }
-  expect(id.id).toBeTypeOf('number');
-  expect(id.id).not.toBe(domainObject.id.id);
-  expect(await api.exists(id)).toBe(true);
-  return id;
-}
-
-async function checkedDelete<T extends DomainObject>(
-  api: CrudApi<T>,
-  id: T['id'],
-) {
-  expect(await api.delete(id)).toBe(true);
-}
+import type {DomainObject, Order} from '~/domain/objects';
 
 async function expectReadbackCreated<T extends DomainObject>(
   api: CrudApi<T>,
@@ -89,22 +72,6 @@ async function expectUpdatedChanged<T extends DomainObject>(
   expect(readback).toEqual(changed);
 
   return id;
-}
-
-function getFakeRestaurant(): Restaurant {
-  return {
-    id: fakeId('Restaurant'),
-    location: {address: '123 Batch St, Seattle WA'},
-    name: 'Batchable Kitchen',
-  };
-}
-
-function getFakeRestaurant2(): Restaurant {
-  return {
-    id: fakeId('Restaurant'),
-    location: {address: '123 Batch St, Seattle OR'},
-    name: 'Batchable Evil Kitchen',
-  };
 }
 
 async function expectArrayRetrieval<
@@ -194,22 +161,6 @@ describe('/restaurant endpoint', () => {
   });
 });
 
-function getFakeMenuItem(restaurant: Restaurant['id']): MenuItem {
-  return {
-    id: fakeId('MenuItem'),
-    restaurant,
-    name: 'Fake Cheeseburger',
-  };
-}
-
-function getFakeMenuItem2(restaurant: Restaurant['id']): MenuItem {
-  return {
-    id: fakeId('MenuItem'),
-    restaurant,
-    name: 'Shrimp Fried Rice',
-  };
-}
-
 describe('/menu endpoint', () => {
   it('can create and read back a menu item', async () => {
     const restaurant = await checkedCreate(restaurantApi, getFakeRestaurant());
@@ -251,45 +202,6 @@ describe('/menu endpoint', () => {
     expect(updated).toBe(false);
   });
 });
-
-function getFakeDriver(restaurant: Restaurant['id']): Driver {
-  return {
-    id: fakeId('Driver'),
-    name: 'Delano',
-    onShift: true,
-    phoneNumber: {compact: '9817235273'},
-    restaurant,
-  };
-}
-
-function getFakeDriver2(restaurant: Restaurant['id']): Driver {
-  return {
-    id: fakeId('Driver'),
-    name: 'Qalid',
-    onShift: false,
-    phoneNumber: {compact: '9817237651'},
-    restaurant,
-  };
-}
-
-async function checkedCreateBatch(driver: Driver['id']) {
-  // note: this directly interfaces with the mock database, since there is no batching algorithm
-  const rawBatchId = db.batches.insert(
-    json.batch.unparse({
-      id: fakeId('Batch'),
-      driver,
-      dispatchTime: new Date(),
-      expectedCompletionTime: new Date(Date.now() + 1e3),
-      route: {
-        encoded: '19872AKJSDH1b3',
-      },
-    }),
-  );
-  if (rawBatchId === null) {
-    expect.fail("created batch id mustn't be null");
-  }
-  return json.batch.field('id').parse(rawBatchId);
-}
 
 describe('/driver endpoint', () => {
   it('can create and read back a driver', async () => {
@@ -351,22 +263,6 @@ describe('/driver endpoint', () => {
     );
   });
 });
-
-function getFakeOrder(restaurant: Restaurant['id']): Order {
-  const now = Date.now();
-  return {
-    id: fakeId('Order'),
-    initialTime: new Date(now),
-    cookedTime: new Date(now + 1e3),
-    deliveryTime: new Date(now + 1e6),
-    currentBatch: null,
-    destination: {address: '1600 Pennsylvania Ave, WA DC'},
-    highPriority: false,
-    itemNames: ['Cheese Burger', 'Anti Burger'],
-    restaurant,
-    state: 'driving',
-  };
-}
 
 const tryAdvanceOrder = async (
   state: Order['state'],
