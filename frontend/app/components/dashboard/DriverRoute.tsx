@@ -37,7 +37,7 @@ export default function DriverRoute({driverId}: Props) {
     return () => {
       monitor.removeEventListener('orderUpdate', onOrderUpdate);
     };
-  }, [monitor, assignedOrdersLoader.reload]);
+  }, [monitor]);
 
   let routeSummary = 'Loading route...';
   const assignedOrders = assignedOrdersLoader.response ?? [];
