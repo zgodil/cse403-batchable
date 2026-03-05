@@ -10,8 +10,8 @@ const defaultRestaurant: json.JSONDomainObject<Restaurant> = {
 };
 
 export const restaurantHandlers = [
-  // /me must come before crud so GET /api/restaurant/me is not matched by /:id
-  http.get(endpoint('/api/restaurant/me'), () => {
+  // /me must come before crud so GET /restaurant/me is not matched by /:id
+  http.get(endpoint('/restaurant/me'), () => {
     const all = db.restaurants.findAll();
     if (all.length === 0) {
       db.restaurants.insert(defaultRestaurant);
@@ -19,7 +19,7 @@ export const restaurantHandlers = [
     }
     return HttpResponse.json(all[0]!);
   }),
-  http.put(endpoint('/api/restaurant/me'), async req => {
+  http.put(endpoint('/restaurant/me'), async req => {
     const body =
       (await req.request.json()) as json.JSONDomainObject<Restaurant>;
     const existing = db.restaurants.findAll()[0];
@@ -27,13 +27,13 @@ export const restaurantHandlers = [
     db.restaurants.update({...body, id: existing.id});
     return new HttpResponse(null, {status: 204});
   }),
-  ...makeCrudHandlers('/api/restaurant', db.restaurants),
-  http.get(endpoint('/api/restaurant/:id/drivers'), req => {
+  ...makeCrudHandlers('/restaurant', db.restaurants),
+  http.get(endpoint('/restaurant/:id/drivers'), req => {
     const id = asId<Restaurant>(req.params.id);
     if (!db.restaurants.get(id)) return notFound('/restaurant');
     return HttpResponse.json(db.drivers.findMatching('restaurant', id));
   }),
-  http.get(endpoint('/api/restaurant/:id/orders'), req => {
+  http.get(endpoint('/restaurant/:id/orders'), req => {
     const id = asId<Restaurant>(req.params.id);
     if (!db.restaurants.get(id)) return notFound('/restaurant');
     return HttpResponse.json(
@@ -42,7 +42,7 @@ export const restaurantHandlers = [
         .filter(order => order.state !== 'DELIVERED'),
     );
   }),
-  http.get(endpoint('/api/restaurant/:id/menu'), req => {
+  http.get(endpoint('/restaurant/:id/menu'), req => {
     const id = asId<Restaurant>(req.params.id);
     if (!db.restaurants.get(id)) return notFound('/restaurant');
     return HttpResponse.json(db.menuItems.findMatching('restaurant', id));

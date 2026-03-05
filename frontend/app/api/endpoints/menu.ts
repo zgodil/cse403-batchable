@@ -4,7 +4,7 @@ import type {MenuItem} from '~/domain/objects';
 
 class MenuApi extends CrudApi<MenuItem> {
   constructor() {
-    super('/api/menu', json.menuItem);
+    super('/menu', json.menuItem);
   }
 }
 

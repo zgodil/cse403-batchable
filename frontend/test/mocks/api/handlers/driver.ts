@@ -10,8 +10,8 @@ import {
 import type {Driver} from '~/domain/objects';
 
 export const driverHandlers = [
-  ...makeCrudHandlers('/api/driver', db.drivers),
-  http.put(endpoint('/api/driver/:id/shift'), req => {
+  ...makeCrudHandlers('/driver', db.drivers),
+  http.put(endpoint('/driver/:id/shift'), req => {
     const driver = db.drivers.get(asId<Driver>(req.params.id));
     if (!driver) return notFound('driver');
     const queryParams = new URL(req.request.url).searchParams;
@@ -21,7 +21,7 @@ export const driverHandlers = [
     });
     return noContent();
   }),
-  http.get(endpoint('/api/driver/:id/batch'), req => {
+  http.get(endpoint('/driver/:id/batch'), req => {
     const id = asId<Driver>(req.params.id);
     if (!db.drivers.get(id)) return notFound('/driver');
     const batch = db.batches.findMatching('driver', id)[0] ?? null;

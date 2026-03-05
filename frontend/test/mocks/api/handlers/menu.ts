@@ -1,6 +1,6 @@
 import {db, makeCrudHandlers} from '../common';
 export const menuHandlers = [
-  ...makeCrudHandlers('/api/menu', db.menuItems, [
+  ...makeCrudHandlers('/menu', db.menuItems, [
     'create',
     'read',
     'update',

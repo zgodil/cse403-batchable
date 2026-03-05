@@ -13,7 +13,7 @@ export const RestaurantContext = createContext<RestaurantContextValue>({
 });
 
 /**
- * Provides the current user's restaurant id (from GET /api/restaurant/me).
+ * Provides the current user's restaurant id (from GET /restaurant/me).
  */
 export default function RestaurantProvider({
   children,

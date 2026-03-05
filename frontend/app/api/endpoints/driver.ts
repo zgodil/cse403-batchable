@@ -5,7 +5,7 @@ import {fetchEndpoint, fetchJSON} from '../common';
 
 class DriverApi extends CrudApi<Driver> {
   constructor() {
-    super('/api/driver', json.driver);
+    super('/driver', json.driver);
   }
   async setOnShift({id}: Driver['id'], onShift: boolean) {
     try {

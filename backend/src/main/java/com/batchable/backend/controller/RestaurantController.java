@@ -21,7 +21,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 
 @RestController
-@RequestMapping("/api/restaurant")
+@RequestMapping("/restaurant")
 public class RestaurantController {
 
   private final RestaurantService restaurantService;
@@ -39,7 +39,7 @@ public class RestaurantController {
   /**
    * Get the current user's restaurant (from JWT sub). Creates one if none exists.
    *
-   * GET /api/restaurant/me
+   * GET /restaurant/me
    */
   @GetMapping("/me")
   @ResponseStatus(HttpStatus.OK)
@@ -51,7 +51,7 @@ public class RestaurantController {
   /**
    * Update the current user's restaurant (name and location). Restaurant is identified by JWT.
    *
-   * PUT /api/restaurant/me
+   * PUT /restaurant/me
    *
    * @param jwt the authenticated user's JWT
    * @param body restaurant payload with name and location (id ignored)
@@ -84,7 +84,7 @@ public class RestaurantController {
   /**
    * Get a restaurant by ID.
    *
-   * GET /api/restaurant/{restaurantId}
+   * GET /restaurant/{restaurantId}
    *
    * @param restaurantId the ID of the restaurant
    * @return the Restaurant object

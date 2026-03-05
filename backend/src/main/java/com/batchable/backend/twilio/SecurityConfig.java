@@ -9,7 +9,7 @@ import org.springframework.security.oauth2.server.resource.web.DefaultBearerToke
 
 /**
  * Security configuration: permits SPA and Twilio endpoints without auth,
- * requires JWT for all /api/* (except send-text, receive-text).
+ * requires JWT for all /* (except send-text, receive-text).
  * SSE (/sse/**) requires JWT; token may be sent as query param ?access_token= for EventSource.
  */
 @Configuration
@@ -27,7 +27,7 @@ public class SecurityConfig {
             .requestMatchers("/", "/restaurant", "/restaurant/**", "/index.html", "/assets/**")
             .permitAll()
             // Twilio webhooks and SMS endpoints
-            .requestMatchers("/api/send-text", "/api/receive-text", "/twilio/**")
+            .requestMatchers("/send-text", "/receive-text", "/twilio/**")
             .permitAll()
             // All other API requests require JWT
             .anyRequest()

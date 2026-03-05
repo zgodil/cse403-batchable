@@ -5,7 +5,7 @@ import {fetchEndpoint, fetchJSON} from '../common';
 
 class OrderApi extends CrudApi<Order> {
   constructor() {
-    super('/api/order', json.order);
+    super('/order', json.order);
   }
 
   /** Create order; throws on error so caller can show the server message (e.g. invalid address). */

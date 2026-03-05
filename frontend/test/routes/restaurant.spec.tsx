@@ -120,7 +120,7 @@ describe('Restaurant page', () => {
 
   it('shows load error when backend data is missing', async () => {
     server.use(
-      http.get(endpoint('/api/restaurant/:id/drivers'), () => {
+      http.get(endpoint('/restaurant/:id/drivers'), () => {
         return HttpResponse.json(null);
       }),
     );
@@ -218,7 +218,7 @@ describe('Restaurant page', () => {
 
   it('alerts when creating a driver fails', async () => {
     server.use(
-      http.post(endpoint('/api/driver'), () => {
+      http.post(endpoint('/driver'), () => {
         return HttpResponse.text('create failed', {status: 500});
       }),
     );
@@ -271,7 +271,7 @@ describe('Restaurant page', () => {
 
   it('alerts when creating a menu item fails', async () => {
     server.use(
-      http.post(endpoint('/api/menu'), () => {
+      http.post(endpoint('/menu'), () => {
         return HttpResponse.text('create failed', {status: 500});
       }),
     );

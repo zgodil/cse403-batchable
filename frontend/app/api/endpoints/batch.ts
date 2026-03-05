@@ -5,7 +5,7 @@ import {fetchJSON} from '../common';
 
 class BatchApi extends CrudApi<Batch> {
   constructor() {
-    super('/api/order/batch', json.batch);
+    super('/order/batch', json.batch);
   }
   async getOrders({id}: Batch['id']) {
     try {
