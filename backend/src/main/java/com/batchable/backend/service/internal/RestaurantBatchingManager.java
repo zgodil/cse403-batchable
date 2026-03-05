@@ -1,7 +1,5 @@
 package com.batchable.backend.service.internal;
 
-// import java.net.URLEncoder;
-// import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -202,7 +200,7 @@ public class RestaurantBatchingManager {
         dbOrderService.remakeOrder(order.id);
         addOrder(dbOrderService.getOrder(order.id));
       } catch (IllegalStateException | IllegalArgumentException e) {
-        log.warn("Skipping order id %d during batching init: %s", order.id, e.getMessage());
+        log.warn("Skipping order id {} during batching init: {}", order.id, e.getMessage());
       }
     }
   }
@@ -273,7 +271,6 @@ public class RestaurantBatchingManager {
       // in active batch
       handleActiveBatchChange(order.batchId);
     } else if (!findAndUpdateReadyBatchOrder(orderId, false)) {
-      System.out.println("rebatchIfTentative: " + rebatchIfTentative);
       if (rebatchIfTentative) {
         rebatchTentativeOrder(order);
       } else {
@@ -423,7 +420,6 @@ public class RestaurantBatchingManager {
     while (!readyDrivers.isEmpty()) {
       ReadyBatch readyBatch = readyBatches.poll();
       Driver driver = readyDrivers.poll();
-      System.out.println("ready drivers " + readyDrivers.toString());
 
       Batch batch = createAndPersistBatch(readyBatch, driver);
       batches.activeBatches.add(batch);

@@ -42,7 +42,7 @@ public class RestaurantDAO {
     }
 
     public Optional<Restaurant> getRestaurant(long id) throws SQLException {
-        final String sql = "SELECT id, name, location, auth0_user_id FROM Restaurant WHERE id = ?;";
+        final String sql = "SELECT id, name, location FROM Restaurant WHERE id = ?;";
         try (Connection conn = dataSource.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
 
@@ -57,7 +57,7 @@ public class RestaurantDAO {
 
     public Optional<Restaurant> getRestaurantByAuth0UserId(String auth0UserId) throws SQLException {
         if (auth0UserId == null || auth0UserId.isBlank()) return Optional.empty();
-        final String sql = "SELECT id, name, location, auth0_user_id FROM Restaurant WHERE auth0_user_id = ?;";
+        final String sql = "SELECT id, name, location FROM Restaurant WHERE auth0_user_id = ?;";
         try (Connection conn = dataSource.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
 
@@ -71,7 +71,7 @@ public class RestaurantDAO {
     }
 
     public List<Restaurant> listRestaurants() throws SQLException {
-        final String sql = "SELECT id, name, location, auth0_user_id FROM Restaurant ORDER BY id;";
+        final String sql = "SELECT id, name, location FROM Restaurant ORDER BY id;";
         List<Restaurant> out = new ArrayList<>();
 
         try (Connection conn = dataSource.getConnection();
@@ -150,13 +150,10 @@ public class RestaurantDAO {
     }
 
     private static Restaurant mapRestaurant(ResultSet rs) throws SQLException {
-        String auth0UserId = rs.getString("auth0_user_id");
-        if (rs.wasNull()) auth0UserId = null;
         return new Restaurant(
             rs.getLong("id"),
             rs.getString("name"),
-            rs.getString("location"),
-            auth0UserId
+            rs.getString("location")
         );
     }
 }
