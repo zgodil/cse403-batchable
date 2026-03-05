@@ -24,9 +24,9 @@ async function renderOverview(orders: Partial<Order>[]) {
     });
   }
   render(
-    <RestaurantContext.Provider value={{restaurantId}}>
+    <RestaurantContext value={{restaurantId}}>
       <OrderOverview />
-    </RestaurantContext.Provider>,
+    </RestaurantContext>,
   );
 }
 

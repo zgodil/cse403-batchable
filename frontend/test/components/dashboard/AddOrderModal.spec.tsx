@@ -36,17 +36,17 @@ function renderOpenModal(restaurant: Restaurant['id'] | null) {
   const hook = renderHook(() => useModal());
   act(() => hook.result.current.setOpen(true));
   const rendered = render(
-    <RestaurantContext.Provider value={toContextValue(restaurant)}>
+    <RestaurantContext value={toContextValue(restaurant)}>
       <AddOrderModal modal={hook.result.current} />
-    </RestaurantContext.Provider>,
+    </RestaurantContext>,
   );
   return {
     modal: () => hook.result.current,
     rerender: (rid: Restaurant['id'] | null = restaurant) =>
       rendered.rerender(
-        <RestaurantContext.Provider value={toContextValue(rid)}>
+        <RestaurantContext value={toContextValue(rid)}>
           <AddOrderModal modal={hook.result.current} />
-        </RestaurantContext.Provider>,
+        </RestaurantContext>,
       ),
   };
 }
