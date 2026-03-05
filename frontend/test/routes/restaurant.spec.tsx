@@ -45,11 +45,7 @@ const RestaurantStub = createRoutesStub([
   {
     path: '/',
     Component: () => (
-      <RestaurantContext
-        value={{
-          restaurantId,
-        }}
-      >
+      <RestaurantContext value={{restaurantId}}>
         <RestaurantPage />
       </RestaurantContext>
     ),
