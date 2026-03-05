@@ -35,4 +35,4 @@ As a team we will address the peer review feedback and march towards our final p
 
 - Zane: work on allowing the database layer to accurately deal with concurrency and multithreading, refine the demo presentation 5-8 hours. 
 
-- Qalid: integrate driver texting back with twilio, time estimate 5-8 hours.
+- Qalid: integrate driver texting back with twilio also fix issues with verification on twilio. Time estimate: 8hrs
