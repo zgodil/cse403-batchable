@@ -94,7 +94,7 @@ public class DriverDAO {
     public Optional<Driver> getDriverByToken(String token) throws SQLException {
       final String sql =
           "SELECT id, restaurant_id, name, phone_number, on_shift " +
-          "FROM Driver WHERE token = ?;";
+          "FROM Driver WHERE token = ?::uuid;";
 
       try (Connection conn = dataSource.getConnection();
           PreparedStatement ps = conn.prepareStatement(sql)) {
