@@ -116,6 +116,18 @@ public class DriverService {
     }
   }
 
+  /** Retrieves driver by UUID token. */
+  public Driver getDriverByToken(String token) {
+    if (token == null || token.isEmpty()) throw new IllegalArgumentException("driver UUID must be non-null and non-empty");
+    try {
+      return driverDAO
+          .getDriverByToken(token)
+          .orElseThrow(() -> new IllegalArgumentException("Driver not found: " + token));
+    } catch (SQLException e) {
+      throw new RuntimeException("Failed to get driver " + token, e);
+    }
+  }
+
   /** Returns whether the given driver (specified by id) is available to drive a batch */
   public boolean isAvailable(long driverId) {
     Driver driver = getDriver(driverId);

@@ -406,7 +406,6 @@ public class RestaurantBatchingManager {
     while (!readyDrivers.isEmpty()) {
       ReadyBatch readyBatch = readyBatches.poll();
       Driver driver = readyDrivers.poll();
-      System.out.println("ready drivers " + readyDrivers.toString());
 
       Batch batch = createAndPersistBatch(readyBatch, driver);
       batches.activeBatches.add(batch);

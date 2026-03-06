@@ -64,6 +64,7 @@ CREATE TABLE Restaurant (
 -- driver table
 CREATE TABLE Driver (
   id SERIAL PRIMARY KEY,
+  token UUID NOT NULL DEFAULT gen_random_uuid() UNIQUE,
   name VARCHAR(100) NOT NULL,
   phone_number VARCHAR(100) NOT NULL,
   on_shift BOOLEAN NOT NULL,

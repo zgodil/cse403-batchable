@@ -44,7 +44,7 @@ public class DriverController {
   @PostMapping
   @ResponseStatus(HttpStatus.CREATED) // 201 if successful
   public long createDriver(@RequestBody Driver driver) {
-   return driverService.createDriver(driver);
+    return driverService.createDriver(driver);
   }
 
   /**
@@ -82,6 +82,18 @@ public class DriverController {
   @ResponseStatus(HttpStatus.OK)
   public Driver getDriver(@PathVariable long driverId) {
     return driverService.getDriver(driverId);
+  }
+
+  /**
+   * Gets a driver by UUID token.
+   *
+   * @param token the UUID of the driver to get
+   * @return the Driver object
+   */
+  @GetMapping("/token/{token}")
+  @ResponseStatus(HttpStatus.OK)
+  public Driver getDriver(@PathVariable String token) {
+    return driverService.getDriverByToken(token);
   }
 
   /**
