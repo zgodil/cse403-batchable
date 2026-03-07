@@ -39,6 +39,35 @@ export const orderHandlers = [
 
     return noContent();
   }),
+  http.put(endpoint('/order/:id/delivered/:token'), async req => {
+    const orderId = asId<Order>(req.params.id);
+    const driverId = asId<Order>(req.params.token);
+
+    // retrieve initial order state
+    const order = db.orders.get(orderId);
+    if (!order) return notFound('order');
+
+    // get order's batch
+    const {currentBatch} = order;
+    if (!currentBatch) return notFound("order's batch");
+    const batch = db.batches.get(currentBatch);
+    if (!batch) return notFound('batch');
+
+    // get driver
+    const {driver} = json.batch.parse(batch);
+    if (driver.id !== driverId) return badRequest();
+
+    // update order state
+    const updatedState = json.order.unparse({
+      ...json.order.parse(order),
+      state: 'delivered',
+    });
+    if (!db.orders.update(updatedState)) {
+      return badRequest();
+    }
+
+    return noContent();
+  }),
   http.put(endpoint('/order/:id/cookedTime'), async req => {
     const order = db.orders.get(asId<Order>(req.params.id));
     if (!order) return notFound('order');
