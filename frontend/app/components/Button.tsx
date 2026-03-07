@@ -77,7 +77,7 @@ export default function Button({
   children,
 }: React.PropsWithChildren<Props>) {
   // if there's no possible interaction, disable it
-  const disabled = !onClick && !href && !to;
+  const disabled = !onClick && !href && !to && !submit;
   if (disabled) style = 'disabled';
   const styles = `${GLOBAL_TAILWIND} ${disabled ? '' : ENABLED_TAILWIND} ${small ? SMALL_TAILWIND : BIG_TAILWIND} ${getTailwind(style)} ${tw ? ` ${tw}` : ''}`;
 
