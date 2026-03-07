@@ -64,27 +64,75 @@ public class DriverDAO {
      */
     public Optional<Driver> getDriver(long driverId) throws SQLException {
 
-        final String sql =
-                "SELECT id, restaurant_id, name, phone_number, on_shift " +
-                "FROM Driver WHERE id = ?;";
+      final String sql =
+          "SELECT id, restaurant_id, name, phone_number, on_shift " +
+          "FROM Driver WHERE id = ?;";
 
-        try (Connection conn = dataSource.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
+      try (Connection conn = dataSource.getConnection();
+          PreparedStatement ps = conn.prepareStatement(sql)) {
 
-            ps.setLong(1, driverId);
+        ps.setLong(1, driverId);
 
-            try (ResultSet rs = ps.executeQuery()) {
-                if (!rs.next()) return Optional.empty();
+        try (ResultSet rs = ps.executeQuery()) {
+          if (!rs.next()) return Optional.empty();
 
-                return Optional.of(new Driver(
-                        rs.getLong("id"),
-                        rs.getLong("restaurant_id"),
-                        rs.getString("name"),
-                        rs.getString("phone_number"),
-                        rs.getBoolean("on_shift")
-                ));
-            }
+          return Optional.of(new Driver(
+              rs.getLong("id"),
+              rs.getLong("restaurant_id"),
+              rs.getString("name"),
+              rs.getString("phone_number"),
+              rs.getBoolean("on_shift")
+          ));
         }
+      }
+    }
+
+    /**
+     * Retrieves a driver by token.
+     * Returns Optional.empty() if not found.
+     */
+    public Optional<Driver> getDriverByToken(String token) throws SQLException {
+      final String sql =
+          "SELECT id, restaurant_id, name, phone_number, on_shift " +
+          "FROM Driver WHERE token = ?::uuid;";
+
+      try (Connection conn = dataSource.getConnection();
+          PreparedStatement ps = conn.prepareStatement(sql)) {
+
+        ps.setString(1, token);
+
+        try (ResultSet rs = ps.executeQuery()) {
+          if (!rs.next()) return Optional.empty();
+
+          return Optional.of(new Driver(
+              rs.getLong("id"),
+              rs.getLong("restaurant_id"),
+              rs.getString("name"),
+              rs.getString("phone_number"),
+              rs.getBoolean("on_shift")
+          ));
+        }
+      }
+    }
+
+    /** 
+     * Retrieves the token belonging to the Driver specified by the given driverId
+     * Returns Optional.empty() if not found.
+     */
+    public Optional<String> getDriverToken(long driverId) throws SQLException {
+
+      final String sql = "SELECT token FROM Driver WHERE id = ?;";
+
+      try (Connection conn = dataSource.getConnection();
+          PreparedStatement ps = conn.prepareStatement(sql)) {
+
+        ps.setLong(1, driverId);
+
+        try (ResultSet rs = ps.executeQuery()) {
+          if (!rs.next()) return Optional.empty();
+          return Optional.ofNullable(rs.getString("token"));
+        }
+      }
     }
 
     /**
@@ -107,14 +155,14 @@ public class DriverDAO {
      * Lists all drivers for a given restaurant.
      * If onShiftOnly is true, filters to only on-shift drivers.
      */
+    
     public List<Driver> listDriversForRestaurant(long restaurantId,
                                                  boolean onShiftOnly)
             throws SQLException {
 
         final String sql =
                 "SELECT id, restaurant_id, name, phone_number, on_shift " +
-                "FROM Driver " +
-                "WHERE restaurant_id = ? " +
+                "FROM Driver WHERE restaurant_id = ? " +
                 (onShiftOnly ? "AND on_shift = TRUE " : "") +
                 "ORDER BY id;";
 
@@ -128,11 +176,11 @@ public class DriverDAO {
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {
                     out.add(new Driver(
-                            rs.getLong("id"),
-                            rs.getLong("restaurant_id"),
-                            rs.getString("name"),
-                            rs.getString("phone_number"),
-                            rs.getBoolean("on_shift")
+                        rs.getLong("id"),
+                        rs.getLong("restaurant_id"),
+                        rs.getString("name"),
+                        rs.getString("phone_number"),
+                        rs.getBoolean("on_shift")
                     ));
                 }
             }
