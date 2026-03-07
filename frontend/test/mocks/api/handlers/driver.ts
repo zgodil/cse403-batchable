@@ -13,7 +13,7 @@ import * as json from '~/domain/json';
 
 function getBatch(driver: json.JSONDomainObject<Driver>) {
   const batch = db.batches.findMatching('driver', driver.id)[0] ?? null;
-  return batch?.finished ? batch : null;
+  return batch && !batch.finished ? batch : null;
 }
 
 export const driverHandlers = [
