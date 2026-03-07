@@ -13,7 +13,7 @@ class DriverApi extends CrudApi<Driver> {
         'GET',
         `${this.resource}/token/${token}`,
       );
-      return json.driver.parse(driver);
+      return json.driver.field('id').parse(driver.id);
     } catch (err) {
       this.error(`Failed to read driver by token; token=${token}`, err);
       return null;
