@@ -1,8 +1,10 @@
 package com.batchable.backend.twilio;
 
+import com.batchable.backend.EventSource.DriverSsePublisher;
 import com.batchable.backend.db.models.Batch;
 import com.batchable.backend.db.models.Driver;
 import com.batchable.backend.db.models.Order;
+import com.batchable.backend.db.models.Order.State;
 import com.batchable.backend.service.BatchingManager;
 import com.batchable.backend.service.DbOrderService;
 import com.batchable.backend.service.DriverService;
@@ -28,6 +30,8 @@ import org.springframework.stereotype.Service;
 @Service
 public class TwilioManager {
 
+  private final DriverSsePublisher driverSsePublisher;
+
   private final DriverService driverService;
 
   /** Used to fetch batch and order data needed to construct messages. */
@@ -36,18 +40,24 @@ public class TwilioManager {
   /** Twilio configuration (e.g., "from" phone number). */
   private final TwilioConfig config;
 
+  private final String driverLinkPrefix = "http://localhost:5173/route/";
+
   public TwilioManager(TwilioConfig config, DbOrderService dbOrderService,
-      DriverService driverService) {
+      DriverService driverService, DriverSsePublisher driverSsePublisher) {
     this.config = config;
     this.dbOrderService = dbOrderService;
     this.driverService = driverService;
+    this.driverSsePublisher = driverSsePublisher;
   }
 
   /**
    * Handler invoked when an existing batch changes (e.g., route updates).
    */
   public void handleBatchChange(long batchId, String restaurantAddress) {
-    // TODO: Implement batch update notification logic
+    Batch batch = dbOrderService.getBatch(batchId);
+    Driver driver = driverService.getDriver(batch.driverId);
+    String batchRouteLink = getBatchRouteLink(batchId, restaurantAddress);
+    driverSsePublisher.refreshOrderData(driver.id, batchRouteLink);
   }
 
   /**
@@ -63,42 +73,35 @@ public class TwilioManager {
   public void handleNewBatch(long batchId, String restaurantAddress) {
     Batch batch = dbOrderService.getBatch(batchId);
     Driver driver = driverService.getDriver(batch.driverId);
-
-    // TODO: eventually replace with driver.phoneNumber
     String driverPhoneNumber = config.getDriverPhoneNumber();
+    String message = "Driver named " + driver.name + " with id " + driver.id + 
+        " you have been assigned a new batch. View here " + driverLinkPrefix + driverService.getDriverToken(driver.id);
 
-    String batchRouteLink = getBatchRouteLink(batchId, restaurantAddress);
-    String message = "Driver id " + batch.driverId + " you have been assigned batch id " + batchId
-        + ".\n Route link: " + batchRouteLink;
-
-    // Temporary logging for debugging / verification
-    // System.out.println(
-    //     "BATCH ACTIVATED TWILIO MESSAGE, would be sent to " + driverPhoneNumber + ": " + message);
     sendMessage(driverPhoneNumber, message);
+    handleBatchChange(batchId, restaurantAddress);
   }
 
   /**
-   * Constructs a Google Maps directions link for a batch. Starts at the restaurant Visits each
-   * order destination in batch order Returns to the restaurant
+   * Constructs a Google Maps directions link for the remaining (i.e., undelivered) orders in a batch. 
+   * Starts at the driver's current location and visits each remaining
+   * order destination in batch order, then returns to the restaurant
    *
    * @param batchId ID of the batch
-   * @param restaurantAddress starting and ending address
+   * @param restaurantAddress address of the restaurant this is a batch for
    * @return a Google Maps directions URL
-   * @throws IllegalStateException if the batch has no orders
    */
   public String getBatchRouteLink(long batchId, String restaurantAddress) {
     List<Order> orders = dbOrderService.getBatchOrders(batchId);
-
-    // A batch without orders is considered a logic error
-    if (orders == null || orders.isEmpty()) {
-      throw new IllegalStateException("Batches must be nonempty, failed for id " + batchId);
-    }
+    orders = orders.stream()
+      .filter(order -> order.state != State.DELIVERED)
+      .toList();
 
     StringBuilder linkBuilder = new StringBuilder("https://www.google.com/maps/dir/?api=1");
-    linkBuilder.append("&origin=").append(urlEncodeAddress(restaurantAddress));
+    linkBuilder.append("&origin=Current+Location");
     linkBuilder.append("&destination=").append(urlEncodeAddress(restaurantAddress));
-    linkBuilder.append("&waypoints=").append(urlEncodeAddress(orders.get(0).destination));
-
+    if (!orders.isEmpty()) {
+      linkBuilder.append("&waypoints=").append(urlEncodeAddress(orders.get(0).destination));
+    }
     for (int i = 1; i < orders.size(); i++) {
       linkBuilder.append("|").append(urlEncodeAddress(orders.get(i).destination));
     }

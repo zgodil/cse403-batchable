@@ -133,6 +133,18 @@ public class DriverService {
     }
   }
 
+  /** Retrieves driver's UUID token. */
+  public String getDriverToken(Long driverId) {
+    if (driverId <= 0) throw new IllegalArgumentException("driver id must be positive");
+    try {
+      return driverDAO
+          .getDriverToken(driverId)
+          .orElseThrow(() -> new IllegalArgumentException("Driver not found: " + driverId));
+    } catch (SQLException e) {
+      throw new RuntimeException("Failed to get driver " + driverId, e);
+    }
+  }
+
   /**
    * Handles the return of a driver to the restaurant after finishing their batch by
    * marking their batch as finished
@@ -168,9 +180,9 @@ public class DriverService {
    * @throws IllegalArgumentException if the driver does not have a currently assigned batch
    */
   public Order getCurrentOrderToDeliver(long driverId) {
-    Batch batch = getDriverBatch(driverId).orElseThrow(() -> new IllegalArgumentException(
+    Optional<List<Order>> optionalBatchOrders = getDriverBatchOrders(driverId);
+    List<Order> batchOrders = optionalBatchOrders.orElseThrow(() -> new IllegalArgumentException(
             "Driver " + driverId + " does not have an assigned batch"));
-    List<Order> batchOrders = dbOrderService.getBatchOrders(batch.id);
 
     // Use the invariant that they are in the order of delivery
     for (Order order : batchOrders) {
@@ -179,6 +191,24 @@ public class DriverService {
       }
     }
     return null;
+  }
+
+  /**
+   * Returns the orders in the driver's batch in delivery order.
+   *
+   * Assumes that getBatchOrders(batch.id) returns orders in delivery order.
+   *
+   * @param driverId the id of the driver
+   * @return Optional list of the driver's batch orders, or Optional.empty() if the driver does not have a batch
+   */
+  public Optional<List<Order>> getDriverBatchOrders(long driverId) {
+    Optional<Batch> optionalDriverBatch = getDriverBatch(driverId);
+    if (optionalDriverBatch.isEmpty()) {
+      return Optional.empty();
+    }
+    Batch driverBatch = optionalDriverBatch.orElseThrow();
+    List<Order> batchOrders = dbOrderService.getBatchOrders(driverBatch.id);
+    return Optional.of(batchOrders);
   }
 
   /** Returns whether the given driver (specified by id) is available to drive a batch */
