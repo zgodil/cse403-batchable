@@ -11,7 +11,7 @@ public class DriverSsePublisher {
   }
 
   // Notify SSE clients to refresh order data for the driver specified by the given id
-  public void refreshOrderData(Long driverId, String routeLink) {
-    driverSseController.refreshOrderData(driverId, routeLink);
+  public void refreshDriverData(Long driverId) {
+    driverSseController.refreshDriverData(driverId);
   }
 }

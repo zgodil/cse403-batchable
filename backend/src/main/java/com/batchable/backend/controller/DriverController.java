@@ -1,9 +1,13 @@
 package com.batchable.backend.controller;
 
+import com.batchable.backend.EventSource.DriverSsePublisher;
+import com.batchable.backend.EventSource.SsePublisher;
 import com.batchable.backend.db.models.Batch;
 import com.batchable.backend.db.models.Driver;
 // Service layer that contains business logic
 import com.batchable.backend.service.DriverService;
+import java.util.Map;
+import java.util.Optional;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -23,6 +27,10 @@ import org.springframework.web.bind.annotation.RestController;
 // Base URL path for all endpoints in this controller
 public class DriverController {
 
+    private final SsePublisher ssePublisher;
+
+    private final DriverSsePublisher driverSsePublisher;
+
   // Dependency on the service layer
   private final DriverService driverService;
 
@@ -30,8 +38,10 @@ public class DriverController {
    * Constructor injection: Spring automatically provides a DriverService instance because it is
    * annotated with @Service
    */
-  public DriverController(DriverService driverService) {
+  public DriverController(DriverService driverService, DriverSsePublisher driverSsePublisher, SsePublisher ssePublisher) {
     this.driverService = driverService;
+    this.driverSsePublisher = driverSsePublisher;
+    this.ssePublisher = ssePublisher;
   }
 
   /**
@@ -115,9 +125,22 @@ public class DriverController {
    */
   @GetMapping("/{driverId}/batch")
   @ResponseStatus(HttpStatus.OK)
-  public Batch getDriverBatch(@PathVariable long driverId) {
-    return driverService.getDriverBatch(driverId).orElse(null);
+  public Optional<Batch> getDriverBatch(@PathVariable long driverId) {
+    return driverService.getDriverBatch(driverId);
   }
+
+  /**
+   * Gets the data for the webpage for the driver corresponding to the given token.
+   *
+   * @param token the UUID of the driver
+   * @return Map containing the driver, the batch orders, and the batch route link
+   */
+  @GetMapping("/route/{token}")
+  @ResponseStatus(HttpStatus.OK)
+  public Map<String, Object> getDriverPageData(@PathVariable String token) {
+    return driverService.getDriverPageData(token);
+  }
+
 
   /**
    * Handles the return of a driver to the restaurant after finishing their batch by
@@ -128,6 +151,9 @@ public class DriverController {
   @PutMapping("/returned/{token}")
   @ResponseStatus(HttpStatus.NO_CONTENT)
   public void handleReturn(@PathVariable String token) {
+    Driver driver = driverService.getDriverByToken(token);
     driverService.handleReturn(token);
+    driverSsePublisher.refreshDriverData(driver.id);
+    ssePublisher.refreshOrderData(driver.restaurantId);
   }
 }

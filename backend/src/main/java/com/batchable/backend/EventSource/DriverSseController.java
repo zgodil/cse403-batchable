@@ -14,14 +14,13 @@ import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 @RestController
 public class DriverSseController {
 
-    private final DriverService driverService;
+  private final DriverService driverService;
 
   // Store emitters per restaurant (thread-safe)
   private final Map<Long, List<SseEmitter>> emitters =
@@ -31,7 +30,7 @@ public class DriverSseController {
         this.driverService = driverService;
     }
 
-  @GetMapping("/sse/orders/{token}")
+  @GetMapping("/sse/orders/token/{token}")
   public SseEmitter subscribe(@PathVariable String token) {
     Driver driver;
     try {
@@ -49,21 +48,15 @@ public class DriverSseController {
     return emitter;
   }
 
-  // Method to broadcast refresh signal to a specific restaurant
-  public void refreshOrderData(Long driverId, String routeLink) {
+  // Method to broadcast refresh signal for a specific driver
+  public void refreshDriverData(Long driverId) {
     List<SseEmitter> emitterList = emitters.get(driverId);
-    Driver driver = driverService.getDriver(driverId);
     if (emitterList == null) {
       return;
     }
     for (SseEmitter emitter : emitterList) {
       try {
-        Map<String, Object> jsonMap = new ConcurrentHashMap<>();
-        jsonMap.put("driver", driver);
-        Optional<List<Order>> orders = driverService.getDriverBatchOrders(driverId);
-        jsonMap.put("orders", orders);
-        jsonMap.put("link", routeLink);
-        emitter.send(SseEmitter.event().name("refresh").data(jsonMap));
+        emitter.send(SseEmitter.event().name("refresh").data(""));
       } catch (IOException e) {
         emitter.complete(); // client disconnected
       }

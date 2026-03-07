@@ -53,11 +53,10 @@ public class TwilioManager {
   /**
    * Handler invoked when an existing batch changes (e.g., route updates).
    */
-  public void handleBatchChange(long batchId, String restaurantAddress) {
+  public void handleBatchChange(long batchId) {
     Batch batch = dbOrderService.getBatch(batchId);
     Driver driver = driverService.getDriver(batch.driverId);
-    String batchRouteLink = getBatchRouteLink(batchId, restaurantAddress);
-    driverSsePublisher.refreshOrderData(driver.id, batchRouteLink);
+    driverSsePublisher.refreshDriverData(driver.id);
   }
 
   /**
@@ -68,52 +67,17 @@ public class TwilioManager {
    * notification for the assigned driver.
    *
    * @param batchId ID of the newly active batch
-   * @param restaurantAddress address used as both route origin and destination
    */
-  public void handleNewBatch(long batchId, String restaurantAddress) {
+  public void handleNewBatch(long batchId) {
     Batch batch = dbOrderService.getBatch(batchId);
     Driver driver = driverService.getDriver(batch.driverId);
     String driverPhoneNumber = config.getDriverPhoneNumber();
-    String message = "Driver named " + driver.name + " with id " + driver.id + 
-        " you have been assigned a new batch. View here " + driverLinkPrefix + driverService.getDriverToken(driver.id);
-
+    String message = "Driver " + driver.name + " (id " + driver.id + 
+        ") you have been assigned a new batch. View here " + driverLinkPrefix + driverService.getDriverToken(driver.id);
+    
     sendMessage(driverPhoneNumber, message);
-    handleBatchChange(batchId, restaurantAddress);
-  }
-
-  /**
-   * Constructs a Google Maps directions link for the remaining (i.e., undelivered) orders in a batch. 
-   * Starts at the driver's current location and visits each remaining
-   * order destination in batch order, then returns to the restaurant
-   *
-   * @param batchId ID of the batch
-   * @param restaurantAddress address of the restaurant this is a batch for
-   * @return a Google Maps directions URL
-   */
-  public String getBatchRouteLink(long batchId, String restaurantAddress) {
-    List<Order> orders = dbOrderService.getBatchOrders(batchId);
-    orders = orders.stream()
-      .filter(order -> order.state != State.DELIVERED)
-      .toList();
-
-    StringBuilder linkBuilder = new StringBuilder("https://www.google.com/maps/dir/?api=1");
-    linkBuilder.append("&origin=Current+Location");
-    linkBuilder.append("&destination=").append(urlEncodeAddress(restaurantAddress));
-    if (!orders.isEmpty()) {
-      linkBuilder.append("&waypoints=").append(urlEncodeAddress(orders.get(0).destination));
-    }
-    for (int i = 1; i < orders.size(); i++) {
-      linkBuilder.append("|").append(urlEncodeAddress(orders.get(i).destination));
-    }
-    return linkBuilder.toString();
-  }
-
-  /**
-   * URL-encodes an address string using UTF-8 so it is safe to include as a query parameter in a
-   * Google Maps URL.
-   */
-  private String urlEncodeAddress(String address) {
-    return URLEncoder.encode(address, StandardCharsets.UTF_8);
+    System.out.println("SENT TWILIO MESSAGE: " + message);
+    handleBatchChange(batchId);
   }
 
   /**

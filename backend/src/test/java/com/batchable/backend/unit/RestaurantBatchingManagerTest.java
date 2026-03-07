@@ -153,7 +153,7 @@ class RestaurantBatchingManagerTest {
         createOrder(42L, State.DRIVING, Instant.now(), Instant.now().plusSeconds(300), 100L);
     mgr.removeOrder(order);
 
-    verify(twilioManager).handleBatchChange(100L, ADDRESS);
+    verify(twilioManager).handleBatchChange(100L);
     verify(batchingAlgorithm, never()).removeOrder(anyList(), anyLong(), anyString());
   }
 
@@ -209,7 +209,7 @@ class RestaurantBatchingManagerTest {
 
     mgr.updateOrder(42L, false);
 
-    verify(twilioManager).handleBatchChange(100L, ADDRESS);
+    verify(twilioManager).handleBatchChange(100L);
     verify(batchingAlgorithm, never()).rebatchOrder(anyList(), any(), anyString());
     verify(batchingAlgorithm, never()).updateOrderInplace(anyList(), anyLong());
   }
@@ -587,8 +587,8 @@ class RestaurantBatchingManagerTest {
     verify(dbOrderService).advanceOrderState(2L);
     verify(dbOrderService, times(2)).getOrder(anyLong());
     verify(dbOrderService, times(2)).createBatch(any(Batch.class));
-    verify(twilioManager, times(2)).handleNewBatch(anyLong(), anyString());
-    verify(twilioManager, never()).handleBatchChange(anyLong(), anyString()); // change listener not
+    verify(twilioManager, times(2)).handleNewBatch(anyLong());
+    verify(twilioManager, never()).handleBatchChange(anyLong()); // change listener not
                                                                               // called during
     // activation
     verify(publisher).refreshOrderData(RESTAURANT_ID);
@@ -689,7 +689,7 @@ class RestaurantBatchingManagerTest {
     when(dbOrderService.getOrder(1L)).thenReturn(o);
     mgr.checkExpiredBatches(UPDATE_MILLIS);
 
-    verify(twilioManager).handleNewBatch(100L, ADDRESS);
+    verify(twilioManager).handleNewBatch(100L);
     verify(publisher).refreshOrderData(RESTAURANT_ID);
   }
 

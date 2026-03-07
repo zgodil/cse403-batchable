@@ -12,6 +12,7 @@ import com.batchable.backend.db.models.Order;
 import com.batchable.backend.db.models.Order.State;
 import com.batchable.backend.service.DbOrderService;
 import com.batchable.backend.service.DriverService;
+import com.batchable.backend.service.RestaurantService;
 import java.sql.SQLException;
 import java.time.Instant;
 import java.util.List;
@@ -36,13 +37,15 @@ public class DriverServiceTest {
   private BatchDAO batchDAO;
   @Mock
   private DbOrderService dbOrderService;
+  @Mock
+  private RestaurantService restaurantService;
 
   private DriverService service;
 
   @BeforeEach
   void setUp() {
     MockitoAnnotations.openMocks(this);
-    service = new DriverService(driverDAO, batchDAO, dbOrderService);
+    service = new DriverService(driverDAO, batchDAO, dbOrderService, restaurantService);
   }
 
   // ---------------- createDriver ----------------

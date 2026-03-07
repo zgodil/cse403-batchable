@@ -196,17 +196,18 @@ public class RestaurantBatchingManager {
       dbOrderService.remakeOrder(order.id);
       addOrder(dbOrderService.getOrder(order.id));
     }
+    publisher.refreshOrderData(restaurantId);
   }
 
   /** Handles an active batch changing by calling the appropriate dependencies. */
   private void handleActiveBatchChange(long batchId) {
-    twilioManager.handleBatchChange(batchId, restaurantAddress);
+    twilioManager.handleBatchChange(batchId);
     updated = true;
   }
 
   /** Handles a new batch becoming active by calling the appropriate dependencies. */
   private void handleNewActiveBatch(long batchId) {
-    twilioManager.handleNewBatch(batchId, restaurantAddress);
+    twilioManager.handleNewBatch(batchId);
     updated = true;
   }
 
@@ -330,8 +331,6 @@ public class RestaurantBatchingManager {
    */
   public void checkExpiredBatches(final long updateMillis) {
     updated = false;
-    // System.out.println("\n\n\n"); useful when you want to see the backend state
-    // debugPrintBatches();
     Instant now = Instant.now();
 
     List<Order> toBeReAdded = moveExpiredTentativeBatches(now);
@@ -340,9 +339,12 @@ public class RestaurantBatchingManager {
     assignReadyBatchesToDrivers();
     delayRemainingReadyBatches(updateMillis);
 
+    removeFinishedBatches();
+
     if (updated) {
       publisher.refreshOrderData(restaurantId);
     }
+    debugPrintBatches();
   }
 
   /**
@@ -563,6 +565,19 @@ public class RestaurantBatchingManager {
     dbOrderService.updateOrderDeliveryTime(order.id, newDeliveryTime);
   }
 
+  /**
+   * Removes all batches in batches.activeBatches that have been finished
+   */
+  private void removeFinishedBatches() {
+    List<Batch> activeBatches = batches.activeBatches;
+    for (int i = activeBatches.size() - 1; i >= 0; i--) {
+      Batch batch = activeBatches.get(i);
+      if (dbOrderService.getBatch(batch.id).finished) {
+        activeBatches.remove(i);
+      }
+    }
+  }
+
   // returns the Instant 'millis' milliseconds after the given time
   private Instant millisAfter(Instant time, long millis) {
     return time.plus(Duration.ofMillis(millis));
@@ -576,6 +591,7 @@ public class RestaurantBatchingManager {
 
 
   public void debugPrintBatches() {
+    System.out.println("\n\n\n");
     Instant now = Instant.now();
     System.out.printf("=== Restaurant %d batch state at %s ===%n", restaurantId, now);
 
