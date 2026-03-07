@@ -218,6 +218,7 @@ public class RestaurantBatchingManager {
           // Call the private doAddOrder directly (not addOrder) to avoid nested submission
           doAddOrder(dbOrderService.getOrder(order.id));
         }
+        publisher.refreshOrderData(restaurantId);
       }).get(); // wait for initialization to finish
     } catch (InterruptedException | ExecutionException e) {
       Thread.currentThread().interrupt();
@@ -371,6 +372,7 @@ public class RestaurantBatchingManager {
       publisher.refreshOrderData(restaurantId);
       this.updated = false; // reset after publishing
     }
+    debugPrintBatches();
   }
 
   /**
@@ -602,6 +604,7 @@ public class RestaurantBatchingManager {
   }
 
   public void debugPrintBatches() {
+    System.out.println("\n\n\n");
     Instant now = Instant.now();
     System.out.printf("=== Restaurant %d batch state at %s ===%n", restaurantId, now);
 
