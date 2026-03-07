@@ -22,7 +22,7 @@ export default function RouteOverview({orders, mapLink}: Props) {
           <ReturnedButton />
         </>
       ) : (
-        <p>There is no active batch</p>
+        <p>You have no active batch.</p>
       )}
     </main>
   );
