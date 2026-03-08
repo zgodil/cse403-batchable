@@ -103,7 +103,7 @@ export const orderHandlers = [
 
     return noContent();
   }),
-  sse<{refresh: string}>('/sse/orders/:id', async ({client}) => {
+  sse<{refresh: string}>(endpoint('/sse/orders/:id'), async ({client}) => {
     db.orders.addEventListener('change', () => {
       client.send({
         event: 'refresh',
@@ -111,12 +111,15 @@ export const orderHandlers = [
       });
     });
   }),
-  sse<{refresh: string}>('/sse/orders/token/:token', async ({client}) => {
-    db.orders.addEventListener('change', () => {
-      client.send({
-        event: 'refresh',
-        data: '<<this should never matter/driver>>',
+  sse<{refresh: string}>(
+    endpoint('/sse/orders/token/:token'),
+    async ({client}) => {
+      db.orders.addEventListener('change', () => {
+        client.send({
+          event: 'refresh',
+          data: '<<this should never matter/driver>>',
+        });
       });
-    });
-  }),
+    },
+  ),
 ];
