@@ -32,9 +32,10 @@ Within the Manage Restaurant section, you can update your restaurant’s name an
 ### Creating an Order
 To create a new order, click the Add New Order button. Enter the delivery address for the accordingly. Once submitted, the system will process the order and determine how it should be dispatched, assigning it to an available driver. 
 
+### Acting as a Driver
+Once a driver is assigned to a batch, **a text message will be sent to their phone number** (please don't enter random phone numbers) with a link to their route page. On this page, you can mark orders as delivered, check your assigned batch, and tell the restaurant that you have returned. You *must* press complete route in order to be assigned another batch. The same route page can be used across multiple batches, and is driver-specific.
 
 ## 5. How to Report a Bug
-
 If you encounter an issue, please open an issue in the GitHub
 repository: https://github.com/zgodil/cse403-batchable/issues
 

@@ -1,4 +1,4 @@
-# cse403-batchable
+# Batchable
 
 Our product is Batchable, a real-time food delivery batching system. It works as a web application that interfaces with medium-sized restaurants, constantly checking if orders should go out as singles, doubles, or triples, using live updates about new orders, readiness, and remakes. Typically, dispatchers have to balance delivery times, food freshness, and how drivers are used–all while handling new orders, remakes, and cancellations. For medium-sized restaurants, this is inevitably done by hand, which leads to inconsistent results and avoidable delivery problems. That’s where Batchable comes in. We will handle this delicate balance for businesses, leading to simpler workflows, fewer headaches, and better resource utilization.
 
@@ -14,15 +14,3 @@ If you are a Batchable user, documentation of the product's features can be foun
 Final Release Tag: `final`
 Features:
 * (TODO!!!)
-
-## Seeing the Messages (TODO!! Where should this go?)
-Follow [this link](https://console.twilio.com/us1/develop/sms/virtual-phone) to take you to the virtual phone where you will recieve the text confirmation\
-You'll need to log in using the provided credentials:\
-User Email: (see Ed)\
-Password: (see Ed)
-
-Select try another method rather than sending 6-digit recovery code\
-Select recovery code as verification method when logging in:
-
-From there you will see a drop down on the right side with the text " Choose a sender number" click on it and select the only number available.
-**Order creations will text the order id to this phone**
