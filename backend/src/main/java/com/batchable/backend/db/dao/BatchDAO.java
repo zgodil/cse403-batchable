@@ -143,8 +143,8 @@ public class BatchDAO {
    * that drivers have at most one unfinished batch at a time.
    */
   public Optional<Batch> getBatchForDriver(long driverId) throws SQLException {
-    final String sql = "SELECT id, driver_id, route, dispatch_time, completion_time, finished "
-        + "FROM Batch WHERE driver_id = ? and finished = ? LIMIT 1;";
+      final String sql = "SELECT id, driver_id, route, dispatch_time, completion_time, finished "
+      + "FROM Batch WHERE driver_id = ? AND finished = ? ORDER BY id DESC LIMIT 1;";
 
     readLock.lock();
     try (Connection conn = dataSource.getConnection();
