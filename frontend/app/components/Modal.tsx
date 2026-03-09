@@ -1,5 +1,8 @@
 import {useLayoutEffect, useRef, useState} from 'react';
 
+/**
+ * Represents the state of a modal dialog. This should be acquired via the {@link useModal} hook, and should be held by some ancestor component of the modal dialog. When passing this interface through props, if the target component is a specific type of modal, the prop should be called `state`. If the target component simply contains a modal, it should be called `modal`.
+ */
 export interface ModalState {
   open: boolean;
   setOpen: (open: boolean) => void;
