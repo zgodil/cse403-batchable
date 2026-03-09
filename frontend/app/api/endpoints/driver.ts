@@ -29,9 +29,14 @@ class DriverApi extends CrudApi<Driver> {
   }
   async markReturned(token: string) {
     try {
-      await fetchEndpoint('PUT', `${this.resource}/returned/${token}`, undefined, {
-        includeAuth: false,
-      });
+      await fetchEndpoint(
+        'PUT',
+        `${this.resource}/returned/${token}`,
+        undefined,
+        {
+          includeAuth: false,
+        },
+      );
       return true;
     } catch (err) {
       this.error(`Failed to mark driver as returned; token=${token}`, err);

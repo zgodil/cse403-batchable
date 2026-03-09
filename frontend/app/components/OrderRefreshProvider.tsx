@@ -12,6 +12,7 @@ export class RefreshMonitor extends EventTarget {
     this.eventSource = new EventSource(`/sse/orders/${path}`);
     this.eventSource.addEventListener('refresh', () => {
       this.dispatchEvent(new Event('orderUpdate'));
+      console.log('refresh event received');
     });
   }
   close() {
