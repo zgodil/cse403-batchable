@@ -5,6 +5,10 @@ interface Props {
   driver: Driver;
 }
 
+/**
+ * Summarizes a driver to identify a `/route/:token` page as being connected to the right person.
+ * @param driver The driver to represent
+ */
 export default function RouteHeader({driver}: Props) {
   return (
     <header className="text-center mb-5">
