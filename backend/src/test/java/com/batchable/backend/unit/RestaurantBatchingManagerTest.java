@@ -157,7 +157,7 @@ class RestaurantBatchingManagerTest {
     mgr.removeOrder(order);
     mgr.getBatches();
 
-    verify(twilioManager).handleBatchChange(100L, ADDRESS);
+    verify(twilioManager).handleBatchChange(100L);
     verify(batchingAlgorithm, never()).removeOrder(anyList(), anyLong(), anyString());
   }
 
@@ -197,7 +197,7 @@ class RestaurantBatchingManagerTest {
     mgr.updateOrder(42L, false);
     mgr.getBatches(); // wait for task to complete
 
-    verify(twilioManager).handleBatchChange(100L, ADDRESS);
+    verify(twilioManager).handleBatchChange(100L);
     verify(batchingAlgorithm, never()).rebatchOrder(anyList(), any(), anyString());
     verify(batchingAlgorithm, never()).updateOrderInplace(anyList(), anyLong());
   }
@@ -231,7 +231,7 @@ class RestaurantBatchingManagerTest {
 
     verifyOrderDelayed(order, order.deliveryTime, order.cookedTime);
     verify(dbOrderService).updateOrderDeliveryTime(eq(1L), instantCaptor.capture());
-    verify(publisher, times(2)).refreshOrderData(RESTAURANT_ID);
+    verify(publisher, times(3)).refreshOrderData(RESTAURANT_ID);
   }
 
   // --- removeOrder_whenOrderInTentativeBatch_delegatesToAlgorithm ---
@@ -323,8 +323,8 @@ class RestaurantBatchingManagerTest {
     mgr.checkExpiredBatches(UPDATE_MILLIS);
     mgr.getBatches(); // wait
 
-    verify(twilioManager).handleNewBatch(100L, ADDRESS);
-    verify(publisher, times(2)).refreshOrderData(RESTAURANT_ID);
+    verify(twilioManager).handleNewBatch(100L);
+    verify(publisher, times(3)).refreshOrderData(RESTAURANT_ID);
   }
 
   // --- updateOrder_whenOrderInTentativeAndRebatchFalse_updatesInPlace ---
@@ -394,9 +394,9 @@ class RestaurantBatchingManagerTest {
     verify(dbOrderService).advanceOrderState(2L);
     verify(dbOrderService, times(2)).getOrder(anyLong());
     verify(dbOrderService, times(2)).createBatch(any(Batch.class));
-    verify(twilioManager, times(2)).handleNewBatch(anyLong(), anyString());
-    verify(twilioManager, never()).handleBatchChange(anyLong(), anyString());
-    verify(publisher, times(2)).refreshOrderData(RESTAURANT_ID);
+    verify(twilioManager, times(2)).handleNewBatch(anyLong());
+    verify(twilioManager, never()).handleBatchChange(anyLong());
+    verify(publisher, times(3)).refreshOrderData(RESTAURANT_ID);
   }
 
   // --- delayRemainingReadyBatches_updatesDeliveryTimes ---
@@ -431,7 +431,7 @@ class RestaurantBatchingManagerTest {
 
     Batches result = spyMgr.getBatches();
     assertEquals(updatedOrder, result.getReadyBatches().peek().getBatch().get(0));
-    verify(publisher, times(2)).refreshOrderData(RESTAURANT_ID);
+    verify(publisher, times(3)).refreshOrderData(RESTAURANT_ID);
   }
 
   // --- constructor_usesProvidedBatches ---
@@ -618,7 +618,7 @@ class RestaurantBatchingManagerTest {
     verify(dbOrderService, never()).updateOrderDeliveryTime(anyLong(), any());
     verify(dbOrderService, never()).updateOrderCookedTime(anyLong(), any());
     verify(batchingAlgorithm, never()).addOrder(anyList(), any(), anyString());
-    verify(publisher, times(2)).refreshOrderData(RESTAURANT_ID);
+    verify(publisher, times(3)).refreshOrderData(RESTAURANT_ID);
   }
 
   /**
@@ -664,7 +664,7 @@ class RestaurantBatchingManagerTest {
     verify(dbOrderService).getOrder(2L);
     verify(batchingAlgorithm).addOrder(customBatches.getTentativeBatches(), updatedUncooked,
         ADDRESS);
-    verify(publisher, times(2)).refreshOrderData(RESTAURANT_ID);
+    verify(publisher, times(3)).refreshOrderData(RESTAURANT_ID);
   }
 
   /** Expired batch with all uncooked: all are delayed and re-added, no ready batch remains. */
@@ -707,7 +707,7 @@ class RestaurantBatchingManagerTest {
     verify(batchingAlgorithm).addOrder(customBatches.getTentativeBatches(), updated1, ADDRESS);
     verify(batchingAlgorithm).addOrder(customBatches.getTentativeBatches(), updated2, ADDRESS);
     assertTrue(result.getReadyBatches().isEmpty());
-    verify(publisher, times(2)).refreshOrderData(RESTAURANT_ID);
+    verify(publisher, times(3)).refreshOrderData(RESTAURANT_ID);
   }
 
   /** Only expired batches are processed; future batches remain untouched. */
@@ -746,7 +746,63 @@ class RestaurantBatchingManagerTest {
     assertEquals(0, result.getActiveBatches().size());
     assertEquals(1, result.getReadyBatches().size());
     assertEquals(expiredOrder, result.getReadyBatches().peek().getBatch().get(0));
-    verify(publisher, times(2)).refreshOrderData(RESTAURANT_ID);
+    verify(publisher, times(3)).refreshOrderData(RESTAURANT_ID);
+  }
+
+  /** Assigns ready batches to available drivers, activates them, and notifies listeners. */
+  @Test
+  void assignReadyBatchesToDrivers_assignsToAvailableDrivers2() throws InvalidRouteException {
+    Instant now = Instant.now();
+    Order o1 = createOrder(1L, State.COOKED, now, now.plus(Duration.ofMinutes(10)));
+    Order o2 = createOrder(2L, State.COOKED, now, now.plus(Duration.ofMinutes(12)));
+
+    List<TentativeBatch> tentative = new ArrayList<>();
+    Queue<ReadyBatch> ready = new LinkedList<>();
+    ready.add(new ReadyBatch(List.of(o1)));
+    ready.add(new ReadyBatch(List.of(o2)));
+    List<Batch> active = new ArrayList<>();
+    Batches customBatches = new Batches(tentative, ready, active);
+
+    RestaurantBatchingManager mgr = new RestaurantBatchingManager(RESTAURANT_ID, ADDRESS, publisher,
+        batchingAlgorithm, routeService, dbOrderService, driverService, restaurantService,
+        twilioManager, customBatches);
+
+    Driver d1 = new Driver(10L, RESTAURANT_ID, "D1", "", true);
+    Driver d2 = new Driver(11L, RESTAURANT_ID, "D2", "", true);
+
+    when(restaurantService.getRestaurantDrivers(RESTAURANT_ID)).thenReturn(List.of(d1, d2));
+    when(driverService.isAvailable(10L)).thenReturn(true);
+    when(driverService.isAvailable(11L)).thenReturn(true);
+
+    RouteDirectionsResponse routeResp = createRouteResponse("polyline", 600);
+    when(routeService.getRouteDirections(eq(ADDRESS), anyList(), eq(false))).thenReturn(routeResp);
+    when(dbOrderService.createBatch(any(Batch.class))).thenReturn(100L, 101L);
+
+    Batch batch1 = new Batch(100L, d1.id, "poly1", now, now.plusSeconds(600), false);
+    Batch batch2 = new Batch(101L, d2.id, "poly2", now, now.plusSeconds(600), false);
+    when(dbOrderService.getBatch(100L)).thenReturn(batch1);
+    when(dbOrderService.getBatch(101L)).thenReturn(batch2);
+
+    when(dbOrderService.getOrder(1L)).thenReturn(o1);
+    when(dbOrderService.getOrder(2L)).thenReturn(o2);
+
+    mgr.checkExpiredBatches(UPDATE_MILLIS);
+
+    Batches result = mgr.getBatches();
+    assertTrue(result.getReadyBatches().isEmpty());
+    assertEquals(2, result.getActiveBatches().size());
+
+    verify(dbOrderService).setOrderBatchId(1L, 100L);
+    verify(dbOrderService).advanceOrderState(1L);
+    verify(dbOrderService).setOrderBatchId(2L, 101L);
+    verify(dbOrderService).advanceOrderState(2L);
+    verify(dbOrderService, times(2)).getOrder(anyLong());
+    verify(dbOrderService, times(2)).createBatch(any(Batch.class));
+    verify(twilioManager, times(2)).handleNewBatch(anyLong());
+    verify(twilioManager, never()).handleBatchChange(anyLong()); // change listener not
+                                                                              // called during
+    // activation
+    verify(publisher, times(3)).refreshOrderData(RESTAURANT_ID);
   }
 
   /** When no drivers are available, ready batches are left and not assigned. */
@@ -778,7 +834,7 @@ class RestaurantBatchingManagerTest {
 
     verify(dbOrderService, never()).setOrderBatchId(anyLong(), anyLong());
     verify(dbOrderService, never()).createBatch(any());
-    verify(publisher, times(2)).refreshOrderData(RESTAURANT_ID);
+    verify(publisher, times(3)).refreshOrderData(RESTAURANT_ID);
   }
 
   /** Full end‑to‑end test with multiple batches, expired and future, and driver assignment. */
@@ -852,7 +908,7 @@ class RestaurantBatchingManagerTest {
     verify(dbOrderService).getOrder(1L);
     verify(dbOrderService).updateOrderDeliveryTime(eq(2L), any());
     verify(dbOrderService).updateOrderCookedTime(eq(2L), any());
-    verify(publisher, times(2)).refreshOrderData(RESTAURANT_ID);
+    verify(publisher, times(3)).refreshOrderData(RESTAURANT_ID);
   }
 
   /** Constructor creates empty Batches when null is passed. */

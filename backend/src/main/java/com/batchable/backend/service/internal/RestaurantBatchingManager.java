@@ -242,6 +242,7 @@ public class RestaurantBatchingManager {
       Thread.currentThread().interrupt();
       throw new RuntimeException("Failed to initialize orders", e);
     }
+    publisher.refreshOrderData(restaurantId);
   }
 
   /**
@@ -250,7 +251,7 @@ public class RestaurantBatchingManager {
    * @param batchId the ID of the batch that changed
    */
   private void handleActiveBatchChange(long batchId) {
-    twilioManager.handleBatchChange(batchId, restaurantAddress);
+    twilioManager.handleBatchChange(batchId);
     updated = true;
   }
 
@@ -260,7 +261,7 @@ public class RestaurantBatchingManager {
    * @param batchId the ID of the newly active batch
    */
   private void handleNewActiveBatch(long batchId) {
-    twilioManager.handleNewBatch(batchId, restaurantAddress);
+    twilioManager.handleNewBatch(batchId);
     updated = true;
   }
 
@@ -419,9 +420,11 @@ public class RestaurantBatchingManager {
     assignReadyBatchesToDrivers();
     delayRemainingReadyBatches(updateMillis);
 
-    if (this.updated) {
+    removeFinishedBatches();
+
+    if (updated) {
       publisher.refreshOrderData(restaurantId);
-      this.updated = false; // reset after publishing
+      updated = false; // reset after publishing
     }
     debugPrintBatches();
   }
@@ -649,6 +652,19 @@ public class RestaurantBatchingManager {
   }
 
   /**
+   * Removes all batches in batches.activeBatches that have been finished
+   */
+  private void removeFinishedBatches() {
+    List<Batch> activeBatches = batches.activeBatches;
+    for (int i = activeBatches.size() - 1; i >= 0; i--) {
+      Batch batch = activeBatches.get(i);
+      if (dbOrderService.getBatch(batch.id).finished) {
+        activeBatches.remove(i);
+      }
+    }
+  }
+
+  /*
    * Returns the Instant 'millis' milliseconds after the given time.
    *
    * @param time the base instant

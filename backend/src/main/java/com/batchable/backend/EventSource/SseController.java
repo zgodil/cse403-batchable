@@ -21,10 +21,16 @@ public class SseController {
   @GetMapping("/sse/orders/{restaurantId}")
   public SseEmitter subscribe(@PathVariable Long restaurantId) {
     SseEmitter emitter = new SseEmitter(Long.MAX_VALUE); // no timeout
-    emitters.computeIfAbsent(restaurantId, a -> new CopyOnWriteArrayList<SseEmitter>()).add(emitter);
+    emitters.computeIfAbsent(restaurantId, a -> new CopyOnWriteArrayList<SseEmitter>())
+        .add(emitter);
 
     // Remove emitter when completed or times out
     emitter.onCompletion(() -> findAndRemove(restaurantId, emitter));
+    try {
+      emitter.send(SseEmitter.event().name("refresh").data("")); // empty payload, just a signal
+    } catch (IOException e) {
+      emitter.complete(); // client disconnected
+    }
     return emitter;
   }
 
@@ -34,6 +40,9 @@ public class SseController {
     if (emitterList == null) {
       return;
     }
+    System.out
+        .println("SSE EMITTER FOR RID " + restaurantId + " NUM EMITTERS " + emitterList.size());
+
     for (SseEmitter emitter : emitterList) {
       try {
         emitter.send(SseEmitter.event().name("refresh").data("")); // empty payload, just a signal
@@ -46,9 +55,11 @@ public class SseController {
   /** Removes the emitter 'emitter' specified by 'restaurantId' in 'emitters' */
   public void findAndRemove(long restaurantId, SseEmitter emitter) {
     List<SseEmitter> emitterList = emitters.get(restaurantId);
-    emitterList.remove(emitter);
-    if (emitterList.isEmpty()) {
-      emitters.remove(restaurantId);
+    if (emitterList != null) {
+      emitterList.remove(emitter);
+      if (emitterList.isEmpty()) {
+        emitters.remove(restaurantId);
+      }
     }
   }
 
