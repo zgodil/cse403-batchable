@@ -14,7 +14,7 @@ import * as json from '~/domain/json';
 if (!globalThis.EventSource) {
   // this allows the server-side portion of the MSW SSE mock to run without error
   Object.defineProperty(globalThis, 'EventSource', {
-    value: class EventSource {},
+    value: class EventSource extends EventTarget {},
   });
 }
 
@@ -36,6 +36,36 @@ export const orderHandlers = [
     }
 
     db.orders.update(json.order.unparse(newOrder));
+
+    return noContent();
+  }),
+  http.put(endpoint('/order/:id/delivered/:token'), async req => {
+    const orderId = asId<Order>(req.params.id);
+    const driverId = asId<Order>(req.params.token);
+
+    // retrieve initial order state
+    const order = db.orders.get(orderId);
+    if (!order) return notFound('order');
+
+    // get order's batch
+    const {currentBatch} = order;
+    if (!currentBatch) return notFound("order's batch");
+    const batch = db.batches.get(currentBatch);
+    if (!batch) return notFound('batch');
+
+    // get driver
+    const {driver} = json.batch.parse(batch);
+    if (driver.id !== driverId) return badRequest();
+
+    // update order state
+    if (
+      !db.orders.update({
+        ...order,
+        state: 'DELIVERED',
+      })
+    ) {
+      return badRequest();
+    }
 
     return noContent();
   }),
@@ -73,12 +103,25 @@ export const orderHandlers = [
 
     return noContent();
   }),
-  sse<{refresh: string}>('/sse/orders/:id', async ({client}) => {
+  sse<{refresh: string}>(endpoint('/sse/orders/:id'), async ({client}) => {
     db.orders.addEventListener('change', () => {
       client.send({
         event: 'refresh',
-        data: '<<this should never matter>>',
+        data: '<<this should never matter/restaurant>>',
       });
     });
   }),
+  sse<{refresh: string}>(
+    endpoint('/sse/orders/token/:token'),
+    async ({client}) => {
+      const sendRefreshEvent = () => {
+        client.send({
+          event: 'refresh',
+          data: '<<this should never matter/driver>>',
+        });
+      };
+      db.orders.addEventListener('change', sendRefreshEvent);
+      db.batches.addEventListener('change', sendRefreshEvent);
+    },
+  ),
 ];

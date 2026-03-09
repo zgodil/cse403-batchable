@@ -209,6 +209,7 @@ export const batch = createDomainObjectParserPair<Batch>({
   route: parsePolyline,
   dispatchTime: parseDate,
   expectedCompletionTime: parseDate,
+  finished: identity,
 });
 
 export const menuItem = createDomainObjectParserPair<MenuItem>({
