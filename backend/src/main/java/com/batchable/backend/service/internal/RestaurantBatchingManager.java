@@ -412,7 +412,6 @@ public class RestaurantBatchingManager {
    * @param updateMillis how much to delay delivery times for unassigned ready batches
    */
   private void doCheckExpiredBatches(final long updateMillis) {
-    updated = false;
     Instant now = Instant.now();
 
     List<Order> toBeReAdded = moveExpiredTentativeBatches(now);
@@ -425,7 +424,7 @@ public class RestaurantBatchingManager {
 
     if (updated) {
       publisher.refreshOrderData(restaurantId);
-      this.updated = false; // reset after publishing
+      updated = false; // reset after publishing
     }
     debugPrintBatches();
   }

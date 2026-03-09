@@ -27,7 +27,7 @@ public class DriverSseController {
       new ConcurrentHashMap<Long, List<SseEmitter>>();
 
   public DriverSseController(DriverService driverService) {
-      this.driverService = driverService;
+    this.driverService = driverService;
   }
 
   @GetMapping("/sse/orders/token/{token}")
@@ -37,7 +37,8 @@ public class DriverSseController {
       driver = driverService.getDriverByToken(token);
     } catch (IllegalArgumentException e) {
       // token does not correspond to a driver
-      throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Driver not found. Given token: " + token);
+      throw new ResponseStatusException(HttpStatus.NOT_FOUND,
+          "Driver not found. Given token: " + token);
     }
 
     SseEmitter emitter = new SseEmitter(Long.MAX_VALUE); // no timeout
@@ -45,6 +46,12 @@ public class DriverSseController {
 
     // Remove emitter when completed or times out
     emitter.onCompletion(() -> findAndRemove(driver.id, emitter));
+
+    try {
+      emitter.send(SseEmitter.event().name("refresh").data(""));
+    } catch (IOException e) {
+      emitter.complete(); // client disconnected
+    }
     return emitter;
   }
 
@@ -66,9 +73,11 @@ public class DriverSseController {
   /** Removes the emitter 'emitter' specified by 'driverId' in 'emitters' */
   public void findAndRemove(long driverId, SseEmitter emitter) {
     List<SseEmitter> emitterList = emitters.get(driverId);
-    emitterList.remove(emitter);
-    if (emitterList.isEmpty()) {
-      emitters.remove(driverId);
+    if (emitterList != null) {
+      emitterList.remove(emitter);
+      if (emitterList.isEmpty()) {
+        emitters.remove(driverId);
+      }
     }
   }
 
