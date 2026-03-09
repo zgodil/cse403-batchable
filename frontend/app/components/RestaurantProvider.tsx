@@ -4,13 +4,7 @@ import {getToken} from '~/api/authToken';
 import {restaurantApi} from '~/api/endpoints/restaurant';
 import type {Restaurant} from '~/domain/objects';
 
-export type RestaurantContextValue = {
-  restaurantId: Restaurant['id'] | null;
-};
-
-export const RestaurantContext = createContext<RestaurantContextValue>({
-  restaurantId: null,
-});
+export const RestaurantContext = createContext<Restaurant['id'] | null>(null);
 
 /**
  * Provides the current user's restaurant id (from GET /restaurant/me).
@@ -64,7 +58,5 @@ export default function RestaurantProvider({
     };
   }, [isAuthenticated]);
 
-  return (
-    <RestaurantContext value={{restaurantId}}>{children}</RestaurantContext>
-  );
+  return <RestaurantContext value={restaurantId}>{children}</RestaurantContext>;
 }

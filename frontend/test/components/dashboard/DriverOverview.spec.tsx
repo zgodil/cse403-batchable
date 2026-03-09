@@ -24,7 +24,7 @@ async function renderOverview(drivers: Partial<Driver>[]) {
     });
   }
   render(
-    <RestaurantContext value={{restaurantId}}>
+    <RestaurantContext value={restaurantId}>
       <DriverOverview />
     </RestaurantContext>,
   );

@@ -20,23 +20,16 @@ import {
 import type {MenuItem, Restaurant} from '~/domain/objects';
 import {
   RestaurantContext,
-  type RestaurantContextValue,
 } from '~/components/RestaurantProvider';
 import {server} from 'test/mocks/api/server';
 import {http} from 'msw';
 import {badRequest, endpoint} from 'test/mocks/api/common';
 
-function toContextValue(rid: Restaurant['id'] | null): RestaurantContextValue {
-  return {
-    restaurantId: rid,
-  };
-}
-
 function renderOpenModal(restaurant: Restaurant['id'] | null) {
   const hook = renderHook(() => useModal());
   act(() => hook.result.current.setOpen(true));
   const rendered = render(
-    <RestaurantContext value={toContextValue(restaurant)}>
+    <RestaurantContext value={restaurant}>
       <AddOrderModal modal={hook.result.current} />
     </RestaurantContext>,
   );
@@ -44,7 +37,7 @@ function renderOpenModal(restaurant: Restaurant['id'] | null) {
     modal: () => hook.result.current,
     rerender: (rid: Restaurant['id'] | null = restaurant) =>
       rendered.rerender(
-        <RestaurantContext value={toContextValue(rid)}>
+        <RestaurantContext value={rid}>
           <AddOrderModal modal={hook.result.current} />
         </RestaurantContext>,
       ),

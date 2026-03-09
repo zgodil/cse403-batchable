@@ -13,7 +13,7 @@ import {db, resetMockDatabase} from 'test/mocks/api/common';
 // fake component to extract context value
 function RestaurantId() {
   const ctx = useContext(RestaurantContext);
-  return <p>{ctx?.restaurantId?.id ?? 'null'}</p>;
+  return <p>{ctx?.id ?? 'null'}</p>;
 }
 
 function renderProvider() {

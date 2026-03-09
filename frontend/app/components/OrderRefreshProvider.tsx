@@ -42,7 +42,7 @@ export default function OrderRefreshProvider({
   useDriverToken = false,
   children,
 }: React.PropsWithChildren<Props>) {
-  const {restaurantId} = useContext(RestaurantContext);
+  const restaurantId = useContext(RestaurantContext);
   const driverToken = useContext(DriverTokenContext);
   const [monitor, setMonitor] = useState<RefreshMonitor | null>(null);
 
