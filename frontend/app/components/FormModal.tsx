@@ -17,7 +17,7 @@ interface Props<T extends FormData> {
 /**
  * Describes a modal which consists entirely of a form, and which closes upon having its changes realized.
  * This may be updated to display a loading state while `apply` is resolving in the future.
- * Examples on how to use this can be found in {@link EditOrderModal}, {@link EditDriverModal}, and {@link AddOrderModal}.
+ * Examples on how to use this can be found in {@link EditOrderModal}, and {@link AddOrderModal}.
  * @param title The header text for the modal
  * @param state The ModalState associated with this modal
  * @param confirm? The text in the 'confirm'-esque button. Default is 'Apply Changes'

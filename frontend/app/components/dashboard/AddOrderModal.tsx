@@ -12,6 +12,10 @@ interface Props {
   modal: ModalState;
 }
 
+/**
+ * Represents a modal on the dashboard page used to add a new order to the system. It contains fields for address, items, cook time, and delivery time. See {@link FormModal} for more details on this kind of dialog.
+ * @param modal The state of the modal.
+ */
 export default function AddOrderModal({modal}: Props) {
   const restaurant = useContext(RestaurantContext);
   const [selectedItemNames, setSelectedItemNames] = useState<string[]>([]);
@@ -20,6 +24,12 @@ export default function AddOrderModal({modal}: Props) {
     setSelectedItemNames([]);
   }
 
+  /**
+   * Uses form input data (and item names) to create a new order via the API. This is called by {@link FormModal}'s `apply` prop when the form is submitted and the modal closes.
+   * @param address The raw address string for the order
+   * @param cookTime A string containing the cooking duration, in minutes from now
+   * @param deliverTime A string containing the delivery duration, in minutes from the expected cooked time
+   */
   const addOrder = async (data: {
     address: string;
     cookTime: string;
