@@ -11,20 +11,20 @@ interface Props {
 }
 
 export default function AddDriverModal({state, onCreate}: Props) {
-  const {restaurantId} = useContext(RestaurantContext);
+  const restaurant = useContext(RestaurantContext);
   const submitNewDriver = (data: {
     name: string;
     phoneNumber: string;
     onShift?: 'on';
   }) => {
-    if (!restaurantId) {
+    if (!restaurant) {
       alert("You're not logged in");
       return;
     }
 
     const driver: Driver = {
       id: fakeId('Driver'),
-      restaurant: restaurantId,
+      restaurant,
       name: data.name,
       phoneNumber: {compact: data.phoneNumber},
       onShift: !!data.onShift,

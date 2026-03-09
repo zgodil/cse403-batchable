@@ -13,7 +13,7 @@ interface Props {
 }
 
 export default function AddOrderModal({modal}: Props) {
-  const {restaurantId} = useContext(RestaurantContext);
+  const restaurant = useContext(RestaurantContext);
   const [selectedItemNames, setSelectedItemNames] = useState<string[]>([]);
 
   if (!modal.open && selectedItemNames.length) {
@@ -25,7 +25,7 @@ export default function AddOrderModal({modal}: Props) {
     cookTime: string;
     deliverTime: string;
   }) => {
-    if (!restaurantId) {
+    if (!restaurant) {
       alert("You aren't logged in");
       return;
     }
@@ -48,7 +48,7 @@ export default function AddOrderModal({modal}: Props) {
 
     const order: Order = {
       id: fakeId('Order'),
-      restaurant: restaurantId,
+      restaurant,
       destination: {
         address: data.address,
       },
@@ -82,7 +82,7 @@ export default function AddOrderModal({modal}: Props) {
         required
       />
       <MenuItemSelector
-        restaurant={restaurantId}
+        restaurant={restaurant}
         onItemsChange={setSelectedItemNames}
       />
       <FormField

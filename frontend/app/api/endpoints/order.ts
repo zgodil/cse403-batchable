@@ -1,7 +1,7 @@
 import * as json from '~/domain/json';
 import {CrudApi} from '../crud';
 import type {Order} from '~/domain/objects';
-import {fetchEndpoint, fetchJSON} from '../common';
+import {fetchEndpoint} from '../common';
 
 class OrderApi extends CrudApi<Order> {
   constructor() {
