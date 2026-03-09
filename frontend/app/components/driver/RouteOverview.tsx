@@ -19,7 +19,7 @@ export default function RouteOverview({orders, mapLink}: Props) {
               <RouteItem order={order} key={order.id.id} />
             ))}
           </ol>
-          <ReturnedButton />
+          <ReturnedButton orders={orders} />
         </>
       ) : (
         <p>You have no active batch.</p>

@@ -14,7 +14,7 @@ import {orderApi} from '~/api/endpoints/order';
 import {restaurantApi} from '~/api/endpoints/restaurant';
 import DriverPage from '~/components/driver/DriverPage';
 import {DriverTokenContext} from '~/components/DriverTokenContext';
-import type {Batch, Driver} from '~/domain/objects';
+import type {Batch, Driver, Order} from '~/domain/objects';
 import {formatOrderName, formatPhoneNumber} from '~/util/format';
 import * as json from '~/domain/json';
 import {batchApi} from '~/api/endpoints/batch';
@@ -29,11 +29,15 @@ async function prepareDriver() {
   return {driver, token: String(driverId.id)};
 }
 
-async function createOrderInBatch(driver: Driver, batch: Batch['id']) {
-  const orderId = await checkedCreate(
-    orderApi,
-    getFakeOrder(driver.restaurant),
-  );
+async function createOrderInBatch(
+  driver: Driver,
+  batch: Batch['id'],
+  orderConfig: Partial<Order> = {},
+) {
+  const orderId = await checkedCreate(orderApi, {
+    ...getFakeOrder(driver.restaurant),
+    ...orderConfig,
+  });
   const order = await orderApi.read(orderId);
   if (!order) expect.fail('order should not be null');
   order.currentBatch = batch;
@@ -161,6 +165,7 @@ describe('<DriverPage>', () => {
 
     await waitFor(() => {
       expect(screen.getByText(/delivered\b/i)).toBeInTheDocument();
+      expect(screen.getByText(/delivered\b/i)).toBeDisabled();
       expect(window.alert).not.toHaveBeenCalled();
     });
   });
@@ -192,7 +197,7 @@ describe('<DriverPage>', () => {
     });
   });
 
-  it('can complete the batch', async () => {
+  it('can fail to complete the batch prior to delivery', async () => {
     const {driver, token} = await prepareDriver();
     const batch = await checkedCreateBatch(driver.id);
     await createOrderInBatch(driver, batch);
@@ -203,6 +208,21 @@ describe('<DriverPage>', () => {
       name: /complete route/i,
     });
     expect(completeButton).toBeInTheDocument();
+    expect(completeButton).toBeDisabled();
+  });
+
+  it('can complete the batch', async () => {
+    const {driver, token} = await prepareDriver();
+    const batch = await checkedCreateBatch(driver.id);
+    await createOrderInBatch(driver, batch, {state: 'delivered'});
+
+    renderPage(token);
+
+    const completeButton = await screen.findByRole('button', {
+      name: /complete route/i,
+    });
+    expect(completeButton).toBeInTheDocument();
+    expect(completeButton).not.toBeDisabled();
 
     fireEvent.click(completeButton);
 
