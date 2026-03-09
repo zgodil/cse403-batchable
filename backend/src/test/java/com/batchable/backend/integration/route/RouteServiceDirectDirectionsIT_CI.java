@@ -3,10 +3,8 @@ package com.batchable.backend.integration.route;
 import com.batchable.backend.exception.InvalidRouteException;
 import com.batchable.backend.model.dto.DirectDirectionsResponse;
 import com.batchable.backend.service.RouteService;
-import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -26,9 +24,6 @@ class RouteServiceDirectDirectionsIT_CI {
   @Autowired
   private RouteService routeService;
 
-  @Value("${google.routes.api-key}")
-  private String apiKey;
-
   /**
    * Tests that a valid request for direct directions between two cities returns a non‑null response
    * with non‑negative distance and duration.
@@ -38,8 +33,6 @@ class RouteServiceDirectDirectionsIT_CI {
    */
   @Test
   void testGetDirectDirections() {
-    Assumptions.assumeTrue(apiKey != null && !"test-api-key".equals(apiKey),
-        "GOOGLE_ROUTES_API_KEY must be set to a valid key for this integration test");
     // Call the service (actual Google API call)
     assertDoesNotThrow(() -> {
       String from = "Olympia, WA";

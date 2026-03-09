@@ -58,15 +58,6 @@ jobs:
       run:
         working-directory: backend
     needs: build
-    env:
-      DB_URL: jdbc:postgresql://localhost:5433/appdb
-      DB_USER: app_user
-      DB_PASSWORD: app_password
-      PGHOST: localhost
-      PGPORT: 5433
-      PGDATABASE: appdb
-      PGUSER: app_user
-      PGPASSWORD: app_password
     services:
       postgres:
         image: postgres:16
@@ -77,7 +68,7 @@ jobs:
           POSTGRES_USER: app_user
           POSTGRES_PASSWORD: app_password
         options: >-
-          --health-cmd "pg_isready -U app_user -d appdb"
+          --health-cmd pg_isready
           --health-interval 5s
           --health-timeout 5s
           --health-retries 5
@@ -94,7 +85,7 @@ jobs:
       - name: Run migrations
         run: |
           for f in $(ls ../infra/postgres/migrations/*.sql | sort); do
-            psql -f "$f"
+            PGPASSWORD=app_password psql -h localhost -p 5433 -U app_user -d appdb -f "$f"
           done
       - name: Run CI Integration Tests
         run: ./mvnw clean verify -Dtest=*IT_CI.java -Djacoco.skip=true
@@ -112,15 +103,6 @@ jobs:
       run:
         working-directory: backend
     needs: build
-    env:
-      DB_URL: jdbc:postgresql://localhost:5433/appdb
-      DB_USER: app_user
-      DB_PASSWORD: app_password
-      PGHOST: localhost
-      PGPORT: 5433
-      PGDATABASE: appdb
-      PGUSER: app_user
-      PGPASSWORD: app_password
     services:
       postgres:
         image: postgres:16
@@ -131,7 +113,7 @@ jobs:
           POSTGRES_USER: app_user
           POSTGRES_PASSWORD: app_password
         options: >-
-          --health-cmd "pg_isready -U app_user -d appdb"
+          --health-cmd pg_isready
           --health-interval 5s
           --health-timeout 5s
           --health-retries 5
@@ -148,7 +130,7 @@ jobs:
       - name: Run migrations
         run: |
           for f in $(ls ../infra/postgres/migrations/*.sql | sort); do
-            psql -f "$f"
+            PGPASSWORD=app_password psql -h localhost -p 5433 -U app_user -d appdb -f "$f"
           done
       - name: Run full verify
         run: ./mvnw clean verify

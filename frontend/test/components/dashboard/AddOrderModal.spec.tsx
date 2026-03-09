@@ -18,9 +18,7 @@ import {
   getFakeRestaurant,
 } from 'test/mocks/domain_objects';
 import type {MenuItem, Restaurant} from '~/domain/objects';
-import {
-  RestaurantContext,
-} from '~/components/RestaurantProvider';
+import {RestaurantContext} from '~/components/RestaurantProvider';
 import {server} from 'test/mocks/api/server';
 import {http} from 'msw';
 import {badRequest, endpoint} from 'test/mocks/api/common';

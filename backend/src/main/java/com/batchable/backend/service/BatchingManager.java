@@ -177,12 +177,8 @@ public class BatchingManager {
    * @param order the order to remove
    * @throws IllegalArgumentException if the restaurant manager does not exist
    */
-  public void removeOrder(Long orderId) {
-    Order order = dbOrderService.getOrder(orderId);
-    long restaurantId = order.restaurantId;
-    if (restaurantManagers.containsKey(restaurantId)) {
-      restaurantManagers.get(restaurantId).removeOrder(order);
-    }
+  public void removeOrder(Order order) {
+    getManager(order.restaurantId).removeOrder(order);
   }
 
   /**

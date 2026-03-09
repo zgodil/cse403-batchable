@@ -176,7 +176,6 @@ class RestaurantBatchingManagerTest {
     RestaurantBatchingManager mgr = new RestaurantBatchingManager(RESTAURANT_ID, ADDRESS, publisher,
         batchingAlgorithm, routeService, dbOrderService, driverService, restaurantService,
         twilioManager, customBatches);
-    when(dbOrderService.getOrder(42L)).thenReturn(order);
     mgr.removeOrder(order);
 
     assertTrue(mgr.getBatches().getReadyBatches().peek().getBatch().isEmpty());

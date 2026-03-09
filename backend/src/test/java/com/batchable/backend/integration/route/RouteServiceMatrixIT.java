@@ -2,10 +2,8 @@ package com.batchable.backend.integration.route;
 
 import com.batchable.backend.model.dto.DistanceMatrixResponse;
 import com.batchable.backend.service.RouteService;
-import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -29,9 +27,6 @@ class RouteServiceDistanceMatrixIT {
   @Autowired
   private RouteService routeService;
 
-  @Value("${google.routes.api-key}")
-  private String apiKey;
-
   /**
    * Tests that a valid request for a distance matrix between two origins and three destinations
    * returns a non‑null response with a matrix of the expected size and non‑negative travel times.
@@ -41,8 +36,6 @@ class RouteServiceDistanceMatrixIT {
    */
   @Test
   void testGetDistanceMatrix() {
-    Assumptions.assumeTrue(apiKey != null && !"test-api-key".equals(apiKey),
-        "GOOGLE_ROUTES_API_KEY must be set to a valid key for this integration test");
     // Origins and destinations for the matrix
     List<String> origins = Arrays.asList("Seattle, WA", "Redmond, WA");
     List<String> destinations = Arrays.asList("Bellevue, WA", "Redmond, WA", "Tacoma, WA");

@@ -23,12 +23,11 @@ import com.batchable.backend.model.dto.RouteDirectionsResponse;
 import com.batchable.backend.service.BatchingAlgorithm;
 import com.batchable.backend.service.BatchingAlgorithm.TentativeBatch;
 import com.batchable.backend.service.DbOrderService;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import com.batchable.backend.service.DriverService;
 import com.batchable.backend.service.RestaurantService;
 import com.batchable.backend.service.RouteService;
 import com.batchable.backend.twilio.TwilioManager;
+import com.batchable.backend.util.Log;
 
 /**
  * Manages order batching for a single restaurant.
@@ -40,8 +39,6 @@ import com.batchable.backend.twilio.TwilioManager;
  * All state modifications are serialized on a dedicated single‑thread executor.
  */
 public class RestaurantBatchingManager {
-
-  private static final Logger log = LoggerFactory.getLogger(RestaurantBatchingManager.class);
 
   private final long restaurantId;
   private String restaurantAddress;
@@ -315,13 +312,7 @@ public class RestaurantBatchingManager {
       // in active batch
       handleActiveBatchChange(order.batchId);
     } else if (!findAndUpdateReadyBatchOrder(order.id, true)) {
-      try {
-        batchingAlgorithm.removeOrder(batches.tentativeBatches, order.id, restaurantAddress);
-      } catch (IllegalArgumentException e) {
-        // Order not in tentative batches (e.g. skipped at init); allow delete to
-        // proceed
-        log.debug("Order {} not in tentative batches during remove: {}", order.id, e.getMessage());
-      }
+      batchingAlgorithm.removeOrder(batches.tentativeBatches, order.id, restaurantAddress);
     }
   }
 
