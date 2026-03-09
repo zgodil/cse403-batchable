@@ -40,6 +40,7 @@ export default function AddOrderModal({modal}: Props) {
       return;
     }
 
+    // clean and verify item names
     const itemNames = selectedItemNames
       .map(name => name.trim())
       .filter(name => name.length > 0);
@@ -48,6 +49,7 @@ export default function AddOrderModal({modal}: Props) {
       return;
     }
 
+    // stagger order timestamps
     const initialTime = new Date();
     const cookedTime = new Date(
       initialTime.getTime() + MS_PER_MINUTE * Number(data.cookTime),
@@ -56,6 +58,7 @@ export default function AddOrderModal({modal}: Props) {
       cookedTime.getTime() + MS_PER_MINUTE * Number(data.deliverTime),
     );
 
+    // create new order skeleton
     const order: Order = {
       id: fakeId('Order'),
       restaurant,

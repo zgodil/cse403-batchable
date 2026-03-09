@@ -16,7 +16,7 @@ interface Props {
 export default function OrderCard({order}: Props) {
   const editOrderModal = useModal();
 
-  // format times
+  // format timestamps
   const prepTime = formatTimeInterval(order.cookedTime.getTime() - Date.now());
   const deliverTime = formatTimeInterval(
     order.deliveryTime.getTime() - Date.now(),

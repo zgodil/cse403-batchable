@@ -32,6 +32,7 @@ export default function OrderRefreshProvider({
   const restaurant = useContext(RestaurantContext);
   const [monitor, setMonitor] = useState<RefreshMonitor | null>(null);
 
+  // create a monitor associated with the current RestaurantContext, whenever it changes
   useEffect(() => {
     if (!restaurant) return;
     const newMonitor = new RefreshMonitor(restaurant);

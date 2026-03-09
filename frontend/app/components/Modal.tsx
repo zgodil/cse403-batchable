@@ -43,6 +43,7 @@ export default function Modal({
 }: React.PropsWithChildren<Props>) {
   const dialogRef = useRef<HTMLDialogElement>(null);
 
+  // synchronizes the state of the <dialog> element with the state prop
   useLayoutEffect(() => {
     const dialog = dialogRef.current;
     if (!dialog) return;
