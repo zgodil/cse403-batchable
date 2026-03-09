@@ -21,6 +21,10 @@ public class SecurityConfig {
         .authorizeHttpRequests(auth -> auth
             .requestMatchers("/", "/restaurant", "/index.html", "/assets/**", "/favicon.ico")
             .permitAll()
+            .requestMatchers("/route/**")
+            .permitAll()
+            .requestMatchers("/driver/route/**", "/driver/returned/**", "/sse/orders/token/**")
+            .permitAll()
             .requestMatchers("/send-text", "/receive-text", "/twilio/**")
             .permitAll()
             .anyRequest().authenticated())

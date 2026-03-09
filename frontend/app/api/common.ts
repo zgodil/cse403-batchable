@@ -8,13 +8,17 @@ export async function fetchEndpoint(
   method: `${HttpMethods}`,
   path: Resource,
   body?: unknown,
+  options: {includeAuth?: boolean} = {},
 ) {
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
   };
-  const token = await getToken();
-  if (token) {
-    headers['Authorization'] = `Bearer ${token}`;
+  const includeAuth = options.includeAuth ?? true;
+  if (includeAuth) {
+    const token = await getToken();
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
   }
   const response = await apiFetch(path, {
     body: body !== undefined ? JSON.stringify(body) : undefined,
@@ -34,6 +38,7 @@ export async function fetchJSON(
   method: `${HttpMethods}`,
   path: Resource,
   body?: unknown,
+  options: {includeAuth?: boolean} = {},
 ) {
-  return await (await fetchEndpoint(method, path, body)).json();
+  return await (await fetchEndpoint(method, path, body, options)).json();
 }
