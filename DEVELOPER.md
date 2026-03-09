@@ -140,7 +140,6 @@ Releases must be built from the main branch after all changes have been merged a
 Prior to packaging the release, update the version in the documentation.
 
 ## 7. Twilio Service
-
 The backend includes a `TwilioManager` component that handles all SMS activity. SMS messages are sent when a driver is assigned an order.
 
 ### Configuration
