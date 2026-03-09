@@ -48,7 +48,9 @@ export default function OrderRefreshProvider({
 
   useEffect(() => {
     if (useDriverToken) {
-      const newMonitor = driverToken ? RefreshMonitor.forDriver(driverToken) : null;
+      const newMonitor = driverToken
+        ? RefreshMonitor.forDriver(driverToken)
+        : null;
       setMonitor(newMonitor);
       return () => newMonitor?.close();
     }
