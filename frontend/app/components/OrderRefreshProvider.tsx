@@ -17,11 +17,14 @@ class RefreshMonitor extends EventTarget {
   }
 }
 
+/**
+ * Represents an EventTarget which monitors order and batch changes. This should not be used directly as a context tag, but rather via `useContext(OrderRefreshContext)` with `<OrderRefreshProvider>`.
+ */
 export const OrderRefreshContext = createContext<RefreshMonitor | null>(null);
 
 /**
  * Provides an EventTarget to which any component can attach via useEffect.
- * It emits an event whenever orders or batches have changed.
+ * It emits an event (`'orderUpdate'`) whenever orders or batches have changed.
  */
 export default function OrderRefreshProvider({
   children,

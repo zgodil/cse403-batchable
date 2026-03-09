@@ -2,6 +2,9 @@ import {createContext, useEffect, useState} from 'react';
 import {restaurantApi} from '~/api/endpoints/restaurant';
 import {fakeId, type Restaurant} from '~/domain/objects';
 
+/**
+ * Represents the ID of the restaurant associated with the current user. This should not be used as a standalone context tag, but rather used via `useContext(RestaurantContext)` in combination with `<RestaurantProvider>`.
+ */
 export const RestaurantContext = createContext<Restaurant['id'] | null>(null);
 
 const DEFAULT_RESTAURANT_ID: Restaurant['id'] = {
