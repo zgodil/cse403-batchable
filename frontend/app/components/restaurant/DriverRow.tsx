@@ -11,6 +11,15 @@ type DriverRowProps = {
   onDelete: () => void;
 };
 
+/**
+ * Represents an editable table row for a single driver on the restaurant page.
+ * @param driver The driver shown in this row.
+ * @param isEditingSection Whether the parent section is in edit mode.
+ * @param isEditingDriver Whether this row is currently being edited.
+ * @param onStartEdit Callback to begin editing this row.
+ * @param onSave Callback to persist row changes.
+ * @param onDelete Callback to delete this driver.
+ */
 export default function DriverRow({
   driver,
   isEditingSection,
@@ -35,6 +44,7 @@ export default function DriverRow({
   }, [driver, isEditingDriver]);
 
   useEffect(() => {
+    // save draft changes when section edit mode is turned off
     const closedSection = wasEditingSection.current && !isEditingSection;
     if (closedSection && wasEditingDriver.current && hasDraftChanges) {
       onSave(draftDriver);

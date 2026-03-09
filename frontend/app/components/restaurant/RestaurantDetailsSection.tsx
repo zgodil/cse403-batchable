@@ -8,6 +8,10 @@ type RestaurantDetailsSectionProps = {
   initialRestaurant: Restaurant;
 };
 
+/**
+ * Represents the restaurant details editor on the restaurant page.
+ * @param initialRestaurant The initial restaurant data loaded by the page.
+ */
 function RestaurantDetailsSection({
   initialRestaurant,
 }: RestaurantDetailsSectionProps) {
@@ -35,6 +39,7 @@ function RestaurantDetailsSection({
     return true;
   };
 
+  // enter edit mode from saved state; exit by persisting current draft
   const toggleEditing = async () => {
     if (!isEditing) {
       setDraftRestaurant(restaurant);

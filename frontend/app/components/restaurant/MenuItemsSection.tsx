@@ -20,6 +20,12 @@ type MenuItemsSectionProps = {
   setIsEditing: Dispatch<SetStateAction<boolean>>;
 };
 
+/**
+ * Represents the menu-item management section on the restaurant page.
+ * @param initialMenuItems The initial set of menu items loaded by the page.
+ * @param isEditing Whether this section is currently in edit mode.
+ * @param setIsEditing Setter controlled by the parent page.
+ */
 function MenuItemsSection({
   initialMenuItems,
   isEditing,
@@ -42,6 +48,7 @@ function MenuItemsSection({
     setIsEditing(!isEditing);
   };
 
+  // reload from backend after failed mutations
   const refreshMenuItems = async () => {
     if (!restaurantId) {
       return false;
