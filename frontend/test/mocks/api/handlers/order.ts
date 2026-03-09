@@ -114,12 +114,14 @@ export const orderHandlers = [
   sse<{refresh: string}>(
     endpoint('/sse/orders/token/:token'),
     async ({client}) => {
-      db.orders.addEventListener('change', () => {
+      const sendRefreshEvent = () => {
         client.send({
           event: 'refresh',
           data: '<<this should never matter/driver>>',
         });
-      });
+      };
+      db.orders.addEventListener('change', sendRefreshEvent);
+      db.batches.addEventListener('change', sendRefreshEvent);
     },
   ),
 ];
