@@ -128,7 +128,11 @@ Backend tests are written using JUnit and Mockito. We follow standard JUnit test
 
 Controller tests should verify HTTP behavior and response correctness. When testing components that depend on external services such as Twilio, those services should be mocked rather than invoked directly.
 
+#### Database Interaction
 If a test requires database interaction, ensure the database is running before executing integration tests. All new backend features must include corresponding tests before being merged into main. Please follow existing test structure and naming conventions for consistency.
+
+#### Twilio Interaction
+If a test requires Twilio interaction, you must mock the Twilio client; existing tests under `backend/src/test/java/com/batchable/backend/twilio/` demonstrate the pattern.
 
 ## 6. How to Build a Release of the Software
 Releases must be built from the main branch after all changes have been merged and validated. Before building a release, developers must ensure that all backend and frontend tests pass and that the application runs successfully in a local development environment.
@@ -140,19 +144,14 @@ Prior to packaging the release, update the version in the documentation.
 The backend includes a `TwilioManager` component that handles all SMS activity. SMS messages are sent when a driver is assigned an order.
 
 ### Configuration
-Required environment variables (added to `vars.env`/ CI secrets) are stated above in the`Installation` section, but we'll explain a bit more throughly here.
+Required environment variables (added to `vars.env`/CI secrets) are stated above in the `Installation` section, but we'll explain a bit more throughly here.
 
 * `TWILIO_ACCOUNT_SID` – Twilio account SID
 * `TWILIO_AUTH_TOKEN` – Twilio auth token
 * `TWILIO_PHONE_NUMBER` – the number Twilio will use as the sender
-* `TWILIO_DRIVER_PHONE_NUMBER` – a placeholder driver number used during development/trial (drivers normally reply via the link)
+* `TWILIO_DRIVER_PHONE_NUMBER` – a placeholder driver number used during development/trial (drivers send information back via the received link)
 
 During development we use a Twilio trial account and the virtual phone number. The trial account can only message verified numbers, so the driver number configured above must be validated in Twilio.
 
-### How it works
-
-1. **Outbound notification** – when an order is created and a driver is selected. The manager formats a message containing a short instruction and a link to the backend.
-
-### Testing
-
-* **Unit tests** – mock the Twilio client; existing tests under `backend/src/test/java/com/batchable/backend/twilio/` demonstrate the pattern.
+### How it Works
+**Outbound notification** – when an order is created and a driver is selected. The manager formats a message containing a short instruction and a link to the backend.
