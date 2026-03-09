@@ -14,46 +14,95 @@ import java.util.Optional;
 @Repository
 public class RestaurantDAO {
 
-    // Spring-managed connection pool
-    private final DataSource dataSource;
+  // Spring-managed connection pool
+  private final DataSource dataSource;
 
-    public RestaurantDAO(DataSource dataSource) {
-        this.dataSource = dataSource;
-    }
+  public RestaurantDAO(DataSource dataSource) {
+    this.dataSource = dataSource;
+  }
 
-    public long createRestaurant(String name, String location) throws SQLException {
-        return createRestaurant(name, location, null);
-    }
 
-    public long createRestaurant(String name, String location, String auth0UserId) throws SQLException {
-        final String sql = "INSERT INTO Restaurant(name, location, auth0_user_id) VALUES (?, ?, ?) RETURNING id;";
-        try (Connection conn = dataSource.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
+  // This exists for backwards compatbility for pre-auth restaurants
+  public long createRestaurant(String name, String location) throws SQLException {
+    return createRestaurant(name, location, null);
+  }
+  
+  public long createRestaurant(String name, String location, String auth0UserId) throws SQLException {
+    final String sql = "INSERT INTO Restaurant(name, location, auth0_user_id) VALUES (?, ?, ?) RETURNING id;";
 
-            ps.setString(1, name);
-            ps.setString(2, location);
-            ps.setString(3, auth0UserId);
+    try (Connection conn = dataSource.getConnection()) {
+      conn.setAutoCommit(false);
 
-            try (ResultSet rs = ps.executeQuery()) {
-                rs.next();
-                return rs.getLong("id");
-            }
+      try (PreparedStatement ps = conn.prepareStatement(sql)) {
+        ps.setString(1, name);
+        ps.setString(2, location);
+
+        try (ResultSet rs = ps.executeQuery()) {
+          rs.next();
+          long id = rs.getLong("id");
+          conn.commit();
+          return id;
         }
+      } catch (SQLException e) {
+        conn.rollback();
+        throw e;
+      }
+    }
+  }
+
+  public Optional<Restaurant> getRestaurant(long id) throws SQLException {
+    final String sql = "SELECT id, name, location FROM Restaurant WHERE id = ?;";
+
+    try (Connection conn = dataSource.getConnection();
+        PreparedStatement ps = conn.prepareStatement(sql)) {
+
+      ps.setLong(1, id);
+
+      try (ResultSet rs = ps.executeQuery()) {
+        if (!rs.next())
+          return Optional.empty();
+        return Optional.of(mapRestaurant(rs));
+      }
+    }
+  }
+
+  public List<Restaurant> listRestaurants() throws SQLException {
+    final String sql = "SELECT id, name, location FROM Restaurant ORDER BY id;";
+    List<Restaurant> out = new ArrayList<>();
+
+    try (Connection conn = dataSource.getConnection();
+        PreparedStatement ps = conn.prepareStatement(sql);
+        ResultSet rs = ps.executeQuery()) {
+
+      while (rs.next()) {
+        out.add(mapRestaurant(rs));
+      }
     }
 
-    public Optional<Restaurant> getRestaurant(long id) throws SQLException {
-        final String sql = "SELECT id, name, location FROM Restaurant WHERE id = ?;";
-        try (Connection conn = dataSource.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
+    return out;
+  }
 
-            ps.setLong(1, id);
+  public boolean updateRestaurant(long restaurantId, String name, String location)
+      throws SQLException {
+    final String sql = "UPDATE Restaurant SET name = ?, location = ? WHERE id = ?;";
 
-            try (ResultSet rs = ps.executeQuery()) {
-                if (!rs.next()) return Optional.empty();
-                return Optional.of(mapRestaurant(rs));
-            }
-        }
+    try (Connection conn = dataSource.getConnection()) {
+      conn.setAutoCommit(false);
+
+      try (PreparedStatement ps = conn.prepareStatement(sql)) {
+        ps.setString(1, name);
+        ps.setString(2, location);
+        ps.setLong(3, restaurantId);
+
+        boolean updated = ps.executeUpdate() == 1;
+        conn.commit();
+        return updated;
+      } catch (SQLException e) {
+        conn.rollback();
+        throw e;
+      }
     }
+  }
 
     public Optional<Restaurant> getRestaurantByAuth0UserId(String auth0UserId) throws SQLException {
         if (auth0UserId == null || auth0UserId.isBlank()) return Optional.empty();
@@ -70,90 +119,69 @@ public class RestaurantDAO {
         }
     }
 
-    public List<Restaurant> listRestaurants() throws SQLException {
-        final String sql = "SELECT id, name, location FROM Restaurant ORDER BY id;";
-        List<Restaurant> out = new ArrayList<>();
+  public boolean deleteRestaurant(long restaurantId) throws SQLException {
+    final String sql = "DELETE FROM Restaurant WHERE id = ?;";
 
-        try (Connection conn = dataSource.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql);
-             ResultSet rs = ps.executeQuery()) {
+    try (Connection conn = dataSource.getConnection()) {
+      conn.setAutoCommit(false);
 
-            while (rs.next()) {
-                out.add(mapRestaurant(rs));
-            }
-        }
-
-        return out;
+      try (PreparedStatement ps = conn.prepareStatement(sql)) {
+        ps.setLong(1, restaurantId);
+        boolean deleted = ps.executeUpdate() == 1;
+        conn.commit();
+        return deleted;
+      } catch (SQLException e) {
+        conn.rollback();
+        throw e;
+      }
     }
+  }
 
-    public boolean updateRestaurant(long restaurantId, String name, String location) throws SQLException {
-        final String sql = "UPDATE Restaurant SET name = ?, location = ? WHERE id = ?;";
-        try (Connection conn = dataSource.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
+  public boolean restaurantExists(long restaurantId) throws SQLException {
+    final String sql = "SELECT 1 FROM Restaurant WHERE id = ? LIMIT 1;";
 
-            ps.setString(1, name);
-            ps.setString(2, location);
-            ps.setLong(3, restaurantId);
+    try (Connection conn = dataSource.getConnection();
+        PreparedStatement ps = conn.prepareStatement(sql)) {
 
-            return ps.executeUpdate() == 1;
-        }
+      ps.setLong(1, restaurantId);
+
+      try (ResultSet rs = ps.executeQuery()) {
+        return rs.next();
+      }
     }
+  }
 
-    public boolean deleteRestaurant(long restaurantId) throws SQLException {
-        final String sql = "DELETE FROM Restaurant WHERE id = ?;";
-        try (Connection conn = dataSource.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
+  public boolean restaurantExistsByName(String name) throws SQLException {
+    final String sql = "SELECT 1 FROM Restaurant WHERE name = ? LIMIT 1;";
 
-            ps.setLong(1, restaurantId);
-            return ps.executeUpdate() == 1;
-        }
+    try (Connection conn = dataSource.getConnection();
+        PreparedStatement ps = conn.prepareStatement(sql)) {
+
+      ps.setString(1, name);
+
+      try (ResultSet rs = ps.executeQuery()) {
+        return rs.next();
+      }
     }
+  }
 
-    public boolean restaurantExists(long restaurantId) throws SQLException {
-        final String sql = "SELECT 1 FROM Restaurant WHERE id = ? LIMIT 1;";
-        try (Connection conn = dataSource.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
+  public boolean restaurantExistsByNameExcludingId(long excludedRestaurantId, String name)
+      throws SQLException {
+    final String sql = "SELECT 1 FROM Restaurant WHERE name = ? AND id <> ? LIMIT 1;";
 
-            ps.setLong(1, restaurantId);
+    try (Connection conn = dataSource.getConnection();
+        PreparedStatement ps = conn.prepareStatement(sql)) {
 
-            try (ResultSet rs = ps.executeQuery()) {
-                return rs.next();
-            }
-        }
+      ps.setString(1, name);
+      ps.setLong(2, excludedRestaurantId);
+
+      try (ResultSet rs = ps.executeQuery()) {
+        return rs.next();
+      }
     }
+  }
 
-    public boolean restaurantExistsByName(String name) throws SQLException {
-        final String sql = "SELECT 1 FROM Restaurant WHERE name = ? LIMIT 1;";
-        try (Connection conn = dataSource.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
-
-            ps.setString(1, name);
-
-            try (ResultSet rs = ps.executeQuery()) {
-                return rs.next();
-            }
-        }
-    }
-
-    public boolean restaurantExistsByNameExcludingId(long excludedRestaurantId, String name) throws SQLException {
-        final String sql = "SELECT 1 FROM Restaurant WHERE name = ? AND id <> ? LIMIT 1;";
-        try (Connection conn = dataSource.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
-
-            ps.setString(1, name);
-            ps.setLong(2, excludedRestaurantId);
-
-            try (ResultSet rs = ps.executeQuery()) {
-                return rs.next();
-            }
-        }
-    }
-
-    private static Restaurant mapRestaurant(ResultSet rs) throws SQLException {
-        return new Restaurant(
-            rs.getLong("id"),
-            rs.getString("name"),
-            rs.getString("location")
-        );
-    }
+  private static Restaurant mapRestaurant(ResultSet rs) throws SQLException {
+    return new Restaurant(rs.getLong("id"), rs.getString("name"), rs.getString("location"));
+  }
 }

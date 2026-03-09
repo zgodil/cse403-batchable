@@ -9,7 +9,9 @@ import com.batchable.backend.db.dao.DriverDAO;
 import com.batchable.backend.db.dao.RestaurantDAO;
 import com.batchable.backend.db.models.Batch;
 import com.batchable.backend.db.models.Driver;
+import com.batchable.backend.service.DbOrderService;
 import com.batchable.backend.service.DriverService;
+import com.batchable.backend.service.RestaurantService;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.Statement;
@@ -33,6 +35,8 @@ public class DriverServiceIT_CI extends PostgresTestBase {
   private DriverDAO driverDAO;
   private BatchDAO batchDAO;
   private RestaurantDAO restaurantDAO;
+  private DbOrderService dbOrderService;
+  private RestaurantService restaurantService;
 
   private TestDataSource ds;
 
@@ -45,7 +49,7 @@ public class DriverServiceIT_CI extends PostgresTestBase {
     batchDAO = new BatchDAO(ds);
     restaurantDAO = new RestaurantDAO(ds);
 
-    driverService = new DriverService(driverDAO, batchDAO);
+    driverService = new DriverService(driverDAO, batchDAO, dbOrderService, restaurantService);
 
     cleanDb();
   }

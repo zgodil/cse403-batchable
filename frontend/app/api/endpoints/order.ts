@@ -7,19 +7,16 @@ class OrderApi extends CrudApi<Order> {
   constructor() {
     super('/order', json.order);
   }
-
-  /** Create order; throws on error so caller can show the server message (e.g. invalid address). */
-  override async create(domainObject: Order): Promise<Order['id'] | null> {
+  async markDelivered({id}: Order['id'], driverToken: string) {
     try {
-      const id = await fetchJSON(
-        'POST',
-        this.resource,
-        json.order.unparse(domainObject),
+      await fetchEndpoint(
+        'PUT',
+        `${this.resource}/${id}/delivered/${driverToken}`,
       );
-      return json.order.field('id').parse(id);
+      return true;
     } catch (err) {
-      this.error(`Failed to create ${this.resource}`, domainObject, err);
-      throw err;
+      this.error(`Failed to mark order as delivered; id=${id}`, err);
+      return false;
     }
   }
   async advanceState({id}: Order['id']) {
