@@ -4,7 +4,6 @@ import com.batchable.backend.db.models.Batch;
 import com.batchable.backend.db.models.Driver;
 import com.batchable.backend.db.models.Order;
 import com.batchable.backend.db.models.Order.State;
-import com.batchable.backend.exception.InvalidOrderAddressException;
 import java.time.Instant;
 import java.util.List;
 import org.springframework.stereotype.Service;
@@ -32,20 +31,10 @@ public class OrderService {
    *
    * @param order the order to create (ID must be <= 0)
    * @return the generated order ID
-   * @throws InvalidOrderAddressException if the restaurant or delivery address is invalid (route
-   *         cannot be computed); the order is not persisted in that case
    */
   public long createOrder(Order order) {
     long id = dbOrderService.createOrder(order);
-    try {
-      batchingManager.addOrder(dbOrderService.getOrder(id));
-    } catch (IllegalStateException e) {
-      // BatchingAlgorithm already removed the order from DB when route failed
-      if (e.getMessage() != null && e.getMessage().contains("Could not add order")) {
-        throw new InvalidOrderAddressException(e.getMessage(), e);
-      }
-      throw e;
-    }
+    batchingManager.addOrder(dbOrderService.getOrder(id));
     return id;
   }
 
