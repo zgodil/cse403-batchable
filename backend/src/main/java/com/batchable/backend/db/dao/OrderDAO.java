@@ -82,37 +82,43 @@ public class OrderDAO {
    * @return the auto-generated ID of the new order
    * @throws SQLException if a database access error occurs
    */
-  public long createOrder(long restaurantId, String destination, String itemNamesJson, // e.g.
-                                                                                       // ["Burger","Fries"]
+  public long createOrder(long restaurantId, String destination, String itemNamesJson,
       Instant initialTime, Instant deliveryTime, Instant cookedTime, Order.State state,
-      boolean highPriority, Long batchId // nullable
-  ) throws SQLException {
+      boolean highPriority, Long batchId) throws SQLException {
 
     final String sql = "INSERT INTO \"Order\"("
         + " restaurant_id, destination, item_names, initial_time, delivery_time, cooked_time,"
         + " state, high_priority, batch_id" + ") VALUES ("
         + " ?, ?, ?::json, ?, ?, ?, ?::order_state, ?, ?" + ") RETURNING id;";
 
-    try (Connection conn = dataSource.getConnection();
-        PreparedStatement ps = conn.prepareStatement(sql)) {
+    try (Connection conn = dataSource.getConnection()) {
+      conn.setAutoCommit(false);
 
-      ps.setLong(1, restaurantId);
-      ps.setString(2, destination);
-      ps.setString(3, itemNamesJson);
-      ps.setTimestamp(4, ts(initialTime));
-      ps.setTimestamp(5, ts(deliveryTime));
-      ps.setTimestamp(6, ts(cookedTime));
-      ps.setString(7, state.name());
-      ps.setBoolean(8, highPriority);
+      try (PreparedStatement ps = conn.prepareStatement(sql)) {
+        ps.setLong(1, restaurantId);
+        ps.setString(2, destination);
+        ps.setString(3, itemNamesJson);
+        ps.setTimestamp(4, ts(initialTime));
+        ps.setTimestamp(5, ts(deliveryTime));
+        ps.setTimestamp(6, ts(cookedTime));
+        ps.setString(7, state.name());
+        ps.setBoolean(8, highPriority);
 
-      if (batchId == null)
-        ps.setNull(9, Types.BIGINT);
-      else
-        ps.setLong(9, batchId);
+        if (batchId == null) {
+          ps.setNull(9, Types.BIGINT);
+        } else {
+          ps.setLong(9, batchId);
+        }
 
-      try (ResultSet rs = ps.executeQuery()) {
-        rs.next();
-        return rs.getLong("id");
+        try (ResultSet rs = ps.executeQuery()) {
+          rs.next();
+          long id = rs.getLong("id");
+          conn.commit();
+          return id;
+        }
+      } catch (SQLException e) {
+        conn.rollback();
+        throw e;
       }
     }
   }
@@ -154,12 +160,19 @@ public class OrderDAO {
   public boolean updateOrderState(long orderId, Order.State newState) throws SQLException {
     final String sql = "UPDATE \"Order\" SET state = ?::order_state WHERE id = ?;";
 
-    try (Connection conn = dataSource.getConnection();
-        PreparedStatement ps = conn.prepareStatement(sql)) {
+    try (Connection conn = dataSource.getConnection()) {
+      conn.setAutoCommit(false);
 
-      ps.setString(1, newState.name());
-      ps.setLong(2, orderId);
-      return ps.executeUpdate() == 1;
+      try (PreparedStatement ps = conn.prepareStatement(sql)) {
+        ps.setString(1, newState.name());
+        ps.setLong(2, orderId);
+        boolean updated = ps.executeUpdate() == 1;
+        conn.commit();
+        return updated;
+      } catch (SQLException e) {
+        conn.rollback();
+        throw e;
+      }
     }
   }
 
@@ -174,12 +187,19 @@ public class OrderDAO {
   public boolean updateOrderCookedTime(long orderId, Instant cookedTime) throws SQLException {
     final String sql = "UPDATE \"Order\" SET cooked_time = ? WHERE id = ?;";
 
-    try (Connection conn = dataSource.getConnection();
-        PreparedStatement ps = conn.prepareStatement(sql)) {
+    try (Connection conn = dataSource.getConnection()) {
+      conn.setAutoCommit(false);
 
-      ps.setTimestamp(1, ts(cookedTime));
-      ps.setLong(2, orderId);
-      return ps.executeUpdate() == 1;
+      try (PreparedStatement ps = conn.prepareStatement(sql)) {
+        ps.setTimestamp(1, ts(cookedTime));
+        ps.setLong(2, orderId);
+        boolean updated = ps.executeUpdate() == 1;
+        conn.commit();
+        return updated;
+      } catch (SQLException e) {
+        conn.rollback();
+        throw e;
+      }
     }
   }
 
@@ -194,12 +214,19 @@ public class OrderDAO {
   public boolean updateOrderDeliveryTime(long orderId, Instant deliveryTime) throws SQLException {
     final String sql = "UPDATE \"Order\" SET delivery_time = ? WHERE id = ?;";
 
-    try (Connection conn = dataSource.getConnection();
-        PreparedStatement ps = conn.prepareStatement(sql)) {
+    try (Connection conn = dataSource.getConnection()) {
+      conn.setAutoCommit(false);
 
-      ps.setTimestamp(1, ts(deliveryTime));
-      ps.setLong(2, orderId);
-      return ps.executeUpdate() == 1;
+      try (PreparedStatement ps = conn.prepareStatement(sql)) {
+        ps.setTimestamp(1, ts(deliveryTime));
+        ps.setLong(2, orderId);
+        boolean updated = ps.executeUpdate() == 1;
+        conn.commit();
+        return updated;
+      } catch (SQLException e) {
+        conn.rollback();
+        throw e;
+      }
     }
   }
 
@@ -214,12 +241,19 @@ public class OrderDAO {
   public boolean setOrderHighPriority(long orderId, boolean highPriority) throws SQLException {
     final String sql = "UPDATE \"Order\" SET high_priority = ? WHERE id = ?;";
 
-    try (Connection conn = dataSource.getConnection();
-        PreparedStatement ps = conn.prepareStatement(sql)) {
+    try (Connection conn = dataSource.getConnection()) {
+      conn.setAutoCommit(false);
 
-      ps.setBoolean(1, highPriority);
-      ps.setLong(2, orderId);
-      return ps.executeUpdate() == 1;
+      try (PreparedStatement ps = conn.prepareStatement(sql)) {
+        ps.setBoolean(1, highPriority);
+        ps.setLong(2, orderId);
+        boolean updated = ps.executeUpdate() == 1;
+        conn.commit();
+        return updated;
+      } catch (SQLException e) {
+        conn.rollback();
+        throw e;
+      }
     }
   }
 
@@ -242,17 +276,24 @@ public class OrderDAO {
         + "initial_time = ?, cooked_time = ?, delivery_time = ?, "
         + "batch_id = NULL, high_priority = ? WHERE id = ?;";
 
-    try (Connection conn = dataSource.getConnection();
-        PreparedStatement ps = conn.prepareStatement(sql)) {
+    try (Connection conn = dataSource.getConnection()) {
+      conn.setAutoCommit(false);
 
-      ps.setString(1, resetState.name()); // for ::order_state cast
-      ps.setTimestamp(2, ts(newInitialTime)); // convert Instant to Timestamp
-      ps.setTimestamp(3, ts(newCookedTime)); // convert Instant to Timestamp
-      ps.setTimestamp(4, ts(newDeliveryTime));
-      ps.setBoolean(5, highPriority);
-      ps.setLong(6, orderId);
+      try (PreparedStatement ps = conn.prepareStatement(sql)) {
+        ps.setString(1, resetState.name());
+        ps.setTimestamp(2, ts(newInitialTime));
+        ps.setTimestamp(3, ts(newCookedTime));
+        ps.setTimestamp(4, ts(newDeliveryTime));
+        ps.setBoolean(5, highPriority);
+        ps.setLong(6, orderId);
 
-      return ps.executeUpdate() == 1;
+        boolean updated = ps.executeUpdate() == 1;
+        conn.commit();
+        return updated;
+      } catch (SQLException e) {
+        conn.rollback();
+        throw e;
+      }
     }
   }
 
@@ -266,11 +307,18 @@ public class OrderDAO {
   public boolean deleteOrder(long orderId) throws SQLException {
     final String sql = "DELETE FROM \"Order\" WHERE id = ?;";
 
-    try (Connection conn = dataSource.getConnection();
-        PreparedStatement ps = conn.prepareStatement(sql)) {
+    try (Connection conn = dataSource.getConnection()) {
+      conn.setAutoCommit(false);
 
-      ps.setLong(1, orderId);
-      return ps.executeUpdate() == 1;
+      try (PreparedStatement ps = conn.prepareStatement(sql)) {
+        ps.setLong(1, orderId);
+        boolean deleted = ps.executeUpdate() == 1;
+        conn.commit();
+        return deleted;
+      } catch (SQLException e) {
+        conn.rollback();
+        throw e;
+      }
     }
   }
 
@@ -383,12 +431,19 @@ public class OrderDAO {
   public boolean updateOrderBatchId(long orderId, long batchId) throws SQLException {
     final String sql = "UPDATE \"Order\" SET batch_id = ? WHERE id = ?;";
 
-    try (Connection conn = dataSource.getConnection();
-        PreparedStatement ps = conn.prepareStatement(sql)) {
+    try (Connection conn = dataSource.getConnection()) {
+      conn.setAutoCommit(false);
 
-      ps.setLong(1, batchId);
-      ps.setLong(2, orderId);
-      return ps.executeUpdate() == 1;
+      try (PreparedStatement ps = conn.prepareStatement(sql)) {
+        ps.setLong(1, batchId);
+        ps.setLong(2, orderId);
+        boolean updated = ps.executeUpdate() == 1;
+        conn.commit();
+        return updated;
+      } catch (SQLException e) {
+        conn.rollback();
+        throw e;
+      }
     }
   }
 
@@ -402,11 +457,18 @@ public class OrderDAO {
   public boolean clearOrderBatchId(long orderId) throws SQLException {
     final String sql = "UPDATE \"Order\" SET batch_id = NULL WHERE id = ?;";
 
-    try (Connection conn = dataSource.getConnection();
-        PreparedStatement ps = conn.prepareStatement(sql)) {
+    try (Connection conn = dataSource.getConnection()) {
+      conn.setAutoCommit(false);
 
-      ps.setLong(1, orderId);
-      return ps.executeUpdate() == 1;
+      try (PreparedStatement ps = conn.prepareStatement(sql)) {
+        ps.setLong(1, orderId);
+        boolean updated = ps.executeUpdate() == 1;
+        conn.commit();
+        return updated;
+      } catch (SQLException e) {
+        conn.rollback();
+        throw e;
+      }
     }
   }
 }

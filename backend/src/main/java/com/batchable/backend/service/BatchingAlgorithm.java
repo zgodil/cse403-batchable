@@ -27,7 +27,7 @@ public class BatchingAlgorithm {
   private final RouteService routeService;
   private final DbOrderService dbOrderService;
   private final int SECONDS_TO_HAND_DELIVER = 6; // seconds to park, walk up, walk back
-  private final int PADDING_SECONDS = 6;  // expected upper bound in variability of direct route time estimates
+  private final int PADDING_SECONDS = 60;  // expected upper bound in variability of direct route time estimates
 
   // Cache travel times between origins and destinations, expiring 15 minutes after write
   private final Cache<String, Integer> travelTimeCache =
@@ -199,7 +199,6 @@ public class BatchingAlgorithm {
    */
   public void addOrder(final List<TentativeBatch> batches, final Order order,
       String restaurantAddress) {
-    Instant now = Instant.now();
     if (order.initialTime.isAfter(order.cookedTime)
         || order.cookedTime.isAfter(order.deliveryTime)) {
       throw new IllegalStateException(
