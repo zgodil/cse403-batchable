@@ -181,7 +181,7 @@ public class BatchingManager {
     Order order = dbOrderService.getOrder(orderId);
     long restaurantId = order.restaurantId;
     if (restaurantManagers.containsKey(restaurantId)) {
-      restaurantManagers.get(restaurantId).removeOrder(orderId);
+      restaurantManagers.get(restaurantId).removeOrder(order);
     }
   }
 

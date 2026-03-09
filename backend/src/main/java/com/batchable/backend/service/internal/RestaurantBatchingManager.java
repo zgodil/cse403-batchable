@@ -29,7 +29,6 @@ import com.batchable.backend.service.DriverService;
 import com.batchable.backend.service.RestaurantService;
 import com.batchable.backend.service.RouteService;
 import com.batchable.backend.twilio.TwilioManager;
-import com.batchable.backend.util.Log;
 
 /**
  * Manages order batching for a single restaurant.
@@ -315,13 +314,13 @@ public class RestaurantBatchingManager {
     if (order.batchId != null) {
       // in active batch
       handleActiveBatchChange(order.batchId);
-    } else if (!findAndUpdateReadyBatchOrder(orderId, true)) {
+    } else if (!findAndUpdateReadyBatchOrder(order.id, true)) {
       try {
-        batchingAlgorithm.removeOrder(batches.tentativeBatches, orderId, restaurantAddress);
+        batchingAlgorithm.removeOrder(batches.tentativeBatches, order.id, restaurantAddress);
       } catch (IllegalArgumentException e) {
         // Order not in tentative batches (e.g. skipped at init); allow delete to
         // proceed
-        log.debug("Order {} not in tentative batches during remove: {}", orderId, e.getMessage());
+        log.debug("Order {} not in tentative batches during remove: {}", order.id, e.getMessage());
       }
     }
   }

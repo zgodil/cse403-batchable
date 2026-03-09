@@ -39,7 +39,7 @@ export default function OrderRefreshProvider({
   useDriverToken = false,
   children,
 }: React.PropsWithChildren<Props>) {
-  const restaurant = useContext(RestaurantContext);
+  const {restaurantId} = useContext(RestaurantContext);
   const driverToken = useContext(DriverTokenContext);
   const [monitor, setMonitor] = useState<RefreshMonitor | null>(null);
 
@@ -48,12 +48,14 @@ export default function OrderRefreshProvider({
     if (useDriverToken) {
       newMonitor = driverToken ? RefreshMonitor.forDriver(driverToken) : null;
     } else {
-      newMonitor = restaurant ? RefreshMonitor.forRestaurant(restaurant) : null;
+      newMonitor = restaurantId
+        ? RefreshMonitor.forRestaurant(restaurantId)
+        : null;
     }
     if (!newMonitor) return;
     setMonitor(newMonitor);
     return () => newMonitor?.close();
-  }, [restaurant]);
+  }, [driverToken, restaurantId, useDriverToken]);
 
   return <OrderRefreshContext value={monitor}>{children}</OrderRefreshContext>;
 }
