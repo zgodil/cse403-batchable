@@ -10,6 +10,13 @@ interface Props {
   state: ModalState;
   onCreated: (menuItem: MenuItem) => void;
 }
+
+/**
+ * Represents a modal on the restaurant page used to add a new menu item.
+ * See {@link FormModal} for more details on this kind of dialog.
+ * @param state The state of the modal.
+ * @param onCreated Callback invoked after the menu item is created.
+ */
 export default function AddMenuItemModal({state, onCreated}: Props) {
   const restaurant = useContext(RestaurantContext);
   const submitNewMenuItem = async (data: {name: string}) => {
@@ -18,6 +25,7 @@ export default function AddMenuItemModal({state, onCreated}: Props) {
       return;
     }
 
+    // create new menu item skeleton
     const newMenuItem: MenuItem = {
       id: fakeId('MenuItem'),
       restaurant,

@@ -10,6 +10,12 @@ interface Props {
   onCreate: (driver: Driver) => Promise<void> | void;
 }
 
+/**
+ * Represents a modal on the restaurant page used to add a new driver.
+ * See {@link FormModal} for more details on this kind of dialog.
+ * @param state The state of the modal.
+ * @param onCreate Callback invoked with the new driver data.
+ */
 export default function AddDriverModal({state, onCreate}: Props) {
   const restaurant = useContext(RestaurantContext);
   const submitNewDriver = (data: {

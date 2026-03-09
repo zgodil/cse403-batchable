@@ -20,6 +20,9 @@ type RestaurantPageData = {
   menuItems: MenuItem[];
 };
 
+/**
+ * Represents the restaurant admin page.
+ */
 function RestaurantPage() {
   const restaurantId = useContext(RestaurantContext);
   const [data, setData] = useState<RestaurantPageData | null>(null);
@@ -43,6 +46,7 @@ function RestaurantPage() {
       setIsLoadingData(true);
       setLoadError(null);
       try {
+        // load page data together so sections render from one backend snapshot
         const [restaurant, drivers, menuItems] = await Promise.all([
           restaurantApi.read(restaurantId),
           restaurantApi.getDrivers(restaurantId),
@@ -81,6 +85,7 @@ function RestaurantPage() {
     };
   }, [restaurantId]);
 
+  // map section-level boolean editing to one mutually-exclusive edit section
   const setIsEditingDriversExclusive: Dispatch<
     SetStateAction<boolean>
   > = value =>
