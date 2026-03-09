@@ -36,6 +36,12 @@ public class RestaurantDAO {
       try (PreparedStatement ps = conn.prepareStatement(sql)) {
         ps.setString(1, name);
         ps.setString(2, location);
+        // add auth while preserving backwards compatibility
+        if (auth0UserId == null || auth0UserId.isBlank()) {
+          ps.setNull(3, Types.VARCHAR);
+        } else {
+          ps.setString(3, auth0UserId);
+        }
 
         try (ResultSet rs = ps.executeQuery()) {
           rs.next();
