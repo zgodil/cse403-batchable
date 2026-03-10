@@ -1,37 +1,58 @@
 import {createContext, useEffect, useState} from 'react';
+import {useAuth0} from '@auth0/auth0-react';
+import {getToken} from '~/api/authToken';
 import {restaurantApi} from '~/api/endpoints/restaurant';
-import {fakeId, type Restaurant} from '~/domain/objects';
+import type {Restaurant} from '~/domain/objects';
 
 export const RestaurantContext = createContext<Restaurant['id'] | null>(null);
 
-const DEFAULT_RESTAURANT_ID: Restaurant['id'] = {
-  type: 'Restaurant',
-  id: 1,
-};
-
 /**
- * Provides the ID of the restaurant associated with the current user.
+ * Provides the current user's restaurant id (from GET /restaurant/me).
  */
 export default function RestaurantProvider({
   children,
 }: React.PropsWithChildren<{}>) {
-  const [restaurant, setRestaurant] = useState<Restaurant['id'] | null>(null);
+  const {isAuthenticated} = useAuth0();
+  const [restaurantId, setRestaurantId] = useState<Restaurant['id'] | null>(
+    null,
+  );
 
-  // TODO: replace this with something that actually depends on auth
   useEffect(() => {
-    async function guaranteeRestaurant() {
-      const exists = await restaurantApi.exists(DEFAULT_RESTAURANT_ID);
-      if (exists) return DEFAULT_RESTAURANT_ID;
-
-      return restaurantApi.create({
-        id: fakeId('Restaurant'),
-        location: {address: '1234 Batch St NE, Seattle WA 98105'},
-        name: 'Batchable Kitchen',
-      });
+    if (!isAuthenticated) {
+      setRestaurantId(null);
+      return;
     }
+    let cancelled = false;
+    const load = async (tokenRetries = 25) => {
+      const token = await getToken();
+      if (cancelled) return;
+      if (!token) {
+        if (tokenRetries > 0) {
+          setTimeout(() => void load(tokenRetries - 1), 400);
+        } else {
+          // Auth may still be initializing after redirect; try once more after a delay
+          setTimeout(() => {
+            if (!cancelled) void load(15);
+          }, 2000);
+        }
+        return;
+      }
+      void restaurantApi
+        .getMyRestaurantId()
+        .then(id => {
+          if (!cancelled) setRestaurantId(id ?? null);
+        })
+        .catch(err => {
+          if (cancelled) return;
+          const is401 = /401|unauthorized/i.test(String(err?.message || err));
+          if (is401) setTimeout(() => void load(10), 800);
+        });
+    };
+    void load();
+    return () => {
+      cancelled = true;
+    };
+  }, [isAuthenticated]);
 
-    void guaranteeRestaurant().then(id => setRestaurant(id));
-  }, []);
-
-  return <RestaurantContext value={restaurant}>{children}</RestaurantContext>;
+  return <RestaurantContext value={restaurantId}>{children}</RestaurantContext>;
 }

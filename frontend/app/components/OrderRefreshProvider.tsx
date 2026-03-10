@@ -1,4 +1,5 @@
 import {createContext, useContext, useEffect, useState} from 'react';
+import {getToken} from '~/api/authToken';
 import {RestaurantContext} from './RestaurantProvider';
 import type {Restaurant} from '~/domain/objects';
 import {DriverTokenContext} from './DriverTokenContext';
@@ -11,13 +12,17 @@ export class RefreshMonitor extends EventTarget {
     this.eventSource = new EventSource(`/sse/orders/${path}`);
     this.eventSource.addEventListener('refresh', () => {
       this.dispatchEvent(new Event('orderUpdate'));
+      console.log('refresh event received');
     });
   }
   close() {
     this.eventSource.close();
   }
-  static forRestaurant(restaurant: Restaurant['id']) {
-    return new RefreshMonitor(`${restaurant.id}`);
+  static forRestaurant(restaurant: Restaurant['id'], accessToken?: string) {
+    const tokenQuery = accessToken
+      ? `?access_token=${encodeURIComponent(accessToken)}`
+      : '';
+    return new RefreshMonitor(`${restaurant.id}${tokenQuery}`);
   }
   static forDriver(token: string) {
     return new RefreshMonitor(`token/${token}`);
@@ -38,21 +43,40 @@ export default function OrderRefreshProvider({
   useDriverToken = false,
   children,
 }: React.PropsWithChildren<Props>) {
-  const restaurant = useContext(RestaurantContext);
+  const restaurantId = useContext(RestaurantContext);
   const driverToken = useContext(DriverTokenContext);
   const [monitor, setMonitor] = useState<RefreshMonitor | null>(null);
 
   useEffect(() => {
-    let newMonitor: RefreshMonitor | null = null;
     if (useDriverToken) {
-      newMonitor = driverToken ? RefreshMonitor.forDriver(driverToken) : null;
-    } else {
-      newMonitor = restaurant ? RefreshMonitor.forRestaurant(restaurant) : null;
+      const newMonitor = driverToken
+        ? RefreshMonitor.forDriver(driverToken)
+        : null;
+      setMonitor(newMonitor);
+      return () => newMonitor?.close();
     }
-    if (!newMonitor) return;
-    setMonitor(newMonitor);
-    return () => newMonitor?.close();
-  }, [restaurant]);
+
+    if (!restaurantId) {
+      setMonitor(null);
+      return;
+    }
+
+    let closed = false;
+    let newMonitor: RefreshMonitor | null = null;
+
+    void (async () => {
+      const token = await getToken();
+      if (closed || !token) return;
+
+      newMonitor = RefreshMonitor.forRestaurant(restaurantId, token);
+      setMonitor(newMonitor);
+    })();
+
+    return () => {
+      closed = true;
+      newMonitor?.close();
+    };
+  }, [driverToken, restaurantId, useDriverToken]);
 
   return <OrderRefreshContext value={monitor}>{children}</OrderRefreshContext>;
 }
