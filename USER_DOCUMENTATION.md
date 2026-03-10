@@ -16,7 +16,7 @@ Restaurant dispatching often requires balancing:
 Batchable simplifies this process by automating order handling the batching process.
 
 ## 2. How to Run the Software
-See the [developer installation and start-up instructions](./DEVELOPER.md#3-how-to-build-and-run-the-software). Once start-up is complete, you should be able to use the product at http://localhost:5173.
+See the [developer installation and start-up instructions](./DEVELOPER_DOCUMENTATION.md#3-how-to-build-and-run-the-software). Once start-up is complete, you should be able to use the product at http://localhost:5173.
 
 ## 4. How to Use the Software
 
