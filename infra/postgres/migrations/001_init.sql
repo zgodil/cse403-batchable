@@ -109,6 +109,3 @@ CREATE TABLE Menu_Item (
   FOREIGN KEY (restaurant_id) REFERENCES Restaurant(id),
   UNIQUE (restaurant_id, name)
 );
-
-INSERT INTO Restaurant (id, name, location)
-VALUES (1, 'applesneeze', 'Lynnwood, WA');

@@ -1,11 +1,13 @@
 package com.batchable.backend.controller;
 
+import com.batchable.backend.db.dao.RestaurantDAO;
 import com.batchable.backend.db.models.Driver;
 import com.batchable.backend.db.models.MenuItem;
 import com.batchable.backend.db.models.Order;
 import com.batchable.backend.db.models.Restaurant;
 import com.batchable.backend.service.BatchingManager;
 import com.batchable.backend.service.RestaurantService;
+import java.sql.SQLException;
 import java.util.List;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -24,6 +26,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/restaurant")
 public class RestaurantController {
 
+  private final RestaurantDAO restaurantDAO;
   private final RestaurantService restaurantService;
   private final BatchingManager batchingManager;
 
@@ -31,9 +34,10 @@ public class RestaurantController {
    * Constructor injection: Spring automatically provides a RestaurantService instance because it is
    * annotated with @Service
    */
-  public RestaurantController(RestaurantService restaurantService, BatchingManager batchingManager) {
+  public RestaurantController(RestaurantService restaurantService, BatchingManager batchingManager, RestaurantDAO restaurantDAO) {
     this.restaurantService = restaurantService;
     this.batchingManager = batchingManager;
+    this.restaurantDAO = restaurantDAO;
   }
 
   /**
@@ -44,8 +48,29 @@ public class RestaurantController {
   @GetMapping("/me")
   @ResponseStatus(HttpStatus.OK)
   public long getMyRestaurantId(@AuthenticationPrincipal Jwt jwt) {
-    String sub = jwt == null ? null : jwt.getSubject();
-    return restaurantService.getOrCreateRestaurantIdForUser(sub);
+    String auth0UserId = jwt == null ? null : jwt.getSubject();
+
+    if (auth0UserId == null || auth0UserId.isBlank())
+      throw new IllegalArgumentException("auth0UserId is required");
+
+    try {
+      return restaurantDAO.getRestaurantByAuth0UserId(auth0UserId)
+          .map(restaurant -> restaurant.id)
+          .orElseGet(() -> {
+            try {
+              long restaurantId = restaurantDAO.createRestaurant(
+                  "My Restaurant",
+                  "Address not set",
+                  auth0UserId);
+              batchingManager.addManager(restaurantId);
+              return restaurantId;
+            } catch (SQLException e) {
+              throw new RuntimeException("Failed to create restaurant for user", e);
+            }
+          });
+    } catch (SQLException e) {
+      throw new RuntimeException("Failed to get restaurant for user", e);
+    }
   }
 
   /**

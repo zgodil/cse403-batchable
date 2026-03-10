@@ -120,28 +120,6 @@ public class RestaurantService {
     }
   }
 
-  /** Returns the restaurant id for the given Auth0 user (sub), creating one if none exists. */
-  public long getOrCreateRestaurantIdForUser(String auth0UserId) {
-    if (auth0UserId == null || auth0UserId.isBlank())
-      throw new IllegalArgumentException("auth0UserId is required");
-    try {
-      return restaurantDAO.getRestaurantByAuth0UserId(auth0UserId)
-          .map(restaurant -> restaurant.id)
-          .orElseGet(() -> {
-            try {
-              return restaurantDAO.createRestaurant(
-                  "My Restaurant",
-                  "Address not set",
-                  auth0UserId);
-            } catch (SQLException e) {
-              throw new RuntimeException("Failed to create restaurant for user", e);
-            }
-          });
-    } catch (SQLException e) {
-      throw new RuntimeException("Failed to get restaurant for user", e);
-    }
-  }
-
   /**
    * Retrieves a restaurant by ID.
    *
