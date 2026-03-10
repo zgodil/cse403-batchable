@@ -37,12 +37,13 @@ export function useLoader<T>(
   });
 
   useEffect(() => {
-    if (!loaded) return;
+    let stale = false;
 
     setLoaded(false);
 
     loader().then(
       response => {
+        if (stale) return;
         if (response) {
           setResponse({
             status: 'success',
@@ -56,12 +57,17 @@ export function useLoader<T>(
         setLoaded(true);
       },
       () => {
+        if (stale) return;
         setResponse({
           status: 'failure',
         });
         setLoaded(true);
       },
     );
+
+    return () => {
+      stale = true;
+    };
   }, [flag, ...dependencies]);
 
   if (response.status === 'success') {
