@@ -5,9 +5,9 @@ specifically the following, each of which has all of its fields and types specif
 These will be used as the basis of the database schema, as well as the runtime
 representation throughout the system. Each model provided is implied to additionally
 have a unique id, and when a model contains a member whose type is another model,
-it is implied that that field will in fact reference a foreign key when placed into 
-the database. Several types are left intentionally vague (like Location, DateTime, 
-etc.) to avoid excessive specificity. Additionally, our database will store Auth0’s 
+it is implied that that field will in fact reference a foreign key when placed into
+the database. Several types are left intentionally vague (like Location, DateTime,
+etc.) to avoid excessive specificity. Additionally, our database will store Auth0's
 authentication and authorization information, whose schema we need not know.
 
 model Restaurant {
@@ -54,11 +54,12 @@ CREATE TYPE order_state AS ENUM (
   'DELIVERED'
 );
 
--- restaurant table
+-- restaurant table (auth0_user_id links to JWT sub for "my restaurant" resolution)
 CREATE TABLE Restaurant (
   id SERIAL PRIMARY KEY,
   name VARCHAR(100) NOT NULL,
-  location VARCHAR(100) NOT NULL
+  location VARCHAR(100) NOT NULL,
+  auth0_user_id VARCHAR(255) UNIQUE
 );
 
 -- driver table
