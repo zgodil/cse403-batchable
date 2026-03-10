@@ -1,12 +1,16 @@
-echo "=== Closing Old Server ==="
+function print_status() {
+  printf "\e[35m=== $1 ===\e[0m\n"
+}
+
+print_status "Closing Old Server"
 screen -wipe
 screen -XS server quit
 set -e
-echo "=== Retrieving New Version ==="
+print_status "Retrieving New Version"
 git pull
-echo "=== Building Front-End ==="
+print_status "Building Front-End"
 ./build.sh
-echo "=== Running Back-End ==="
+print_status "Running Back-End"
 screen -md -S server ./run.sh
-echo "=== Done! ==="
+print_status "Done!"
 echo "Visit https://batchable.org"
