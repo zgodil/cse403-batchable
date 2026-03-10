@@ -32,7 +32,7 @@ The `backend/` directory contains the server-side application implemented in Jav
 ## 3. How to Build and Run the Software
 
 ### Prerequisites
-First, ensure that the prerequisite software is installed on your system. Then ensure that Docker is currently running: running `docker` in a terminal should indicate this.
+First, ensure that the prerequisite software is installed on your system. Then ensure that Docker is currently running: Running `docker` in a terminal indicate that Docker is active.
 * Maven
 * Java 17
 * Node.js 22+
@@ -45,7 +45,11 @@ If this is your first time building the code, you will need to complete the foll
   ```bash
   git clone https://www.github.com/zgodil/cse403-batchable.git
   ```
-2. Place your `vars.env` file in the root of the cloned project. *Important: do not place your environment variables in the file called `.env`. To succesfullly complete setup, both `.env` and `vars.env` should be present in the project's root directory*.
+2. If a `vars.env` file is not provided, create a file named `vars.env` in the root of the cloned project and place the provided credentials inside it. Otherwise, simply place the provided `vars.env` file in the root of the project. *Important: do not place your environment variables in the file called `.env`. To successfully complete setup, both `.env` and `vars.env` should be present in the project's root directory*.
+
+### vars.env Credentials
+
+The values required in `vars.env` will be **provided by the development team** for the purposes of running the system. 
 
 The structure of `vars.env` should be as follows:
 ```sh
@@ -146,8 +150,7 @@ Controller tests should verify HTTP behavior and response correctness. When test
 If a test requires database interaction, ensure the database is running before executing integration tests. All new backend features must include corresponding tests before being merged into main. Please follow existing test structure and naming conventions for consistency.
 
 #### Twilio Interaction
-When testing `TwilioManager` or other components that call Twilio, mock the `RestClient` and `Message.creator()` calls e
-eto avoid sending real SMS. Existing test patterns are demonstrated in `backend/src/test/java/com/batchable/backend/twilio/`.
+When testing `TwilioManager` or other components that call Twilio, mock the `RestClient` and `Message.creator()` calls to avoid sending real SMS. Existing test patterns are demonstrated in `backend/src/test/java/com/batchable/backend/twilio/`.
 
 ## 6. How to Build a Release of the Software
 Releases must be built from the main branch after all changes have been merged and validated. Before building a release, developers must ensure that all backend and frontend tests pass and that the application runs successfully in a local development environment.
@@ -156,7 +159,7 @@ Prior to packaging the release, update the version in the documentation.
 
 ### Deployment
 Once the code for the new version is on main, you can deploy the new code using the following steps:
-1. Run `ssh root@batchable.org`, and enter the password 
+1. Run `ssh root@batchable.org`, and enter the password.
 2. `cd server/cse403-batchable`
 3. `chmod +x ./deploy.sh && ./deploy.sh`
 4. You're done! This may take a few minutes before the server finishes restarting. You can view the result at [batchable.org](https://batchable.org)
