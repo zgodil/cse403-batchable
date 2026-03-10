@@ -34,7 +34,7 @@ Within the Manage Restaurant section, you can update your restaurant’s name an
 **Note**: Upon creating an account, the corresponding restaurant location is initialized as "Address not set". This must be changed to an actual adress for most functionality (such as creating orders) to work without errors. Otherwise, there is no way to create a route.
 
 ### Creating an Order
-To create a new order, click the Add New Order button. Enter the delivery address for the accordingly. Once submitted, the system will process the order and determine how it should be dispatched, assigning it to an available driver. 
+To create a new order, click the Add New Order button. Enter the delivery address for the order.. Once submitted, the system will process the order and determine how it should be dispatched, assigning it to an available driver. 
 
 ### Acting as a Driver
 Once a driver is assigned to a batch, the system sends a text message notification containing a link to the driver route page. This message includes the driver name, batch ID, and a link that opens the driver route interface where the driver can view their assigned batch, see the list of delivery stops, mark orders as delivered, and indicate that they have returned to the restaurant. Drivers must press **Complete Route** after finishing their deliveries in order to be eligible for assignment to another batch. The route page is driver-specific and can be reused across multiple batches. Because the system currently uses a Twilio trial account, SMS messages are sent only to the configured virtual phone number rather than to the individual phone numbers entered for drivers.
