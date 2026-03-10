@@ -2,6 +2,11 @@ name: Frontend CI
 
 on: [push, pull_request]
 
+env:
+  LOCATION_PROTOCOL: ${{ variables.LOCATION_PROTOCOL }}
+  LOCATION_HOST: ${{ variables.LOCATION_HOST }}
+  LOCATION_PORT: ${{ variables.LOCATION_PORT }}
+
 jobs:
   build:
     runs-on: ubuntu-latest
