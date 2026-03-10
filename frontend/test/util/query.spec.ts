@@ -71,7 +71,7 @@ describe('useLoader', () => {
     ).rejects.not.toBe(null);
   });
 
-  it('skips refetching mid-load', async () => {
+  it('refetches mid-load for consistency', async () => {
     const loadFn = makeLoadDifferent(false);
     const {result} = renderHook(() => useLoader(loadFn));
     act(() => {
@@ -80,7 +80,7 @@ describe('useLoader', () => {
     await waitFor(() => {
       const {loaded, response} = result.current;
       expect(loaded).toBe(true);
-      expect(response).toBe(1);
+      expect(response).toBe(2);
     });
   });
 

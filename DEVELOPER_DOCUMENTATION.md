@@ -49,11 +49,14 @@ If this is your first time building the code, you will need to complete the foll
 
 The structure of `vars.env` should be as follows:
 ```sh
-export TWILIO_ACCOUNT_SID=
-export TWILIO_AUTH_TOKEN=
-export TWILIO_PHONE_NUMBER=
-export TWILIO_DRIVER_PHONE_NUMBER=
-export GOOGLE_ROUTES_API_KEY=
+TWILIO_ACCOUNT_SID=
+TWILIO_AUTH_TOKEN=
+TWILIO_PHONE_NUMBER=
+TWILIO_DRIVER_PHONE_NUMBER=
+GOOGLE_ROUTES_API_KEY=
+LOCATION_PROTOCOL=http
+LOCATION_HOST=localhost
+LOCATION_PORT=5173
 ```
 
 Below is an explanation of each variable:
@@ -91,7 +94,7 @@ chmod +x ./build.sh
 ```
 After giving permissions, retry running the build scripts.
 
-**Troubleshooting:** By far the most common issue is stale database configuration after upgrading Batchable versions. If you encounter issues when running the app for a second time on the same machine, try running `npm run db:reset` in the project root.
+**Troubleshooting:** By far the most common issue is stale database configuration after upgrading Batchable versions. If you encounter issues when running the app for a second time on the same machine, try running `npm run db:reset` in the project root. Also make sure that your vars.env file is up to date.
 
 ## 4. How to test the software
 
@@ -103,11 +106,7 @@ To get a prettier view of the testing infrastructure, run `npm test -- --ui` ins
 If you want to manually experiment with the front-end without creating a production build (`./build.sh`), you can run `npm run dev` in the `frontend/` folder to see the UI wrapped around a lightweight mock of the back-end.
 
 ### Back-End
-To run the backend tests, navigate to the backend directory. and run `./mvnw clean test`. This will run all tests. To view the code coverage on the backend. From the `backend/` directory, run:
-```bash
-./mvnw clean verify
-```
-Look for coverage results in `backend/target/site/jacoco/index.html`.
+To run the backend tests/code coverage, first ensure Docker says "engine is running" and there is a container named `cse403-batchable`. If there is no container, do `./build.sh` and `./run.sh` from the root to run the server, then once it starts, stop it with `ctrl-c`. This should create the container. Once Docker is running with the necessary container, navigate to the backend directory (`cd backend` from root). Make sure the terminal has the context of the secret variables. This can be achieved by copy and pasting the contents of `vars.env` into the terminal. Finally, to run the tests, do `./mvnw clean test`. To view the backend code coverage, do `./mvnw clean verify` and look for coverage results in `backend/target/site/jacoco/index.html`.
 
 To see test results (and code coverage information) in the GitHub CI, look into the CI run details for the "Frontend CI / Build", and look under the step "Run Tests". This will show the code coverage report, or test failure reasons. PRs with under 70% branch and statement coverage for the front end should not be merged (unless those branches can be reasonably be shown to be impossible but required by the style guide), and new features need to adhere to these guidelines.
 
@@ -139,9 +138,9 @@ Test classes should follow the naming convention:
 * `ClassNameIT.java` for integration tests and have them not trigger the CI
 * `ClassNameIT_CI.java` for integration tests and to have them add to the CI for GitHub
 
-Backend tests are written using JUnit and Mockito. We follow standard JUnit testing patterns. Unit tests should isolate business logic in: Services, The batching algorithm, The batching manager, The database manager 
+Backend tests are written using JUnit and Mockito. We follow standard JUnit testing patterns. Unit tests should isolate business logic in: Services, the Batching Algorithm, the Batching Manager, and the Database Manager. 
 
-Controller tests should verify HTTP behavior and response correctness. When testing components that depend on external services such as Twilio, those services should be mocked rather than invoked directly.
+Controller tests should verify HTTP behavior and response correctness. When testing components that depend on external services such as Twilio, those services should be mocked rather than invoked directly, unless the test is specifically designed to check integration with the actual service.
 
 #### Database Interaction
 If a test requires database interaction, ensure the database is running before executing integration tests. All new backend features must include corresponding tests before being merged into main. Please follow existing test structure and naming conventions for consistency.
@@ -153,6 +152,13 @@ When testing `TwilioManager` or other components that call Twilio, mock the `Res
 Releases must be built from the main branch after all changes have been merged and validated. Before building a release, developers must ensure that all backend and frontend tests pass and that the application runs successfully in a local development environment.
 
 Prior to packaging the release, update the version in the documentation.
+
+### Deployment
+Once the code for the new version is on main, you can deploy the new code using the following steps:
+1. Run `ssh root@batchable.org`, and enter the password 
+2. `cd server/cse403-batchable`
+3. `chmod +x ./deploy.sh && ./deploy.sh`
+4. You're done! This may take a few minutes before the server finishes restarting. You can view the result at [batchable.org](https://batchable.org)
 
 ## 7. Accessing the Twilio Virtual Phone (Testing SMS)
 

@@ -13,7 +13,9 @@ class DriverApi extends CrudApi<Driver> {
         driver: json.JSONDomainObject<Driver>;
         mapLink: string | null;
         orders: json.JSONDomainObject<Order>[] | null;
-      } = await fetchJSON('GET', `${this.resource}/route/${token}`);
+      } = await fetchJSON('GET', `${this.resource}/route/${token}`, undefined, {
+        includeAuth: false,
+      });
 
       return {
         driver: json.driver.parse(routeInfo.driver),
@@ -27,7 +29,14 @@ class DriverApi extends CrudApi<Driver> {
   }
   async markReturned(token: string) {
     try {
-      await fetchEndpoint('PUT', `${this.resource}/returned/${token}`);
+      await fetchEndpoint(
+        'PUT',
+        `${this.resource}/returned/${token}`,
+        undefined,
+        {
+          includeAuth: false,
+        },
+      );
       return true;
     } catch (err) {
       this.error(`Failed to mark driver as returned; token=${token}`, err);
