@@ -153,6 +153,13 @@ Releases must be built from the main branch after all changes have been merged a
 
 Prior to packaging the release, update the version in the documentation.
 
+### Deployment
+Once the code for the new version is on main, you can deploy the new code using the following steps:
+1. Run `ssh root@batchable.org`, and enter the password
+2. `cd server/cse403-batchable`
+3. `chmod +x ./deploy.sh && ./deploy.sh`
+4. You're done! This may take a few minutes before the server finishes restarting. You can view the result at [batchable.org](https://batchable.org)
+
 ## 7. SMS Notifications (Twilio Integration)
 SMS notifications are sent when a new delivery batch is assigned to a driver.
 

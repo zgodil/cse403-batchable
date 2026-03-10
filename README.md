@@ -1,7 +1,7 @@
 # Batchable
 Our product is Batchable, a real-time food delivery batching system. It works as a web application that interfaces with medium-sized restaurants, constantly checking if orders should go out as singles, doubles, or triples, using live updates about new orders, readiness, and remakes. Typically, dispatchers have to balance delivery times, food freshness, and how drivers are used–all while handling new orders, remakes, and cancellations. For medium-sized restaurants, this is inevitably done by hand, which leads to inconsistent results and avoidable delivery problems. That’s where Batchable comes in. We will handle this delicate balance for businesses, leading to simpler workflows, fewer headaches, and better resource utilization.
 
-Try it at [batchable.org](https://www.batchable.org)!
+Try it at [batchable.org](https://batchable.org)!
 
 A link to our requirements and plan can be found here: [Batchable](https://docs.google.com/document/d/1lBQPrSYdc8PdP-THlGFKEYEQGw-icpVO-P4352XmHsA/edit?usp=sharing)
 
@@ -20,4 +20,4 @@ Features:
 - Ability to add orders, mark orders as remakes, and cancel orders.
 - Ability to modify restaurant details, including adding/editing drivers and menu items.
 - Robust and efficient batching logic that edits and assigns batched orders to drivers in real-time (with orders rebatched based on new information/order changes).
-- A public URL: [batchable.org](https://www.batchable.org)
+- A public URL: [batchable.org](https://batchable.org)
