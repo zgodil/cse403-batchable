@@ -33,9 +33,7 @@ Within the Manage Restaurant section, you can update your restaurant’s name an
 To create a new order, click the Add New Order button. Enter the delivery address for the accordingly. Once submitted, the system will process the order and determine how it should be dispatched, assigning it to an available driver. 
 
 ### Acting as a Driver
-Once a driver is assigned to a batch, **a text message will be sent to their phone number** (please don't enter random phone numbers) with a link to their route page. On this page, you can mark orders as delivered, check your assigned batch, and tell the restaurant that you have returned. You *must* press complete route in order to be assigned another batch. The same route page can be used across multiple batches, and is driver-specific.
-
-**Note**: The current system uses a Twilio trial account. Twilio trial accounts can only send SMS messages to phone numbers that have been verified in the Twilio console. Because of this restriction, the system currently sends SMS notifications only to the configured virtual phone number rather than to the individual phone numbers entered for drivers.
+Once a driver is assigned to a batch, the system sends a text message notification containing a link to the driver route page. This message includes the driver name, batch ID, and a link that opens the driver route interface where the driver can view their assigned batch, see the list of delivery stops, mark orders as delivered, and indicate that they have returned to the restaurant. Drivers must press **Complete Route** after finishing their deliveries in order to be eligible for assignment to another batch. The route page is driver-specific and can be reused across multiple batches. Because the system currently uses a Twilio trial account, SMS messages are sent only to the configured virtual phone number rather than to the individual phone numbers entered for drivers.
 
 ## 5. How to Report a Bug
 If you encounter an issue, please open an issue in the GitHub

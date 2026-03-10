@@ -62,7 +62,7 @@ The Twilio variables configure SMS notifications for drivers:
 * `TWILIO_ACCOUNT_SID` – Twilio account SID
 * `TWILIO_AUTH_TOKEN` – Twilio auth token
 * `TWILIO_PHONE_NUMBER` – the number Twilio will use as the sender
-* `TWILIO_DRIVER_PHONE_NUMBER` – the phone number that receives all driver SMS notifications. Because the system uses a Twilio trial account, messages can only be sent to verified numbers, so this value must correspond to a verified phone number in the Twilio console.
+* `TWILIO_DRIVER_PHONE_NUMBER` – the phone number used during development and testing to receive SMS notifications. Because the system uses a Twilio trial account, messages are sent only to this verified number rather than to the individual driver phone numbers entered in the system.
 
 The Google variable configures routing calculations:
 * `GOOGLE_ROUTES_API_KEY` – Google Routes API key for delivery route optimization and distance calculations
@@ -149,21 +149,52 @@ If a test requires database interaction, ensure the database is running before e
 #### Twilio Interaction
 When testing `TwilioManager` or other components that call Twilio, mock the `RestClient` and `Message.creator()` calls to avoid sending real SMS. Existing test patterns are demonstrated in `backend/src/test/java/com/batchable/backend/twilio/`.
 
-
 ## 6. How to Build a Release of the Software
 Releases must be built from the main branch after all changes have been merged and validated. Before building a release, developers must ensure that all backend and frontend tests pass and that the application runs successfully in a local development environment.
 
 Prior to packaging the release, update the version in the documentation.
 
-## 7. SMS Notifications (Twilio Integration)
+## 7. Accessing the Twilio Virtual Phone (Testing SMS)
 
-SMS notifications are sent when a new delivery batch is assigned to a driver.
+Because the system currently uses a **Twilio trial account**, SMS messages cannot be sent to arbitrary phone numbers. Instead, all driver SMS notifications are delivered to a **Twilio virtual phone interface** that can be viewed in the Twilio console.
+
+To view incoming SMS messages, follow these steps:
+
+1. Navigate to the Twilio login page:  
+   https://www.twilio.com/login
+
+2. Log in using the Twilio credentials provided by the development team.
+
+3. After entering the username and password, you will be prompted for **two-factor authentication**.
+
+4. Select **“Try another method”** and enter the **one-time login code** provided by the development team.  
+   - This code changes each time a new login occurs.
+   - A new code will be generated after logging in and should be stored for the next login session.
+
+5. After successfully logging in, you will see the **Twilio Console dashboard**.
+
+6. In the left navigation panel:
+   - Click **Messaging**
+   - Then click **Virtual Phone**
+
+<img src="twilioExp.png" height="400">
+
+Alternatively, you can navigate directly to the page:
+https://console.twilio.com/us1/develop/sms/virtual-phone
+
+7. On the Virtual Phone page, locate the **phone number selector** near the top right of the interface.
+
+8. Click the dropdown menu and select the **available phone number** (there is currently only one configured number).
+
+Once selected, the interface will display all SMS messages sent by the Batchable system. When a new delivery batch is assigned to a driver, the system will send a message that appears here.
 
 ### Message Format
 
-The SMS message is formatted in `TwilioManager.handleNewBatch()` and contains:
+The SMS message is formatted in the following order:
 - Driver name
 - Batch ID
 - A link to the driver's route page
 
-Example: Driver <name> (id <id>) you have been assigned a new batch. View here <link>
+Example: Driver John (id 42) you have been assigned a new batch. View here ___
+
+
