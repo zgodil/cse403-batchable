@@ -3,7 +3,9 @@ import tailwindcss from '@tailwindcss/vite';
 import {defineConfig} from 'vitest/config';
 import tsconfigPaths from 'vite-tsconfig-paths';
 
-process.loadEnvFile('../vars.env');
+if (!process.env.LOCATION_HOST) {
+  process.loadEnvFile('../vars.env');
+}
 
 export default defineConfig({
   plugins: [
