@@ -94,7 +94,7 @@ chmod +x ./build.sh
 ```
 After giving permissions, retry running the build scripts.
 
-**Troubleshooting:** By far the most common issue is stale database configuration after upgrading Batchable versions. If you encounter issues when running the app for a second time on the same machine, try running `npm run db:reset` in the project root.
+**Troubleshooting:** By far the most common issue is stale database configuration after upgrading Batchable versions. If you encounter issues when running the app for a second time on the same machine, try running `npm run db:reset` in the project root. Also make sure that your vars.env file is up to date.
 
 ## 4. How to test the software
 
@@ -138,9 +138,9 @@ Test classes should follow the naming convention:
 * `ClassNameIT.java` for integration tests and have them not trigger the CI
 * `ClassNameIT_CI.java` for integration tests and to have them add to the CI for GitHub
 
-Backend tests are written using JUnit and Mockito. We follow standard JUnit testing patterns. Unit tests should isolate business logic in: Services, The batching algorithm, The batching manager, The database manager 
+Backend tests are written using JUnit and Mockito. We follow standard JUnit testing patterns. Unit tests should isolate business logic in: Services, the Batching Algorithm, the Batching Manager, and the Database Manager. 
 
-Controller tests should verify HTTP behavior and response correctness. When testing components that depend on external services such as Twilio, those services should be mocked rather than invoked directly.
+Controller tests should verify HTTP behavior and response correctness. When testing components that depend on external services such as Twilio, those services should be mocked rather than invoked directly, unless the test is specifically designed to check integration with the actual service.
 
 #### Database Interaction
 If a test requires database interaction, ensure the database is running before executing integration tests. All new backend features must include corresponding tests before being merged into main. Please follow existing test structure and naming conventions for consistency.
