@@ -49,11 +49,14 @@ If this is your first time building the code, you will need to complete the foll
 
 The structure of `vars.env` should be as follows:
 ```sh
-export TWILIO_ACCOUNT_SID=
-export TWILIO_AUTH_TOKEN=
-export TWILIO_PHONE_NUMBER=
-export TWILIO_DRIVER_PHONE_NUMBER=
-export GOOGLE_ROUTES_API_KEY=
+TWILIO_ACCOUNT_SID=
+TWILIO_AUTH_TOKEN=
+TWILIO_PHONE_NUMBER=
+TWILIO_DRIVER_PHONE_NUMBER=
+GOOGLE_ROUTES_API_KEY=
+LOCATION_PROTOCOL=http
+LOCATION_HOST=localhost
+LOCATION_PORT=5173
 ```
 
 Below is an explanation of each variable:
@@ -149,18 +152,15 @@ If a test requires database interaction, ensure the database is running before e
 #### Twilio Interaction
 When testing `TwilioManager` or other components that call Twilio, mock the `RestClient` and `Message.creator()` calls to avoid sending real SMS. Existing test patterns are demonstrated in `backend/src/test/java/com/batchable/backend/twilio/`.
 
-
 ## 6. How to Build a Release of the Software
 Releases must be built from the main branch after all changes have been merged and validated. Before building a release, developers must ensure that all backend and frontend tests pass and that the application runs successfully in a local development environment.
 
 Prior to packaging the release, update the version in the documentation.
 
 ## 7. SMS Notifications (Twilio Integration)
-
 SMS notifications are sent when a new delivery batch is assigned to a driver.
 
 ### Message Format
-
 The SMS message is formatted in `TwilioManager.handleNewBatch()` and contains:
 - Driver name
 - Batch ID
