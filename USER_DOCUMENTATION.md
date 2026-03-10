@@ -18,6 +18,8 @@ Batchable simplifies this process by automating order handling the batching proc
 ## 2. How to Run the Software
 See the [developer installation and start-up instructions](./DEVELOPER_DOCUMENTATION.md#3-how-to-build-and-run-the-software). Once start-up is complete, you should be able to use the product at http://localhost:5173.
 
+**Hint**: Read how to use the software (below) first. There are some important notes that are paramount for avoiding basic errors.
+
 ## 3. How to Use the Software
 
 ### Adding Drivers
@@ -28,6 +30,8 @@ Under the Manage Restaurant tab, you can also add menu items that your restauran
 
 ### Modifying Restaurant Information
 Within the Manage Restaurant section, you can update your restaurant’s name and location. Editing this information ensures that delivery routes and dispatch calculations are based on the correct starting location.
+
+**Note**: Upon creating an account, the corresponding restaurant location is initialized as "Address not set". This must be changed to an actual adress for most functionality (such as creating orders) to work without errors. Otherwise, there is no way to create a route.
 
 ### Creating an Order
 To create a new order, click the Add New Order button. Enter the delivery address for the accordingly. Once submitted, the system will process the order and determine how it should be dispatched, assigning it to an available driver. 
