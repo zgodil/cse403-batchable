@@ -44,11 +44,7 @@ export default function RestaurantProvider({
         })
         .catch(err => {
           if (cancelled) return;
-          const is401 =
-            String(err?.message || err).includes('401') ||
-            String(err?.message || err)
-              .toLowerCase()
-              .includes('unauthorized');
+          const is401 = /401|unauthorized/i.test(String(err?.message || err));
           if (is401) setTimeout(() => void load(10), 800);
         });
     };
