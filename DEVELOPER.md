@@ -27,7 +27,7 @@ The `infra/` directory contains the infrastructure and database configuration fo
 
 The `frontend/` directory contains the client-side application and its associated tests. The main application code is located under `frontend/app/`. Within this directory, the application is structured as follows: `api/` contains frontend API wrappers that communicate with the backend, `components/` contains reusable UI components, domain/ defines shared types and domain-level logic, routes/ contains route-level pages and navigation logic, and `util/` stores general utility functions used throughout the frontend. Static assets are located under `frontend/public/`. Frontend tests are located under `frontend/test/` and follow the structure of the application layer (`/app`).
 
-The `backend/` directory contains the server-side application implemented in Java. The primary source code resides in `backend/src/main/java/com/batchable/backend`. This layer contains the core application components, including the controllers that define HTTP endpoints, the services layer that implements business logic, and the database manager responsible for interacting with the persistence layer, the Twilio manager which sends SMS notifications to drivers when new delivery batches are assigned, the websocket which handles communication with the frontend, client and models which handle the Google API, and the batching alogrithim and manager which handles orchestration of batching.
+The `backend/` directory contains the server-side application implemented in Java. The primary source code resides in `backend/src/main/java/com/batchable/backend`. This layer contains the core application components, including the controllers that define HTTP endpoints, the services layer that implements business logic, and the database manager responsible for interacting with the persistence layer, the Twilio manager which sends SMS notifications to drivers when new delivery batches are assigned, the websocket which handles communication with the frontend, client and models which handle the Google API, and the batching algorithm and manager which handles orchestration of batching.
 
 ## 3. How to Build and Run the Software
 
@@ -69,6 +69,7 @@ The Google variable configures routing calculations:
 
 **Additional information**
 - Twilio trial accounts can only send to verified numbers, so a single configured number simplifies testing
+- The system sends an SMS notification to `TWILIO_DRIVER_PHONE_NUMBER` whenever a new delivery batch is assigned to a driver.
 
 ## Build & Run
 Then, while still in the root, execute the following in an **sh-compatible** terminal:
@@ -156,40 +157,13 @@ Prior to packaging the release, update the version in the documentation.
 
 ## 7. SMS Notifications (Twilio Integration)
 
-### When Messages Are Sent
-
-SMS notifications are sent **only when a batch is first activated and assigned to a driver**. This occurs in the flow:
-1. `RestaurantBatchingManager.assignReadyBatchesToDrivers()` identifies available drivers
-2. A ready batch is assigned to an available driver and activated
-3. `TwilioManager.handleNewBatch(batchId)` is called
-4. An SMS is sent to the configured `TWILIO_DRIVER_PHONE_NUMBER`
-
-**Important:** 
-Updates to orders within an existing batch, changes to batch contents, or subsequent reassignments do NOT trigger new SMS notifications. Only the initial batch assignment sends a message.
-
+SMS notifications are sent when a new delivery batch is assigned to a driver.
 
 ### Message Format
+
 The SMS message is formatted in `TwilioManager.handleNewBatch()` and contains:
-- Driver name (greeting)
+- Driver name
 - Batch ID
-- A clickable link to the driver's route page
+- A link to the driver's route page
 
-**Example:**
-```
-Driver <name> (id <id>) you have been assigned a new batch. View here <link>
-```
-
-### How it Works
-The SMS message contains a link of the form:
-
-http://localhost:5173/route/{driverToken}
-
-The `{driverToken}` is a UUID associated with the driver. When opened, this page loads the driver dashboard which displays:
-
-- the driver’s assigned batch
-- the list of delivery stops
-- a Google Maps directions link for completing the route
-
-The frontend retrieves this data through the backend endpoint:
-
-GET /driver/route/{token}
+Example: Driver <name> (id <id>) you have been assigned a new batch. View here <link>
