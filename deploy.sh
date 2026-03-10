@@ -14,3 +14,4 @@ print_status "Running Back-End"
 screen -md -S server ./run.sh
 print_status "Done!"
 echo "Visit https://batchable.org"
+echo "It may take a few minutes to finish server startup..."
