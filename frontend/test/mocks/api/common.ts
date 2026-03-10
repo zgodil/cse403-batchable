@@ -22,8 +22,18 @@ export const resetMockDatabase = () => {
   }
 };
 
-export function endpoint(path: `/${string}`, protocol = 'http') {
-  return `${protocol}://localhost:5173${path}`;
+const isNode = typeof process !== 'undefined';
+if (isNode) process.loadEnvFile('../vars.env');
+
+export function endpoint(path: `/${string}`) {
+  if (!isNode) return `${location.origin}${path}`;
+
+  const {
+    LOCATION_PROTOCOL: protocol,
+    LOCATION_DOMAIN: domain,
+    LOCATION_PORT: port,
+  } = process.env;
+  return `${protocol}://${domain}:${port}${path}`;
 }
 
 export function notFound(type: string) {
