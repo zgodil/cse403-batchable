@@ -18,7 +18,7 @@ Batchable simplifies this process by automating order handling the batching proc
 ## 2. How to Run the Software
 See the [developer installation and start-up instructions](./DEVELOPER_DOCUMENTATION.md#3-how-to-build-and-run-the-software). Once start-up is complete, you should be able to use the product at http://localhost:5173.
 
-## 4. How to Use the Software
+## 3. How to Use the Software
 
 ### Adding Drivers
 To add drivers, navigate to the Manage Restaurant tab. In this section, you can add new drivers by entering their name and phone number. You can also set their status as either On Shift or Off Shift. Drivers marked as On Shift and not currently out for delivery will be assined to batches, while those marked Off Shift will not be assigned to batches. 
@@ -37,7 +37,7 @@ Once a driver is assigned to a batch, **a text message will be sent to their pho
 
 **Note**: The current system uses a Twilio trial account. Twilio trial accounts can only send SMS messages to phone numbers that have been verified in the Twilio console. Because of this restriction, the system currently sends SMS notifications only to the configured virtual phone number rather than to the individual phone numbers entered for drivers.
 
-## 5. How to Report a Bug
+## 4. How to Report a Bug
 If you encounter an issue, please open an issue in the GitHub
 repository: https://github.com/zgodil/cse403-batchable/issues
 
