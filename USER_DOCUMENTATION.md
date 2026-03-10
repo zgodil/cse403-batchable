@@ -21,7 +21,7 @@ See the [developer installation and start-up instructions](./DEVELOPER_DOCUMENTA
 ## 3. How to Use the Software
 
 ### Adding Drivers
-To add drivers, navigate to the Manage Restaurant tab. In this section, you can add new drivers by entering their name and phone number. You can also set their status as either On Shift or Off Shift. Drivers marked as On Shift and not currently out for delivery will be assined to batches, while those marked Off Shift will not be assigned to batches. 
+To add drivers, navigate to the Manage Restaurant tab. In this section, you can add new drivers by entering their name and phone number. You can also set their status as either On Shift or Off Shift. Drivers marked as On Shift and not currently out for delivery will be assigned to batches, while those marked Off Shift will not be assigned to batches. 
 
 ### Adding Menu Items
 Under the Manage Restaurant tab, you can also add menu items that your restaurant offers. Just enter the name of the menu item and save it. You can also edit or remove menu items as needed to keep your menu up to date.
@@ -33,7 +33,7 @@ Within the Manage Restaurant section, you can update your restaurant’s name an
 To create a new order, click the Add New Order button. Enter the delivery address for the accordingly. Once submitted, the system will process the order and determine how it should be dispatched, assigning it to an available driver. 
 
 ### Acting as a Driver
-Once a driver is assigned to a batch, **a text message will be sent to their phone number** (please don't enter random phone numbers) with a link to their route page. On this page, you can mark orders as delivered, check your assigned batch, and tell the restaurant that you have returned. You *must* press complete route in order to be assigned another batch. The same route page can be used across multiple batches, and is driver-specific.
+Once a driver is assigned to a batch, a text message will be sent to their phone number (just the single Twilio virtual number for now; see the note below) with a link to their route page. On this page, you can mark orders as delivered, check your assigned batch, and tell the restaurant that you have returned. You *must* press complete route in order to be assigned another batch, and you must complete the orders in the assigned order before completing the route. The same route page can be used across multiple batches, and is driver-specific.
 
 **Note**: The current system uses a Twilio trial account. Twilio trial accounts can only send SMS messages to phone numbers that have been verified in the Twilio console. Because of this restriction, the system currently sends SMS notifications only to the configured virtual phone number rather than to the individual phone numbers entered for drivers.
 
@@ -54,9 +54,3 @@ A good bug report should include:
 For more information about bug reporting guidelines please visit: https://bugzilla.mozilla.org/page.cgi?id=bug-writing.html
 
 Providing detailed information helps the development team resolve issues more quickly.
-
-## Known Bugs
-* Driver can be taken off shift despite on a delivery
-* Restaurant ID defaults to 1 due to authentication bug
-* Drivers stay assigned to batches even after deleting all the batched orders
-
