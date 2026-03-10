@@ -1,4 +1,4 @@
-# Batchable User Documentatoin
+# Batchable User Documentation
 
 ## 1. Description
 Batchable is a real-time food delivery batching system designed for
@@ -34,6 +34,8 @@ To create a new order, click the Add New Order button. Enter the delivery addres
 
 ### Acting as a Driver
 Once a driver is assigned to a batch, **a text message will be sent to their phone number** (please don't enter random phone numbers) with a link to their route page. On this page, you can mark orders as delivered, check your assigned batch, and tell the restaurant that you have returned. You *must* press complete route in order to be assigned another batch. The same route page can be used across multiple batches, and is driver-specific.
+
+**Note**: The current system uses a Twilio trial account. Twilio trial accounts can only send SMS messages to phone numbers that have been verified in the Twilio console. Because of this restriction, the system currently sends SMS notifications only to the configured virtual phone number rather than to the individual phone numbers entered for drivers.
 
 ## 5. How to Report a Bug
 If you encounter an issue, please open an issue in the GitHub

@@ -27,7 +27,7 @@ The `infra/` directory contains the infrastructure and database configuration fo
 
 The `frontend/` directory contains the client-side application and its associated tests. The main application code is located under `frontend/app/`. Within this directory, the application is structured as follows: `api/` contains frontend API wrappers that communicate with the backend, `components/` contains reusable UI components, domain/ defines shared types and domain-level logic, routes/ contains route-level pages and navigation logic, and `util/` stores general utility functions used throughout the frontend. Static assets are located under `frontend/public/`. Frontend tests are located under `frontend/test/` and follow the structure of the application layer (`/app`).
 
-The `backend/` directory contains the server-side application implemented in Java. The primary source code resides in `backend/src/main/java/com/batchable/backend`. This layer contains the core application components, including the controllers that define HTTP endpoints, the services layer that implements business logic, and the database manager responsible for interacting with the persistence layer, the Twilio manager which interacts with the Twilio API, the websocket which handles communication with the frontend, client and models which handle the Google API, and the batching alogrithim and manager which handles orchestration of batching.
+The `backend/` directory contains the server-side application implemented in Java. The primary source code resides in `backend/src/main/java/com/batchable/backend`. This layer contains the core application components, including the controllers that define HTTP endpoints, the services layer that implements business logic, and the database manager responsible for interacting with the persistence layer, the Twilio manager which sends SMS notifications to drivers when new delivery batches are assigned, the websocket which handles communication with the frontend, client and models which handle the Google API, and the batching algorithm and manager which handles orchestration of batching.
 
 ## 3. How to Build and Run the Software
 
@@ -55,6 +55,21 @@ export TWILIO_PHONE_NUMBER=
 export TWILIO_DRIVER_PHONE_NUMBER=
 export GOOGLE_ROUTES_API_KEY=
 ```
+
+Below is an explanation of each variable:
+
+The Twilio variables configure SMS notifications for drivers:
+* `TWILIO_ACCOUNT_SID` – Twilio account SID
+* `TWILIO_AUTH_TOKEN` – Twilio auth token
+* `TWILIO_PHONE_NUMBER` – the number Twilio will use as the sender
+* `TWILIO_DRIVER_PHONE_NUMBER` – the phone number that receives all driver SMS notifications. Because the system uses a Twilio trial account, messages can only be sent to verified numbers, so this value must correspond to a verified phone number in the Twilio console.
+
+The Google variable configures routing calculations:
+* `GOOGLE_ROUTES_API_KEY` – Google Routes API key for delivery route optimization and distance calculations
+
+**Additional information**
+- Twilio trial accounts can only send to verified numbers, so a single configured number simplifies testing
+- The system sends an SMS notification to `TWILIO_DRIVER_PHONE_NUMBER` whenever a new delivery batch is assigned to a driver.
 
 ## Build & Run
 Then, while still in the root, execute the following in an **sh-compatible** terminal:
@@ -132,25 +147,23 @@ Controller tests should verify HTTP behavior and response correctness. When test
 If a test requires database interaction, ensure the database is running before executing integration tests. All new backend features must include corresponding tests before being merged into main. Please follow existing test structure and naming conventions for consistency.
 
 #### Twilio Interaction
-If a test requires Twilio interaction, you must mock the Twilio client; existing tests under `backend/src/test/java/com/batchable/backend/twilio/` demonstrate the pattern.
+When testing `TwilioManager` or other components that call Twilio, mock the `RestClient` and `Message.creator()` calls to avoid sending real SMS. Existing test patterns are demonstrated in `backend/src/test/java/com/batchable/backend/twilio/`.
+
 
 ## 6. How to Build a Release of the Software
 Releases must be built from the main branch after all changes have been merged and validated. Before building a release, developers must ensure that all backend and frontend tests pass and that the application runs successfully in a local development environment.
 
 Prior to packaging the release, update the version in the documentation.
 
-## 7. Twilio Service
-The backend includes a `TwilioManager` component that handles all SMS activity. SMS messages are sent when a driver is assigned an order.
+## 7. SMS Notifications (Twilio Integration)
 
-### Configuration
-Required environment variables (added to `vars.env`/CI secrets) are stated above in the `Installation` section, but we'll explain a bit more throughly here.
+SMS notifications are sent when a new delivery batch is assigned to a driver.
 
-* `TWILIO_ACCOUNT_SID` – Twilio account SID
-* `TWILIO_AUTH_TOKEN` – Twilio auth token
-* `TWILIO_PHONE_NUMBER` – the number Twilio will use as the sender
-* `TWILIO_DRIVER_PHONE_NUMBER` – a placeholder driver number used during development/trial (drivers send information back via the received link)
+### Message Format
 
-During development we use a Twilio trial account and the virtual phone number. The trial account can only message verified numbers, so the driver number configured above must be validated in Twilio.
+The SMS message is formatted in `TwilioManager.handleNewBatch()` and contains:
+- Driver name
+- Batch ID
+- A link to the driver's route page
 
-### How it Works
-**Outbound notification** – when an order is created and a driver is selected. The manager formats a message containing a short instruction and a link to the backend.
+Example: Driver <name> (id <id>) you have been assigned a new batch. View here <link>
