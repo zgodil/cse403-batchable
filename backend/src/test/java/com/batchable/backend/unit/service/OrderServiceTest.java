@@ -35,7 +35,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
  * timestamp updates. - Validation of cooked time updates. - Remake and removal logic (domain
  * restrictions). - Retrieval methods (getOrder, getBatch, getBatchOrders). - Batch assignment
  * (setOrderBatchId) with checks for existence and state. - Proper handling of SQLException
- * (wrapping into RuntimeException). - WebSocket publisher invocations after successful
+ * (wrapping into RuntimeException). - SSE publisher invocations after successful
  * modifications.
  */
 @ExtendWith(MockitoExtension.class)
@@ -119,10 +119,10 @@ public class OrderServiceTest {
     verifyNoInteractions(orderDAO, batchDAO, publisher);
   }
 
-  /**
-   * Verifies that a valid order is created with state forced to COOKING, the correct ID is
-   * returned, and a WebSocket refresh is published.
-   */
+/**
+ * Verifies that a valid order is created with state forced to COOKING, the correct ID is
+ * returned, and an SSE refresh is published.
+ */
   @Test
   void createOrder_happyPath_setsStateCooking_returnsId_andRefreshes() throws Exception {
     Instant t0 = Instant.parse("2026-02-16T00:00:00Z");
@@ -143,10 +143,10 @@ public class OrderServiceTest {
     verifyNoInteractions(batchDAO);
   }
 
-  /**
-   * Verifies that a SQLException from the DAO is wrapped in a RuntimeException and that no
-   * WebSocket publish occurs.
-   */
+/**
+ * Verifies that a SQLException from the DAO is wrapped in a RuntimeException and that no
+ * SSE refresh is published.
+ */
   @Test
   void createOrder_sqlException_wrapped_andNoRefresh() throws Exception {
     Instant t0 = Instant.parse("2026-02-16T00:00:00Z");
@@ -211,10 +211,10 @@ public class OrderServiceTest {
     verifyNoInteractions(batchDAO, publisher);
   }
 
-  /**
-   * Verifies that advancing from COOKING to COOKED updates the state and publishes a WebSocket
-   * refresh.
-   */
+/**
+ * Verifies that advancing from COOKING to COOKED updates the state and publishes an SSE
+ * refresh.
+ */
   @Test
   void advanceOrderState_cooking_to_cooked_updatesState_andRefreshes() throws Exception {
     Order o = order(5, 7, "Dest", "[]", Instant.now(), null, null, Order.State.COOKING, true, null);
@@ -306,9 +306,9 @@ public class OrderServiceTest {
     verifyNoInteractions(publisher, batchDAO);
   }
 
-  /**
-   * Verifies that a valid cooked time update succeeds and triggers a WebSocket refresh.
-   */
+/**
+ * Verifies that a valid cooked time update succeeds and triggers an SSE refresh.
+ */
   @Test
   void updateOrderCookedTime_happyPath_updates_andRefreshes() throws Exception {
     Instant t0 = Instant.parse("2026-02-16T00:00:00Z");
@@ -509,10 +509,10 @@ public class OrderServiceTest {
     verifyNoInteractions(publisher);
   }
 
-  /**
-   * Verifies that a valid batch assignment succeeds, updates the order, and publishes a WebSocket
-   * refresh.
-   */
+/**
+ * Verifies that a valid batch assignment succeeds, updates the order, and publishes an SSE
+ * refresh.
+ */
   @Test
   void setOrderBatchId_happyPath_updates_andRefreshes() throws Exception {
     Order o = order(5, 7, "Dest", "[]", Instant.now(), null, null, Order.State.COOKED, true, null);
@@ -599,7 +599,7 @@ public class OrderServiceTest {
     verifyNoInteractions(publisher, batchDAO);
   }
 
-  /** Verifies that a valid delivery time update succeeds and triggers a WebSocket refresh. */
+  /** Verifies that a valid delivery time update succeeds and triggers an SSE refresh. */
   @Test
   void updateOrderDeliveryTime_happyPath_updates_andRefreshes() throws Exception {
     Instant t0 = Instant.parse("2026-02-16T00:00:00Z");
@@ -705,7 +705,7 @@ public class OrderServiceTest {
     assertEquals(99L, id);
 
     verify(batchDAO).createBatch(7L, "polyline", dispatch, completion);
-    // No WebSocket refresh expected for batch creation (not in code)
+    // No SSE refresh expected for batch creation (not in code)
     verifyNoInteractions(publisher);
   }
 
