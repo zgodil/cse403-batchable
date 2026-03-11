@@ -16,7 +16,7 @@ Final Release Tag: `final`
 Features:
 - Secure login.
 - An order and driver overview for the restaurant employee that displays order details, including order time, promised time, prep time, customer information, and driver information. 
-- All delivery details will be texted to the driver. The driver will have a web interface to communicate about order and route completion.
+- Delivery details are texted to the driver. The driver has a web interface to communicate about order and route completion.
 - Ability to add orders, mark orders as remakes, and cancel orders.
 - Ability to modify restaurant details, including adding/editing drivers and menu items.
 - Robust and efficient batching logic that edits and assigns batched orders to drivers in real-time (with orders rebatched based on new information/order changes).
