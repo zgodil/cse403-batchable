@@ -9,9 +9,15 @@ interface Props {
   driverId: Driver['id'];
 }
 
+/**
+ * Represents a compact route summary for a given driver on the dashboard page.
+ * It displays assigned order ids in route order and refreshes when order updates are pushed.
+ * @param driverId The driver whose assigned route should be displayed
+ */
 export default function DriverRoute({driverId}: Props) {
   const monitor = useContext(OrderRefreshContext);
 
+  // loads the driver batch and its orders, returning an empty route when unassigned
   const assignedOrdersLoader = useLoader(async () => {
     const batch = await driverApi.getBatch(driverId);
     if (!batch) {
@@ -26,6 +32,7 @@ export default function DriverRoute({driverId}: Props) {
     return orders;
   }, [driverId.id]);
 
+  // refresh route on order update events from the shared SSE monitor
   useEffect(() => {
     if (!monitor) return;
 

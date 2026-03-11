@@ -1,5 +1,8 @@
 import Button from '../Button';
 
+/**
+ * Represents the heading section on the restaurant admin page, with navigation back to the dashboard.
+ */
 export default function RestaurantPageHeader() {
   return (
     <div className="mb-8 flex flex-wrap items-center justify-between gap-3">

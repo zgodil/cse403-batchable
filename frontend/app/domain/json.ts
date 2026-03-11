@@ -11,8 +11,14 @@ import type {
   DomainObject,
 } from './objects';
 
+/**
+ * If T is a finite union of lowercase strings, then `StringEnum<T>` is `T`. Otherwise it is `never`. Checking if a given `T extends StringEnum<T>` checks that it is in this form.
+ */
 type StringEnum<T> = Lowercase<string> & (string extends T ? never : T);
 
+/**
+ * For a given domain object field type, this represents the post-parsing JSON representation. Many types are represented as non-specific strings in JSON, and enums (finite string unions) are represented as their uppercase versions (thanks Jackson JSON).
+ */
 type JSONDomainField<T> = T extends
   | Date
   | WorldLocation

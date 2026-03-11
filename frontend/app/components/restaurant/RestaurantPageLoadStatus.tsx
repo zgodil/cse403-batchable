@@ -6,6 +6,11 @@ type RestaurantPageLoadStatusProps = {
   loadError: string | null;
 };
 
+/**
+ * Represents loading and error status messages for the restaurant admin page.
+ * @param isLoadingData Whether initial page data is still loading
+ * @param loadError A user-visible backend load error message, if any
+ */
 export default function RestaurantPageLoadStatus({
   isLoadingData,
   loadError,

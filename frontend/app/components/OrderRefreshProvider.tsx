@@ -29,6 +29,9 @@ export class RefreshMonitor extends EventTarget {
   }
 }
 
+/**
+ * Represents an EventTarget which monitors order and batch changes. This should not be used directly as a context tag, but rather via `useContext(OrderRefreshContext)` with `<OrderRefreshProvider>`.
+ */
 export const OrderRefreshContext = createContext<RefreshMonitor | null>(null);
 
 interface Props {
@@ -37,7 +40,7 @@ interface Props {
 
 /**
  * Provides an EventTarget to which any component can attach via useEffect.
- * It emits an event whenever orders or batches have changed.
+ * It emits an event (`'orderUpdate'`) whenever orders or batches have changed.
  */
 export default function OrderRefreshProvider({
   useDriverToken = false,
@@ -47,6 +50,7 @@ export default function OrderRefreshProvider({
   const driverToken = useContext(DriverTokenContext);
   const [monitor, setMonitor] = useState<RefreshMonitor | null>(null);
 
+  // create a monitor associated with the current RestaurantContext, whenever it changes
   useEffect(() => {
     if (useDriverToken) {
       const newMonitor = driverToken

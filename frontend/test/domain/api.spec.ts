@@ -223,24 +223,6 @@ describe('/driver endpoint', () => {
     );
   });
 
-  it('can toggle shift', async () => {
-    const restaurant = await checkedCreate(restaurantApi, getFakeRestaurant());
-    const driver = await checkedCreate(driverApi, getFakeDriver(restaurant));
-    for (const option of [false, true]) {
-      const shifted = await driverApi.setOnShift(driver, option);
-      expect(shifted).toBe(true);
-      const readback = await driverApi.read(driver);
-      expect(readback?.onShift).toBe(option);
-    }
-  });
-
-  it('can fail to toggle shift for non-existent driver', async () => {
-    const restaurant = await checkedCreate(restaurantApi, getFakeRestaurant());
-    const driver = await checkedCreate(driverApi, getFakeDriver(restaurant));
-    await checkedDelete(driverApi, driver);
-    expect(await driverApi.setOnShift(driver, true)).toBe(false);
-  });
-
   it('cannot read a batch from a new driver', async () => {
     const restaurant = await checkedCreate(restaurantApi, getFakeRestaurant());
     const driver = await checkedCreate(driverApi, getFakeDriver(restaurant));

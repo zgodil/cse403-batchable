@@ -14,6 +14,16 @@ interface Props {
   emptyMessage?: string;
 }
 
+/**
+ * Represents a reusable menu-item checkbox selector for order forms.
+ * It loads menu items for the current restaurant and reports selected item names upstream.
+ * @param restaurant The restaurant whose menu items should be listed
+ * @param onItemsChange Callback invoked whenever selected item names change
+ * @param label Header text for the selector block
+ * @param loadingMessage Message shown while menu items are loading
+ * @param errorMessage Message shown when menu items fail to load
+ * @param emptyMessage Message shown when no menu items are available
+ */
 export default function MenuItemSelector({
   restaurant,
   onItemsChange,
@@ -27,10 +37,12 @@ export default function MenuItemSelector({
   const [loadingMenuItems, setLoadingMenuItems] = useState(false);
   const [menuItemsLoadFailed, setMenuItemsLoadFailed] = useState(false);
 
+  // keep parent form state in sync with local checkbox state
   useEffect(() => {
     onItemsChange(selectedItemNames);
   }, [onItemsChange, selectedItemNames]);
 
+  // load menu items for the current restaurant, resetting state when unavailable
   useEffect(() => {
     if (!restaurant) {
       setMenuItems([]);

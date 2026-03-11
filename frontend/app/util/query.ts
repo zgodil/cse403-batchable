@@ -1,5 +1,9 @@
 import {useEffect, useReducer, useState} from 'react';
 
+/**
+ * Represents the ongoing loading process for a given resource.
+ * The `.reload()` method has constant identity (like a `setState()` callback), and can be used to begin the loading process again. The old results will continue to be shown until the new request completes.
+ */
 export interface Loader<T> {
   loaded: boolean;
   response: T | null;
@@ -25,6 +29,9 @@ type LoaderResult<T> =
  *  1. Returning null: This indicates that the data could not meaningfully be loaded at this time
  *  2. Throwing an error: This indicates that the data could in theory be loaded, but failed
  *  3. Returning non-null: This indicates that the data was successfully loaded
+ * @param loader A function which asynchronously resolves in one of the aforementioned ways. This is usually a wrapper around an API call
+ * @param dependencies A list of values upon which the loaded values depend. If these change (or if `.reload()` is called), the loader will be triggered again.
+ * @returns The {@link Loader} object associated with the loading process
  */
 export function useLoader<T>(
   loader: () => Promise<T | null>,

@@ -5,6 +5,11 @@ interface Props {
   disabled?: boolean;
 }
 
+/**
+ * Represents a visual depiction of an {@link Order}'s state property. Different colors are used to indicate the different states.
+ * @param state Which order state to display. See {@link Order}'s state property.
+ * @param disabled Whether or not the state should be greyed-out, indicating that it is 'not interactable' or 'completed'.
+ */
 export default function OrderState({state, disabled}: Props) {
   const style = disabled
     ? 'bg-gray-100 text-gray-400'

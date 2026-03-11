@@ -18,13 +18,23 @@ interface Props {
   state: ModalState;
 }
 
+/**
+ * Represents a modal dialog for editing the post-creation-mutable properties of an Order. See {@link FormModal} for more details on the underlying functionality.
+ * @param order The order domain object's current state, prior to any modifications
+ * @param state The state of the modal dialog. See {@link ModalState}
+ */
 export default function EditOrderModal({order, state}: Props) {
+  // gather initial data from order object
+  const editable = isStateBefore(order.state, 'cooked');
   const cookTime = Math.ceil(
     (order.cookedTime.getTime() - order.initialTime.getTime()) / MS_PER_MINUTE,
   );
 
-  const editable = isStateBefore(order.state, 'cooked');
-
+  /**
+   * Uses form input data (and item names) to edit the order via the API. This is called by {@link FormModal}'s `apply` prop when the form is submitted and the modal closes.
+   * @param cookTime A string containing the cooking duration, in minutes from the order's creation time
+   * @param state A string containing the order's new {@link Order | state}, unvalidated.
+   */
   const applyChanges = async (data: {
     cookTime: string;
     state: Order['state'];
@@ -52,6 +62,7 @@ export default function EditOrderModal({order, state}: Props) {
     }
   };
 
+  /** Remakes the current order via the API */
   const remake = async () => {
     if (await orderApi.remake(order.id)) {
       state.setOpen(false);
@@ -60,6 +71,7 @@ export default function EditOrderModal({order, state}: Props) {
     }
   };
 
+  /** Cancels the current order via the API */
   const cancel = async () => {
     if (await orderApi.delete(order.id)) {
       state.setOpen(false);

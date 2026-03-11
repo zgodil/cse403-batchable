@@ -9,8 +9,14 @@ interface Props {
   order: Order;
 }
 
+/**
+ * Provides a high-level, formatted overview of a given order, for display on the dashboard page. Clicking the card reveals a modal dialog with additional details.
+ * @param order The order domain object to summarize
+ */
 export default function OrderCard({order}: Props) {
   const editOrderModal = useModal();
+
+  // format timestamps
   const prepTime = formatTimeInterval(order.cookedTime.getTime() - Date.now());
   const deliverTime = formatTimeInterval(
     order.deliveryTime.getTime() - Date.now(),

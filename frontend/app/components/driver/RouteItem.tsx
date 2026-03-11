@@ -9,8 +9,14 @@ interface Props {
   order: Order;
 }
 
+/**
+ * Represents one item in a driver's batch. It allows that order to be delivered.
+ * @param order The order in the driver's batch. May be delivered
+ */
 export default function RouteItem({order}: Props) {
   const token = useContext(DriverTokenContext);
+
+  /** Delivers the order via the API */
   const deliverOrder = async () => {
     if (!token || !(await orderApi.markDelivered(order.id, token))) {
       alert('Failed to mark order as delivered');

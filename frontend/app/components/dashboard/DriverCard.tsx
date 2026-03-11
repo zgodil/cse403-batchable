@@ -7,6 +7,10 @@ interface Props {
   driver: Driver;
 }
 
+/**
+ * Provides a high-level summary of a driver's current state, to be displayed on the dashboard page.
+ * @param driver The driver domain object which is being summarized by the card
+ */
 export default function DriverCard({driver}: Props) {
   return (
     <>

@@ -20,6 +20,12 @@ type DriversSectionProps = {
   setIsEditing: Dispatch<SetStateAction<boolean>>;
 };
 
+/**
+ * Represents the drivers management section on the restaurant page.
+ * @param initialDrivers The initial set of drivers loaded by the page.
+ * @param isEditing Whether this section is currently in edit mode.
+ * @param setIsEditing Setter controlled by the parent page.
+ */
 function DriversSection({
   initialDrivers,
   isEditing,
@@ -40,6 +46,7 @@ function DriversSection({
     setIsEditing(!isEditing);
   };
 
+  // reload from backend after failed mutations
   const refreshDrivers = async () => {
     if (!restaurantId) {
       return false;

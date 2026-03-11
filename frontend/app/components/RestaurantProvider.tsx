@@ -4,6 +4,9 @@ import {getToken} from '~/api/auth_token';
 import {restaurantApi} from '~/api/endpoints/restaurant';
 import type {Restaurant} from '~/domain/objects';
 
+/**
+ * Represents the ID of the restaurant associated with the current user. This should not be used as a standalone context tag, but rather used via `useContext(RestaurantContext)` in combination with `<RestaurantProvider>`.
+ */
 export const RestaurantContext = createContext<Restaurant['id'] | null>(null);
 
 /**

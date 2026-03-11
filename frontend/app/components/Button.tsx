@@ -57,7 +57,7 @@ interface Props {
 }
 
 /**
- * A lightly-customizable button component, which can be an \<a>, \<Link>, or \<button> tag depending on props, while looking identical.
+ * A lightly-customizable button component, which can be an \<a>, \<Link>, or \<button> tag depending on props, while looking identical. If the button is not given any non-undefined values for interaction props (`href`, `to`, `onClick`, or `submit`), then it will be shown in a disabled state.
  * @param style The kind of button. Can be a color or 'dark' or 'blank'
  * @param submit Whether this is a submission button for a form
  * @param onClick What to do when the button is clicked
