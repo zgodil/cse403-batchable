@@ -120,7 +120,7 @@ public class DbOrderService {
     try {
       orderDAO.updateOrderState(orderId, next);
 
-      // Push update to frontend via SMS
+      // Push update to frontend via SSE
       publisher.refreshOrderData(order.restaurantId);
 
     } catch (SQLException e) {
