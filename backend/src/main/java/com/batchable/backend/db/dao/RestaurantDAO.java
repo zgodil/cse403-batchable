@@ -157,20 +157,6 @@ public class RestaurantDAO {
     }
   }
 
-  public boolean restaurantExistsByName(String name) throws SQLException {
-    final String sql = "SELECT 1 FROM Restaurant WHERE name = ? LIMIT 1;";
-
-    try (Connection conn = dataSource.getConnection();
-        PreparedStatement ps = conn.prepareStatement(sql)) {
-
-      ps.setString(1, name);
-
-      try (ResultSet rs = ps.executeQuery()) {
-        return rs.next();
-      }
-    }
-  }
-
   public boolean restaurantExistsByNameExcludingId(long excludedRestaurantId, String name)
       throws SQLException {
     final String sql = "SELECT 1 FROM Restaurant WHERE name = ? AND id <> ? LIMIT 1;";

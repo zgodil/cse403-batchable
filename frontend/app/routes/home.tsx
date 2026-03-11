@@ -7,6 +7,8 @@ import Button from '~/components/Button';
 import Loading from '~/components/Loading';
 import {useModal} from '~/components/Modal';
 import OrderRefreshProvider from '~/components/OrderRefreshProvider';
+import {useEffect} from 'react';
+import UnconfiguredRestaurantModal from '~/components/dashboard/UnconfiguredRestaurantModal';
 
 /**
  * The order dashboard page for Batchable. This can be used to view and manage orders and drivers.
@@ -14,6 +16,10 @@ import OrderRefreshProvider from '~/components/OrderRefreshProvider';
 function Home() {
   const {isAuthenticated, isLoading, user, logout} = useAuth0();
   const addOrderModal = useModal();
+
+  useEffect(() => {
+    document.title = 'Batchable Dashboard';
+  }, []);
 
   if (isLoading) {
     return <Loading>Loading...</Loading>;
@@ -33,7 +39,7 @@ function Home() {
   return (
     <OrderRefreshProvider>
       <div className="p-8 max-w-7xl mx-auto min-h-screen bg-white dark:bg-gray-950 text-gray-900 dark:text-gray-100">
-        <div className="flex justify-between items-center mb-8">
+        <div className="flex justify-between items-center mb-8 gap-4 flex-col md:flex-row">
           <div>
             <h1 className="text-3xl font-extrabold tracking-tight">
               Batchable Dashboard
@@ -42,9 +48,9 @@ function Home() {
               Adaptive Real-Time Delivery Batching System
             </p>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex items-stretch w-full gap-3 flex-col md:flex-row md:items-center md:w-auto">
             {user?.email && (
-              <span className="text-sm text-gray-600 dark:text-gray-400">
+              <span className="text-sm text-center text-gray-600 dark:text-gray-400">
                 {user.email}
               </span>
             )}
@@ -71,6 +77,7 @@ function Home() {
         </div>
 
         <AddOrderModal modal={addOrderModal} />
+        <UnconfiguredRestaurantModal />
       </div>
     </OrderRefreshProvider>
   );

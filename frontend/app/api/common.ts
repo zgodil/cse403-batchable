@@ -1,6 +1,6 @@
 import type {HttpMethods} from 'msw';
 import {apiFetch} from './fetch';
-import {getToken} from './authToken';
+import {getToken} from './auth_token';
 
 export type Resource = `/${string}`;
 

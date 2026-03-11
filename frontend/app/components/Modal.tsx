@@ -16,10 +16,11 @@ interface Props {
 /**
  * A custom hook for getting a ModalState object associated with a closed modal.
  * This can be used to control one or more modal children.
+ * @param initiallyOpen Whether the modal should begin by opening
  * @returns The new modal state, closed
  */
-export function useModal(): ModalState {
-  const [open, setOpen] = useState(false);
+export function useModal(initiallyOpen = false): ModalState {
+  const [open, setOpen] = useState(initiallyOpen);
   return {open, setOpen};
 }
 

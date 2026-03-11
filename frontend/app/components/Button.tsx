@@ -1,6 +1,7 @@
 import {Link} from 'react-router';
 
-const GLOBAL_TAILWIND = 'cursor-pointer text-center transition-all';
+const GLOBAL_TAILWIND =
+  'cursor-pointer text-center transition-all inline-block';
 
 const ENABLED_TAILWIND = 'active:scale-95';
 
@@ -56,12 +57,12 @@ interface Props {
 }
 
 /**
- * A lightly-customizable button component, which can be an <a>, <Link>, or <button> tag depending on props, while looking identical. If the button is not given any non-undefined values for interaction props (`href`, `to`, `onClick`, or `submit`), then it will be shown in a disabled state.
+ * A lightly-customizable button component, which can be an \<a>, \<Link>, or \<button> tag depending on props, while looking identical. If the button is not given any non-undefined values for interaction props (`href`, `to`, `onClick`, or `submit`), then it will be shown in a disabled state.
  * @param style The kind of button. Can be a color or 'dark' or 'blank'
  * @param submit Whether this is a submission button for a form
  * @param onClick What to do when the button is clicked
- * @param to The link to visit when clicked. This will force the <Button> to become a <Link>
- * @param href The link to visit when clicked. This will force the <Button> to become an <a>
+ * @param to The link to visit when clicked. This will force the \<Button> to become a \<Link>
+ * @param href The link to visit when clicked. This will force the \<Button> to become an \<a>
  * @param tw Additional Tailwind classes to add to the button, if intense customization is needed
  * @param small Whether to make the button somewhat smaller
  * @param children The contents of the button. Hopefully not too much

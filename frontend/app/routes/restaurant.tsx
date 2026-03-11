@@ -33,6 +33,10 @@ function RestaurantPage() {
   >(null);
 
   useEffect(() => {
+    document.title = 'Manage Restaurant';
+  }, []);
+
+  useEffect(() => {
     if (!restaurantId) {
       setData(null);
       setLoadError('Could not determine restaurant.');

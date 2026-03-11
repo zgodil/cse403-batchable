@@ -266,13 +266,32 @@ public class RestaurantBatchingManager {
   }
 
   /**
-   * Adds an order to the restaurant's tentative batches. This operation is asynchronous and returns
-   * immediately.
+   * Adds an order to the restaurant's tentative batches. This operation runs synchronously on the
+   * executor and blocks until complete.
    *
    * @param order the order to add
+   * @throws IllegalArgumentException if the order is not in COOKING state or its cookedTime is not
+   *         in the future
+   * @throws RuntimeException if the batching algorithm fails (e.g., invalid route) or if
+   *         interrupted
    */
   public void addOrder(Order order) {
-    executor.submit(() -> doAddOrder(order));
+    try {
+      executor.submit(() -> doAddOrder(order)).get();
+    } catch (InterruptedException e) {
+      Thread.currentThread().interrupt();
+      throw new RuntimeException("Interrupted while adding order", e);
+    } catch (ExecutionException e) {
+      // Unwrap the cause and rethrow it
+      Throwable cause = e.getCause();
+      if (cause instanceof RuntimeException) {
+        throw (RuntimeException) cause;
+      } else if (cause instanceof Error) {
+        throw (Error) cause;
+      } else {
+        throw new RuntimeException(cause);
+      }
+    }
   }
 
   /**
@@ -292,13 +311,30 @@ public class RestaurantBatchingManager {
   }
 
   /**
-   * Removes an order from restaurant's batches by ID. This operation is asynchronous.
+   * Removes an order from restaurant's batches by ID. This operation runs synchronously on the
+   * executor and blocks until complete.
    *
    * @param order the order to remove
    * @throws IllegalArgumentException if the order id is not found in any batch
+   * @throws RuntimeException if interrupted or if an unexpected error occurs
    */
   public void removeOrder(Order order) {
-    executor.submit(() -> doRemoveOrder(order));
+    try {
+      executor.submit(() -> doRemoveOrder(order)).get();
+    } catch (InterruptedException e) {
+      Thread.currentThread().interrupt();
+      throw new RuntimeException("Interrupted while removing order", e);
+    } catch (ExecutionException e) {
+      // Unwrap the cause and rethrow it
+      Throwable cause = e.getCause();
+      if (cause instanceof RuntimeException) {
+        throw (RuntimeException) cause;
+      } else if (cause instanceof Error) {
+        throw (Error) cause;
+      } else {
+        throw new RuntimeException(cause);
+      }
+    }
   }
 
   /**
@@ -317,14 +353,32 @@ public class RestaurantBatchingManager {
   }
 
   /**
-   * Updates an order across all batching states. This operation is asynchronous.
+   * Updates an order across all batching states. This operation runs synchronously on the executor
+   * and blocks until complete.
    *
    * @param orderId the ID of the order to update
    * @param rebatchIfTentative whether to rebatch the order if it is currently part of a tentative
    *        batch
+   * @throws RuntimeException if the operation fails (e.g., order not found, batching error) or if
+   *         interrupted
    */
   public void updateOrder(Long orderId, boolean rebatchIfTentative) {
-    executor.submit(() -> doUpdateOrder(orderId, rebatchIfTentative));
+    try {
+      executor.submit(() -> doUpdateOrder(orderId, rebatchIfTentative)).get();
+    } catch (InterruptedException e) {
+      Thread.currentThread().interrupt();
+      throw new RuntimeException("Interrupted while updating order", e);
+    } catch (ExecutionException e) {
+      // Unwrap the cause and rethrow it
+      Throwable cause = e.getCause();
+      if (cause instanceof RuntimeException) {
+        throw (RuntimeException) cause;
+      } else if (cause instanceof Error) {
+        throw (Error) cause;
+      } else {
+        throw new RuntimeException(cause);
+      }
+    }
   }
 
   /**
@@ -375,24 +429,59 @@ public class RestaurantBatchingManager {
   }
 
   /**
-   * Rebatches an existing order within the tentative batches. This operation is asynchronous.
+   * Rebatches an existing order within the tentative batches. This operation runs synchronously on
+   * the executor and blocks until complete.
    *
    * @param order the updated order
    * @throws IllegalArgumentException if the order id is not found
+   * @throws RuntimeException if interrupted or if an unexpected error occurs
    */
   public void rebatchTentativeOrder(Order order) {
-    executor.submit(
-        () -> batchingAlgorithm.rebatchOrder(batches.tentativeBatches, order, restaurantAddress));
+    try {
+      executor.submit(
+          () -> batchingAlgorithm.rebatchOrder(batches.tentativeBatches, order, restaurantAddress))
+          .get();
+    } catch (InterruptedException e) {
+      Thread.currentThread().interrupt();
+      throw new RuntimeException("Interrupted while rebatching order", e);
+    } catch (ExecutionException e) {
+      // Unwrap the cause and rethrow it
+      Throwable cause = e.getCause();
+      if (cause instanceof RuntimeException) {
+        throw (RuntimeException) cause;
+      } else if (cause instanceof Error) {
+        throw (Error) cause;
+      } else {
+        throw new RuntimeException(cause);
+      }
+    }
   }
 
   /**
-   * Updates an existing order within the tentative batches in place. This operation is
-   * asynchronous.
+   * Updates an existing order within the tentative batches in place. This operation runs
+   * synchronously on the executor and blocks until complete.
    *
    * @param orderId the id of the order to update
+   * @throws RuntimeException if the order is not found in tentative batches or if interrupted
    */
   public void updateTentativeOrderInplace(Long orderId) {
-    executor.submit(() -> batchingAlgorithm.updateOrderInplace(batches.tentativeBatches, orderId));
+    try {
+      executor.submit(() -> batchingAlgorithm.updateOrderInplace(batches.tentativeBatches, orderId))
+          .get();
+    } catch (InterruptedException e) {
+      Thread.currentThread().interrupt();
+      throw new RuntimeException("Interrupted while updating order in place", e);
+    } catch (ExecutionException e) {
+      // Unwrap the cause and rethrow it
+      Throwable cause = e.getCause();
+      if (cause instanceof RuntimeException) {
+        throw (RuntimeException) cause;
+      } else if (cause instanceof Error) {
+        throw (Error) cause;
+      } else {
+        throw new RuntimeException(cause);
+      }
+    }
   }
 
   /**
@@ -668,7 +757,9 @@ public class RestaurantBatchingManager {
    * Returns the Instant 'millis' milliseconds after the given time.
    *
    * @param time the base instant
+   * 
    * @param millis the number of milliseconds to add
+   * 
    * @return the new Instant
    */
   private Instant millisAfter(Instant time, long millis) {

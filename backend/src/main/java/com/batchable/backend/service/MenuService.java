@@ -6,6 +6,8 @@ import com.batchable.backend.db.models.MenuItem;
 import org.springframework.stereotype.Service;
 
 import java.sql.SQLException;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 /**
  * MenuService belongs to the business logic layer.
@@ -22,6 +24,12 @@ public class MenuService {
 
   private final MenuItemDAO menuItemDAO;
   private final RestaurantDAO restaurantDAO;
+
+  // Service-level lock protects multi-step business invariants
+  // across multiple DAO calls.
+  private final ReentrantReadWriteLock rwLock = new ReentrantReadWriteLock();
+  private final Lock readLock = rwLock.readLock();
+  private final Lock writeLock = rwLock.writeLock();
 
   public MenuService(MenuItemDAO menuItemDAO, RestaurantDAO restaurantDAO) {
     this.menuItemDAO = menuItemDAO;
@@ -75,17 +83,20 @@ public class MenuService {
       throw new IllegalStateException("menuItem.id must be <= 0 (database-generated)");
     }
 
+    writeLock.lock();
     try {
       // Ensure restaurant exists
       if (!restaurantDAO.restaurantExists(menuItem.restaurantId)) {
         throw new IllegalArgumentException(
             "Restaurant does not exist: " + menuItem.restaurantId);
       }
-      
+
       return menuItemDAO.createMenuItem(menuItem.restaurantId, menuItem.name);
 
     } catch (SQLException e) {
       throw new RuntimeException("Failed to create menu item", e);
+    } finally {
+      writeLock.unlock();
     }
   }
 
@@ -101,11 +112,14 @@ public class MenuService {
       throw new IllegalArgumentException("menuItemId must be positive");
     }
 
+    readLock.lock();
     try {
       return menuItemDAO.getMenuItem(menuItemId)
           .orElseThrow(() -> new IllegalArgumentException("Menu item not found: " + menuItemId));
     } catch (SQLException e) {
       throw new RuntimeException("Failed to retrieve menuItem", e);
+    } finally {
+      readLock.unlock();
     }
   }
 
@@ -150,12 +164,13 @@ public class MenuService {
       throw new IllegalArgumentException("name must be non-empty");
     }
 
-    MenuItem old = getMenuItem(menuItem.id);
-    if (menuItem.restaurantId != old.restaurantId) {
-      throw new IllegalArgumentException("menuItem restaurant id must match the old restaurant id");
-    }
-
+    writeLock.lock();
     try {
+      MenuItem old = getMenuItem(menuItem.id);
+      if (menuItem.restaurantId != old.restaurantId) {
+        throw new IllegalArgumentException("menuItem restaurant id must match the old restaurant id");
+      }
+
       // Ensure restaurant exists
       if (!restaurantDAO.restaurantExists(menuItem.restaurantId)) {
         throw new IllegalArgumentException(
@@ -165,6 +180,8 @@ public class MenuService {
 
     } catch (SQLException e) {
       throw new RuntimeException("Failed to update menu item", e);
+    } finally {
+      writeLock.unlock();
     }
   }
 
@@ -192,6 +209,7 @@ public class MenuService {
       throw new IllegalArgumentException("menuItemId must be positive");
     }
 
+    writeLock.lock();
     try {
       // Validate menu item exists
       if (menuItemDAO.getMenuItem(menuItemId).isEmpty()) {
@@ -216,6 +234,8 @@ public class MenuService {
     } catch (SQLException e) {
       throw new RuntimeException(
           "Failed to remove menu item " + menuItemId, e);
+    } finally {
+      writeLock.unlock();
     }
   }
 }

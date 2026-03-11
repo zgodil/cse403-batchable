@@ -14,6 +14,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 import org.springframework.stereotype.Service;
 
 /**
@@ -28,6 +30,12 @@ public class DriverService {
   private final DbOrderService dbOrderService;
   private final DriverDAO driverDAO;
   private final BatchDAO batchDAO;
+
+  // Service-level lock protects multi-step business invariants
+  // across multiple DAO/service calls.
+  private final ReentrantReadWriteLock rwLock = new ReentrantReadWriteLock();
+  private final Lock readLock = rwLock.readLock();
+  private final Lock writeLock = rwLock.writeLock();
 
   public DriverService(DriverDAO driverDAO, BatchDAO batchDAO, DbOrderService dbOrderService,
       RestaurantService restaurantService) {
@@ -51,12 +59,15 @@ public class DriverService {
     if (driver.id > 0)
       throw new IllegalStateException("driver.id must be <= 0 (db-generated)");
 
+    writeLock.lock();
     try {
       return driverDAO.createDriver(driver.restaurantId, driver.name, driver.phoneNumber,
           driver.onShift);
 
     } catch (SQLException e) {
       throw new RuntimeException("Failed to create driver", e);
+    } finally {
+      writeLock.unlock();
     }
   }
 
@@ -69,6 +80,7 @@ public class DriverService {
     validateName(driver.name);
     validatePhone(driver.phoneNumber);
 
+    writeLock.lock();
     try {
       if (driverDAO.getDriver(driver.id).isEmpty()) {
         throw new IllegalArgumentException("Driver not found: " + driver.id);
@@ -80,6 +92,8 @@ public class DriverService {
       updateDriverOnShift(driver.id, driver.onShift);
     } catch (SQLException e) {
       throw new RuntimeException("Failed to update driver " + driver.id, e);
+    } finally {
+      writeLock.unlock();
     }
   }
 
@@ -88,6 +102,7 @@ public class DriverService {
     if (driverId <= 0)
       throw new IllegalArgumentException("driverId must be positive");
 
+    writeLock.lock();
     try {
       Driver existing = driverDAO.getDriver(driverId)
           .orElseThrow(() -> new IllegalArgumentException("Driver not found: " + driverId));
@@ -113,6 +128,8 @@ public class DriverService {
 
     } catch (SQLException e) {
       throw new RuntimeException("Failed to update shift status for driver " + driverId, e);
+    } finally {
+      writeLock.unlock();
     }
   }
 
@@ -120,11 +137,15 @@ public class DriverService {
   public Driver getDriver(long driverId) {
     if (driverId <= 0)
       throw new IllegalArgumentException("driverId must be positive");
+
+    readLock.lock();
     try {
       return driverDAO.getDriver(driverId)
           .orElseThrow(() -> new IllegalArgumentException("Driver not found: " + driverId));
     } catch (SQLException e) {
       throw new RuntimeException("Failed to get driver " + driverId, e);
+    } finally {
+      readLock.unlock();
     }
   }
 
@@ -132,11 +153,15 @@ public class DriverService {
   public Driver getDriverByToken(String token) {
     if (token == null || token.isEmpty())
       throw new IllegalArgumentException("driver UUID must be non-null and non-empty");
+
+    readLock.lock();
     try {
       return driverDAO.getDriverByToken(token)
           .orElseThrow(() -> new IllegalArgumentException("Driver not found: " + token));
     } catch (SQLException e) {
       throw new RuntimeException("Failed to get driver " + token, e);
+    } finally {
+      readLock.unlock();
     }
   }
 
@@ -144,11 +169,15 @@ public class DriverService {
   public String getDriverToken(Long driverId) {
     if (driverId <= 0)
       throw new IllegalArgumentException("driver id must be positive");
+
+    readLock.lock();
     try {
       return driverDAO.getDriverToken(driverId)
           .orElseThrow(() -> new IllegalArgumentException("Driver not found: " + driverId));
     } catch (SQLException e) {
       throw new RuntimeException("Failed to get driver " + driverId, e);
+    } finally {
+      readLock.unlock();
     }
   }
 
@@ -159,19 +188,24 @@ public class DriverService {
    * @return Map containing the driver, the batch orders, and the batch route link
    */
   public Map<String, Object> getDriverPageData(String token) {
-    Driver driver = getDriverByToken(token);
-    Optional<List<Order>> orders = getDriverBatchOrders(driver.id);
-    Optional<String> routeLink = Optional.empty();
-    if (orders.isPresent()) {
-      Restaurant restaurant = restaurantService.getRestaurant(driver.restaurantId);
-      List<Order> unboxedOrders = orders.orElseThrow();
-      routeLink = Optional.of(getRouteLink(unboxedOrders, restaurant.location));
+    readLock.lock();
+    try {
+      Driver driver = getDriverByToken(token);
+      Optional<List<Order>> orders = getDriverBatchOrders(driver.id);
+      Optional<String> routeLink = Optional.empty();
+      if (orders.isPresent()) {
+        Restaurant restaurant = restaurantService.getRestaurant(driver.restaurantId);
+        List<Order> unboxedOrders = orders.orElseThrow();
+        routeLink = Optional.of(getRouteLink(unboxedOrders, restaurant.location));
+      }
+      Map<String, Object> map = new ConcurrentHashMap<>();
+      map.put("driver", driver);
+      map.put("orders", orders);
+      map.put("mapLink", routeLink);
+      return map;
+    } finally {
+      readLock.unlock();
     }
-    Map<String, Object> map = new ConcurrentHashMap<>();
-    map.put("driver", driver);
-    map.put("orders", orders);
-    map.put("mapLink", routeLink);
-    return map;
   }
 
   /**
@@ -184,20 +218,25 @@ public class DriverService {
    * @return a Google Maps directions URL
    */
   public String getRouteLink(List<Order> orders, String restaurantAddress) {
-    orders = orders.stream()
-      .filter(order -> order.state != State.DELIVERED)
-      .toList();
+    readLock.lock();
+    try {
+      orders = orders.stream()
+          .filter(order -> order.state != State.DELIVERED)
+          .toList();
 
-    StringBuilder linkBuilder = new StringBuilder("https://www.google.com/maps/dir/?api=1");
-    linkBuilder.append("&origin=Current+Location");
-    linkBuilder.append("&destination=").append(urlEncodeAddress(restaurantAddress));
-    if (!orders.isEmpty()) {
-      linkBuilder.append("&waypoints=").append(urlEncodeAddress(orders.get(0).destination));
+      StringBuilder linkBuilder = new StringBuilder("https://www.google.com/maps/dir/?api=1");
+      linkBuilder.append("&origin=Current+Location");
+      linkBuilder.append("&destination=").append(urlEncodeAddress(restaurantAddress));
+      if (!orders.isEmpty()) {
+        linkBuilder.append("&waypoints=").append(urlEncodeAddress(orders.get(0).destination));
+      }
+      for (int i = 1; i < orders.size(); i++) {
+        linkBuilder.append("|").append(urlEncodeAddress(orders.get(i).destination));
+      }
+      return linkBuilder.toString();
+    } finally {
+      readLock.unlock();
     }
-    for (int i = 1; i < orders.size(); i++) {
-      linkBuilder.append("|").append(urlEncodeAddress(orders.get(i).destination));
-    }
-    return linkBuilder.toString();
   }
 
   /**
@@ -217,18 +256,23 @@ public class DriverService {
    * 
    */
   public void handleReturn(String token) {
-    Driver driver = getDriverByToken(token);
-    if (getCurrentOrderToDeliver(driver.id) != null) {
-      throw new IllegalArgumentException(
-          "Driver specified by the given token still has orders to deliver");
-    }
-    
-    Batch batch = getDriverBatch(driver.id).orElseThrow(() -> new IllegalArgumentException(
-        "Driver " + driver.id + " does not have an assigned batch"));
+    writeLock.lock();
     try {
-      batchDAO.markBatchFinished(batch.id);
-    } catch (SQLException e) {
-      throw new RuntimeException("Failed to mark batch finished " + batch.id, e);
+      Driver driver = getDriverByToken(token);
+      if (getCurrentOrderToDeliver(driver.id) != null) {
+        throw new IllegalArgumentException(
+            "Driver specified by the given token still has orders to deliver");
+      }
+
+      Batch batch = getDriverBatch(driver.id).orElseThrow(() -> new IllegalArgumentException(
+          "Driver " + driver.id + " does not have an assigned batch"));
+      try {
+        batchDAO.markBatchFinished(batch.id);
+      } catch (SQLException e) {
+        throw new RuntimeException("Failed to mark batch finished " + batch.id, e);
+      }
+    } finally {
+      writeLock.unlock();
     }
   }
 
@@ -244,17 +288,22 @@ public class DriverService {
    * @throws IllegalArgumentException if the driver does not have a currently assigned batch
    */
   public Order getCurrentOrderToDeliver(long driverId) {
-    Optional<List<Order>> optionalBatchOrders = getDriverBatchOrders(driverId);
-    List<Order> batchOrders = optionalBatchOrders.orElseThrow(() -> new IllegalArgumentException(
-        "Driver " + driverId + " does not have an assigned batch"));
+    readLock.lock();
+    try {
+      Optional<List<Order>> optionalBatchOrders = getDriverBatchOrders(driverId);
+      List<Order> batchOrders = optionalBatchOrders.orElseThrow(() -> new IllegalArgumentException(
+          "Driver " + driverId + " does not have an assigned batch"));
 
-    // Use the invariant that they are in the order of delivery
-    for (Order order : batchOrders) {
-      if (order.state != State.DELIVERED) {
-        return order;
+      // Use the invariant that they are in the order of delivery
+      for (Order order : batchOrders) {
+        if (order.state != State.DELIVERED) {
+          return order;
+        }
       }
+      return null;
+    } finally {
+      readLock.unlock();
     }
-    return null;
   }
 
   /**
@@ -267,19 +316,29 @@ public class DriverService {
    *         have a batch
    */
   public Optional<List<Order>> getDriverBatchOrders(long driverId) {
-    Optional<Batch> optionalDriverBatch = getDriverBatch(driverId);
-    if (optionalDriverBatch.isEmpty()) {
-      return Optional.empty();
+    readLock.lock();
+    try {
+      Optional<Batch> optionalDriverBatch = getDriverBatch(driverId);
+      if (optionalDriverBatch.isEmpty()) {
+        return Optional.empty();
+      }
+      Batch driverBatch = optionalDriverBatch.orElseThrow();
+      List<Order> batchOrders = dbOrderService.getBatchOrders(driverBatch.id);
+      return Optional.of(batchOrders);
+    } finally {
+      readLock.unlock();
     }
-    Batch driverBatch = optionalDriverBatch.orElseThrow();
-    List<Order> batchOrders = dbOrderService.getBatchOrders(driverBatch.id);
-    return Optional.of(batchOrders);
   }
 
   /** Returns whether the given driver (specified by id) is available to drive a batch */
   public boolean isAvailable(long driverId) {
-    Driver driver = getDriver(driverId);
-    return driver.onShift && getDriverBatch(driverId).isEmpty();
+    readLock.lock();
+    try {
+      Driver driver = getDriver(driverId);
+      return driver.onShift && getDriverBatch(driverId).isEmpty();
+    } finally {
+      readLock.unlock();
+    }
   }
 
   /** Removes a driver from the system. */
@@ -287,6 +346,7 @@ public class DriverService {
     if (driverId <= 0)
       throw new IllegalArgumentException("driverId must be positive");
 
+    writeLock.lock();
     try {
       Driver driver = driverDAO.getDriver(driverId)
           .orElseThrow(() -> new IllegalArgumentException("Driver not found: " + driverId));
@@ -311,6 +371,8 @@ public class DriverService {
 
     } catch (SQLException e) {
       throw new RuntimeException("Failed to remove driver " + driverId, e);
+    } finally {
+      writeLock.unlock();
     }
   }
 
@@ -319,6 +381,7 @@ public class DriverService {
     if (driverId <= 0)
       throw new IllegalArgumentException("driverId must be positive");
 
+    readLock.lock();
     try {
       // Validate driver exists (per contract)
       if (driverDAO.getDriver(driverId).isEmpty()) {
@@ -328,6 +391,8 @@ public class DriverService {
       return batchDAO.getBatchForDriver(driverId);
     } catch (SQLException e) {
       throw new RuntimeException("Failed to get batch for driver " + driverId, e);
+    } finally {
+      readLock.unlock();
     }
   }
 
