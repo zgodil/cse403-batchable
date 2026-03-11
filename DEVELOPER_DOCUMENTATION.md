@@ -8,7 +8,7 @@ If environment variables are required such as API keys, they should be added to 
 ### Editor/Git Configuration
 To contribute to the source code in a similar manner to the existing codebase, please install an [EditorConfig](https://editorconfig.org/) extension/plug-in for your editor so as to use our global `.editorconfig` settings and not mess up spacing, indentation, or line endings. If you're on Windows, please also use Git's `autocrlf=false` option, which is likely not enabled. If it's not, you can use:
 ```bash
-$ git config --global autocrlf false
+$ git config --global core.autocrlf false
 ```
 
 ## 2. The Directory Structure
@@ -53,11 +53,14 @@ The values required in `vars.env` will be **provided by the development team** f
 
 The structure of `vars.env` should be as follows:
 ```sh
+# secrets
 TWILIO_ACCOUNT_SID=
 TWILIO_AUTH_TOKEN=
 TWILIO_PHONE_NUMBER=
 TWILIO_DRIVER_PHONE_NUMBER=
 GOOGLE_ROUTES_API_KEY=
+
+# configuration (defaults for local development)
 LOCATION_PROTOCOL=http
 LOCATION_HOST=localhost
 LOCATION_PORT=5173
@@ -74,7 +77,7 @@ The Twilio variables configure SMS notifications for drivers:
 The Google variable configures routing calculations:
 * `GOOGLE_ROUTES_API_KEY` – Google Routes API key for delivery route optimization and distance calculations
 
-**Additional information**
+**Additional Information**
 - Twilio trial accounts can only send to verified numbers, so a single configured number simplifies testing
 - The system sends an SMS notification to `TWILIO_DRIVER_PHONE_NUMBER` whenever a new delivery batch is assigned to a driver.
 
@@ -205,6 +208,6 @@ The SMS message is formatted in the following order:
 - Batch ID
 - A link to the driver's route page
 
-Example: Driver John (id 42) you have been assigned a new batch. View here ___
+Example: Driver John (id 42) you have been assigned a new batch. View here `https://batchable.org/...`
 
 
