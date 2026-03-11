@@ -23,7 +23,7 @@ public class SecurityConfig {
             .permitAll()
             .requestMatchers("/route/**")
             .permitAll()
-            .requestMatchers("/driver/route/**", "/driver/returned/**", "/sse/orders/token/**")
+            .requestMatchers("/driver/route/**", "/order/*/delivered/**",  "/driver/returned/**", "/sse/orders/token/**")
             .permitAll()
             .requestMatchers("/send-text", "/receive-text", "/twilio/**")
             .permitAll()
