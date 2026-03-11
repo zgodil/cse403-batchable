@@ -62,7 +62,7 @@ public class RestaurantBatchingManager {
    *
    * @param restaurantId the restaurant ID
    * @param restaurantAddress the restaurant's address (used for routing)
-   * @param publisher SMS publisher to notify clients
+   * @param publisher SSE publisher to notify clients
    * @param batchingAlgorithm algorithm for forming batches
    * @param routeService service for computing route polylines and duration
    * @param dbOrderService service for database order operations
