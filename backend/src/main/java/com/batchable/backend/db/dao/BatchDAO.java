@@ -287,7 +287,7 @@ public class BatchDAO {
 
   /** Returns true if any batch exists for the given driver id. */
   public boolean batchExistsForDriver(long driverId) throws SQLException {
-    final String sql = "SELECT 1 FROM Batch WHERE driver_id = ? LIMIT 1;";
+    final String sql = "SELECT 1 FROM Batch WHERE driver_id = ? and finished = false LIMIT 1;";
 
     try (Connection conn = dataSource.getConnection();
         PreparedStatement ps = conn.prepareStatement(sql)) {

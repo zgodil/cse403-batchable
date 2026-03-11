@@ -78,7 +78,6 @@ public class DbOrderService {
       // batch ids initialized to null then filled in later
       long id = orderDAO.createOrder(order.restaurantId, order.destination, order.itemNamesJson,
           now, order.deliveryTime, order.cookedTime, Order.State.COOKING, order.highPriority, null);
-      System.out.println("STILL IN TRY BLOCK");
       publisher.refreshOrderData(order.restaurantId);
       return id;
 
