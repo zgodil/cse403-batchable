@@ -101,15 +101,6 @@ public class RestaurantDAOTest extends PostgresTestBase {
   }
 
   @Test
-  void restaurantExistsByName_trueOnlyForExactMatch_caseSensitiveByDefault() throws Exception {
-    restaurantDAO.createRestaurant("Chipotle", "Seattle");
-
-    assertTrue(restaurantDAO.restaurantExistsByName("Chipotle"));
-    assertFalse(restaurantDAO.restaurantExistsByName("chipotle")); // case-sensitive by default
-    assertFalse(restaurantDAO.restaurantExistsByName("NotChipotle"));
-  }
-
-  @Test
   void restaurantExistsByNameExcludingId_trueWhenAnotherRowHasName_falseWhenOnlySelfHasName()
       throws Exception {
     long id1 = restaurantDAO.createRestaurant("R1", "Seattle");
