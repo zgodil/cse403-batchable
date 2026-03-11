@@ -1,6 +1,7 @@
 package com.batchable.backend.unit;
 
 import com.batchable.backend.EventSource.DriverSsePublisher;
+import com.batchable.backend.config.ServerLocationConfig;
 import com.batchable.backend.db.models.Batch;
 import com.batchable.backend.db.models.Driver;
 import com.batchable.backend.db.models.Order;
@@ -34,6 +35,7 @@ import static org.mockito.Mockito.*;
 class TwilioManagerTest {
 
     @Mock private TwilioConfig config;
+    @Mock private ServerLocationConfig locationConfig;
     @Mock private DbOrderService dbOrderService;
     @Mock private DriverService driverService;
     @Mock private DriverSsePublisher driverSsePublisher;
@@ -47,7 +49,7 @@ class TwilioManagerTest {
 
     @BeforeEach
     void setUp() {
-        twilioManager = new TwilioManager(config, dbOrderService, driverService, driverSsePublisher);
+        twilioManager = new TwilioManager(config, locationConfig, dbOrderService, driverService, driverSsePublisher);
     }
 
     @Test
@@ -58,6 +60,7 @@ class TwilioManagerTest {
         String driverPhoneNumber = "+1234567890";
         String fromPhoneNumber = "+0987654321";
         String driverToken = "abc123token";
+        String serverUrl = "http://localhost:5173";
 
         Batch batch = new Batch(batchId, driverId, "encoded_polyline", Instant.now(), null, false);
         Driver driver = new Driver(driverId, 100L, "John Doe", driverPhoneNumber, true);
@@ -71,6 +74,7 @@ class TwilioManagerTest {
         when(dbOrderService.getBatchOrders(batchId)).thenReturn(orders);
         when(config.getPhoneNumber()).thenReturn(fromPhoneNumber);
         when(config.getDriverPhoneNumber()).thenReturn(driverPhoneNumber);
+        when(locationConfig.getUrl()).thenReturn(serverUrl);
 
         try (var mockedStatic = mockStatic(Message.class)) {
             mockedStatic.when(() -> Message.creator(any(PhoneNumber.class), any(PhoneNumber.class), anyString()))

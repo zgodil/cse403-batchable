@@ -3,12 +3,20 @@ import tailwindcss from '@tailwindcss/vite';
 import {defineConfig} from 'vitest/config';
 import tsconfigPaths from 'vite-tsconfig-paths';
 
+if (!process.env.LOCATION_HOST) {
+  process.loadEnvFile('../vars.env');
+}
+
 export default defineConfig({
   plugins: [
     tailwindcss(),
     !process.env.VITEST && reactRouter(),
     tsconfigPaths(),
   ],
+  server: {
+    host: process.env.LOCATION_HOST,
+    port: parseInt(process.env.LOCATION_PORT ?? '') || undefined,
+  },
   test: {
     globals: true,
     environment: 'jsdom',

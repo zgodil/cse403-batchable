@@ -33,9 +33,7 @@ class DriverApi extends CrudApi<Driver> {
         'PUT',
         `${this.resource}/returned/${token}`,
         undefined,
-        {
-          includeAuth: false,
-        },
+        {includeAuth: false},
       );
       return true;
     } catch (err) {

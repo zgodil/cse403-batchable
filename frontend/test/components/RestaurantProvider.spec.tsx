@@ -4,7 +4,7 @@ import {useContext} from 'react';
 import RestaurantProvider, {
   RestaurantContext,
 } from '~/components/RestaurantProvider';
-import {setTokenGetter} from '~/api/authToken';
+import {setTokenGetter} from '~/api/auth_token';
 import {restaurantApi} from '~/api/endpoints/restaurant';
 import type {Restaurant} from '~/domain/objects';
 import {checkedCreate, getFakeRestaurant} from 'test/mocks/domain_objects';

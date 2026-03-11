@@ -12,6 +12,8 @@ class OrderApi extends CrudApi<Order> {
       await fetchEndpoint(
         'PUT',
         `${this.resource}/${id}/delivered/${driverToken}`,
+        undefined,
+        {includeAuth: false},
       );
       return true;
     } catch (err) {

@@ -6,6 +6,8 @@ import com.batchable.backend.db.models.Order;
 import com.batchable.backend.db.models.Order.State;
 import java.time.Instant;
 import java.util.List;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 import org.springframework.stereotype.Service;
 
 /**
@@ -18,6 +20,12 @@ public class OrderService {
   private final DriverService driverService;
   private final DbOrderService dbOrderService;
   private final BatchingManager batchingManager;
+
+  // Service-level lock protects multi-step business invariants
+  // across dbOrderService, driverService, and batchingManager calls.
+  private final ReentrantReadWriteLock rwLock = new ReentrantReadWriteLock();
+  private final Lock readLock = rwLock.readLock();
+  private final Lock writeLock = rwLock.writeLock();
 
   public OrderService(DbOrderService dbOrderService, BatchingManager batchingManager,
       DriverService driverService) {
@@ -33,9 +41,14 @@ public class OrderService {
    * @return the generated order ID
    */
   public long createOrder(Order order) {
-    long id = dbOrderService.createOrder(order);
-    batchingManager.addOrder(dbOrderService.getOrder(id));
-    return id;
+    writeLock.lock();
+    try {
+      long id = dbOrderService.createOrder(order);
+      batchingManager.addOrder(dbOrderService.getOrder(id));
+      return id;
+    } finally {
+      writeLock.unlock();
+    }
   }
 
   /**
@@ -45,13 +58,18 @@ public class OrderService {
    * @throws IllegalArgumentException if this would advance the order state past COOKED
    */
   public void advanceOrderState(long orderId) {
-    Order order = dbOrderService.getOrder(orderId);
-    if (order.state.getRank() >= State.COOKED.getRank()) {
-      throw new IllegalArgumentException(
-          "Front-end cannot advance order state past cooked. Order id " + order.id);
+    writeLock.lock();
+    try {
+      Order order = dbOrderService.getOrder(orderId);
+      if (order.state.getRank() >= State.COOKED.getRank()) {
+        throw new IllegalArgumentException(
+            "Front-end cannot advance order state past cooked. Order id " + order.id);
+      }
+      dbOrderService.advanceOrderState(orderId);
+      batchingManager.updateOrder(orderId, false);
+    } finally {
+      writeLock.unlock();
     }
-    dbOrderService.advanceOrderState(orderId);
-    batchingManager.updateOrder(orderId, false);
   }
 
   /**
@@ -63,21 +81,26 @@ public class OrderService {
    *         they are delivering does not match the given one
    */
   public void markDelivered(long orderId, String token) {
-    Order order = dbOrderService.getOrder(orderId);
-    Driver driver = driverService.getDriverByToken(token);
-    Order currentOrderToDeliver = driverService.getCurrentOrderToDeliver(driver.id);
-    if (currentOrderToDeliver == null || currentOrderToDeliver.id != orderId) {
-      throw new IllegalArgumentException("Driver specified has delivered all batch orders or "
-          + "their next order to deliver does not match the given id " + orderId);
-    }
+    writeLock.lock();
+    try {
+      Order order = dbOrderService.getOrder(orderId);
+      Driver driver = driverService.getDriverByToken(token);
+      Order currentOrderToDeliver = driverService.getCurrentOrderToDeliver(driver.id);
+      if (currentOrderToDeliver == null || currentOrderToDeliver.id != orderId) {
+        throw new IllegalArgumentException("Driver specified has delivered all batch orders or "
+            + "their next order to deliver does not match the given id " + orderId);
+      }
 
-    if (order.state != State.DRIVING) {
-      throw new IllegalStateException(
-          "Order id " + orderId + " is being delivered but has non-driving state");
-    }
+      if (order.state != State.DRIVING) {
+        throw new IllegalStateException(
+            "Order id " + orderId + " is being delivered but has non-driving state");
+      }
 
-    dbOrderService.advanceOrderState(orderId);
-    batchingManager.updateOrder(orderId, false);
+      dbOrderService.advanceOrderState(orderId);
+      batchingManager.updateOrder(orderId, false);
+    } finally {
+      writeLock.unlock();
+    }
   }
 
   /**
@@ -87,8 +110,13 @@ public class OrderService {
    * @param cookedTime new cooked time
    */
   public void updateOrderCookedTime(long orderId, Instant cookedTime) {
-    dbOrderService.updateOrderCookedTime(orderId, cookedTime);
-    batchingManager.updateOrder(orderId, true);
+    writeLock.lock();
+    try {
+      dbOrderService.updateOrderCookedTime(orderId, cookedTime);
+      batchingManager.updateOrder(orderId, true);
+    } finally {
+      writeLock.unlock();
+    }
   }
 
   /**
@@ -97,8 +125,13 @@ public class OrderService {
    * @param orderId ID of the order to remake
    */
   public void remakeOrder(long orderId) {
-    dbOrderService.remakeOrder(orderId);
-    batchingManager.updateOrder(orderId, true);
+    writeLock.lock();
+    try {
+      dbOrderService.remakeOrder(orderId);
+      batchingManager.updateOrder(orderId, true);
+    } finally {
+      writeLock.unlock();
+    }
   }
 
   /**
@@ -109,7 +142,12 @@ public class OrderService {
    * @throws IllegalArgumentException if not found
    */
   public Order getOrder(long orderId) {
-    return dbOrderService.getOrder(orderId);
+    readLock.lock();
+    try {
+      return dbOrderService.getOrder(orderId);
+    } finally {
+      readLock.unlock();
+    }
   }
 
   /**
@@ -119,7 +157,12 @@ public class OrderService {
    * @return the generated batch ID
    */
   public long createBatch(Batch batch) {
-    return dbOrderService.createBatch(batch);
+    writeLock.lock();
+    try {
+      return dbOrderService.createBatch(batch);
+    } finally {
+      writeLock.unlock();
+    }
   }
 
 
@@ -130,7 +173,12 @@ public class OrderService {
    * @return list of orders in that batch
    */
   public Batch getBatch(long batchId) {
-    return dbOrderService.getBatch(batchId);
+    readLock.lock();
+    try {
+      return dbOrderService.getBatch(batchId);
+    } finally {
+      readLock.unlock();
+    }
   }
 
   /**
@@ -140,7 +188,12 @@ public class OrderService {
    * @return list of orders in that batch
    */
   public List<Order> getBatchOrders(long batchId) {
-    return dbOrderService.getBatchOrders(batchId);
+    readLock.lock();
+    try {
+      return dbOrderService.getBatchOrders(batchId);
+    } finally {
+      readLock.unlock();
+    }
   }
 
   /**
@@ -149,9 +202,14 @@ public class OrderService {
    * @param orderId ID of the order to remove
    */
   public void removeOrder(long orderId) {
-    Order order = dbOrderService.getOrder(orderId);
-    dbOrderService.removeOrder(orderId);
-    batchingManager.removeOrder(order);
+    writeLock.lock();
+    try {
+      Order order = dbOrderService.getOrder(orderId);
+      dbOrderService.removeOrder(orderId);
+      batchingManager.removeOrder(order);
+    } finally {
+      writeLock.unlock();
+    }
   }
 
   /**
@@ -161,6 +219,11 @@ public class OrderService {
    * @param batchId ID of the batch
    */
   public void setOrderBatchId(long orderId, long batchId) {
-    dbOrderService.setOrderBatchId(orderId, batchId);
+    writeLock.lock();
+    try {
+      dbOrderService.setOrderBatchId(orderId, batchId);
+    } finally {
+      writeLock.unlock();
+    }
   }
 }

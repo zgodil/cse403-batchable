@@ -1,5 +1,5 @@
 import {createContext, useContext, useEffect, useState} from 'react';
-import {getToken} from '~/api/authToken';
+import {getToken} from '~/api/auth_token';
 import {RestaurantContext} from './RestaurantProvider';
 import type {Restaurant} from '~/domain/objects';
 import {DriverTokenContext} from './DriverTokenContext';

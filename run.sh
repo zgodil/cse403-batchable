@@ -1,4 +1,6 @@
 npm run db:up
 cd backend
-source ../vars.env
+set -o allexport
+. ../vars.env
+set +o allexport
 ./mvnw spring-boot:run
