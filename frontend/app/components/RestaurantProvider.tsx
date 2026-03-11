@@ -1,6 +1,6 @@
 import {createContext, useEffect, useState} from 'react';
 import {useAuth0} from '@auth0/auth0-react';
-import {getToken} from '~/api/authToken';
+import {getToken} from '~/api/auth_token';
 import {restaurantApi} from '~/api/endpoints/restaurant';
 import type {Restaurant} from '~/domain/objects';
 

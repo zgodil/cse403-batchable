@@ -12,7 +12,7 @@ import type {Route} from './+types/root';
 import './app.css';
 import {Auth0Provider, useAuth0} from '@auth0/auth0-react';
 import RestaurantProvider from './components/RestaurantProvider';
-import {setTokenGetter} from './api/authToken';
+import {setTokenGetter} from './api/auth_token';
 
 export const links: Route.LinksFunction = () => [
   {rel: 'preconnect', href: 'https://fonts.googleapis.com'},
