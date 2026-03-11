@@ -158,7 +158,7 @@ public class OrderServiceIT_CI extends PostgresTestBase {
 
   /**
    * Tests the full order lifecycle (COOKING → COOKED → DRIVING → DELIVERED). Verifies that the
-   * state advances correctly and an SMS notification is sent at each step.
+   * state advances correctly and an SSE notification is sent at each step.
    */
   @Test
   void advanceOrderState_movesAlongLifecycle_andPublishesEachTime() throws Exception {
