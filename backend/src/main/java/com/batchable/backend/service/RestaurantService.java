@@ -7,6 +7,8 @@ import com.batchable.backend.db.models.Order;
 import com.batchable.backend.db.models.Restaurant;
 import java.sql.SQLException;
 import java.util.List;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 import org.springframework.stereotype.Service;
 
 /**
@@ -25,6 +27,12 @@ public class RestaurantService {
   private final OrderDAO orderDAO;
   private final DriverDAO driverDAO;
   private final MenuItemDAO menuItemDAO;
+
+  // Service-level lock protects multi-step business invariants
+  // across multiple DAO calls.
+  private final ReentrantReadWriteLock rwLock = new ReentrantReadWriteLock();
+  private final Lock readLock = rwLock.readLock();
+  private final Lock writeLock = rwLock.writeLock();
 
   public RestaurantService(RestaurantDAO restaurantDAO, OrderDAO orderDAO, DriverDAO driverDAO,
       MenuItemDAO menuItemDAO) {
@@ -64,12 +72,15 @@ public class RestaurantService {
     if (restaurant.id > 0)
       throw new IllegalStateException("restaurant.id must be <= 0 (database-generated)");
 
+    writeLock.lock();
     try {
       long restaurantId = restaurantDAO.createRestaurant(restaurant.name, restaurant.location);
       return restaurantId;
 
     } catch (SQLException e) {
       throw new RuntimeException("Failed to create restaurant", e);
+    } finally {
+      writeLock.unlock();
     }
   }
 
@@ -100,6 +111,7 @@ public class RestaurantService {
     if (restaurant.location == null || restaurant.location.trim().isEmpty())
       throw new IllegalArgumentException("location is required");
 
+    writeLock.lock();
     try {
       if (!restaurantDAO.restaurantExists(restaurantId))
         throw new IllegalArgumentException("Restaurant not found: " + restaurantId);
@@ -114,6 +126,8 @@ public class RestaurantService {
 
     } catch (SQLException e) {
       throw new RuntimeException("Failed to update restaurant", e);
+    } finally {
+      writeLock.unlock();
     }
   }
 
@@ -126,20 +140,26 @@ public class RestaurantService {
     if (restaurantId <= 0)
       throw new IllegalArgumentException("restaurantId must be positive");
 
+    readLock.lock();
     try {
       return restaurantDAO.getRestaurant(restaurantId)
           .orElseThrow(() -> new IllegalArgumentException("Restaurant not found: " + restaurantId));
     } catch (SQLException e) {
       throw new RuntimeException("Failed to retrieve restaurant", e);
+    } finally {
+      readLock.unlock();
     }
   }
 
   /** Returns a list of all restaurants in the database */
   public List<Restaurant> getAllRestaurants() {
+    readLock.lock();
     try {
       return restaurantDAO.listRestaurants();
     } catch (SQLException e) {
       throw new RuntimeException("Failed to retrieve all restaurants", e);
+    } finally {
+      readLock.unlock();
     }
   }
 
@@ -160,6 +180,7 @@ public class RestaurantService {
     if (restaurantId <= 0)
       throw new IllegalArgumentException("restaurantId must be positive");
 
+    writeLock.lock();
     try {
       if (!restaurantDAO.restaurantExists(restaurantId))
         throw new IllegalArgumentException("Restaurant not found: " + restaurantId);
@@ -176,6 +197,8 @@ public class RestaurantService {
 
     } catch (SQLException e) {
       throw new RuntimeException("Failed to remove restaurant", e);
+    } finally {
+      writeLock.unlock();
     }
   }
 
@@ -187,12 +210,15 @@ public class RestaurantService {
    * Errors: - IllegalArgumentException if restaurantId does not exist
    */
   public List<Order> getRestaurantOrders(long restaurantId) {
-    getRestaurant(restaurantId); // validate exists
-
+    readLock.lock();
     try {
+      getRestaurant(restaurantId); // validate exists
+
       return orderDAO.listOpenOrdersForRestaurant(restaurantId);
     } catch (SQLException e) {
       throw new RuntimeException("Failed to list restaurant orders", e);
+    } finally {
+      readLock.unlock();
     }
   }
 
@@ -206,12 +232,15 @@ public class RestaurantService {
    * Errors: - IllegalArgumentException if restaurantId does not exist
    */
   public List<Driver> getRestaurantDrivers(long restaurantId) {
-    getRestaurant(restaurantId);
-
+    readLock.lock();
     try {
+      getRestaurant(restaurantId);
+
       return driverDAO.listDriversForRestaurant(restaurantId, false);
     } catch (SQLException e) {
       throw new RuntimeException("Failed to list restaurant drivers", e);
+    } finally {
+      readLock.unlock();
     }
   }
 
@@ -223,12 +252,15 @@ public class RestaurantService {
    * Errors: - IllegalArgumentException if restaurantId does not exist
    */
   public List<MenuItem> getRestaurantMenuItems(long restaurantId) {
-    getRestaurant(restaurantId);
-
+    readLock.lock();
     try {
+      getRestaurant(restaurantId);
+
       return menuItemDAO.listMenuItems(restaurantId);
     } catch (SQLException e) {
       throw new RuntimeException("Failed to list restaurant menu items", e);
+    } finally {
+      readLock.unlock();
     }
   }
 }
