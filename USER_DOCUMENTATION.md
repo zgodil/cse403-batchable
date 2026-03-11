@@ -1,10 +1,7 @@
 # Batchable User Documentation
 
 ## 1. Description
-Batchable is a real-time food delivery batching system designed for
-medium-sized restaurants. It helps restaurant staff determine whether
-orders should be dispatched individually or grouped into double or
-triple batches.
+Batchable is a real-time food delivery batching system designed for medium-sized restaurants. It helps restaurant staff determine whether orders should be dispatched individually or grouped into double or triple batches.
 
 Restaurant dispatching often requires balancing:
 * Delivery times
@@ -16,7 +13,7 @@ Restaurant dispatching often requires balancing:
 Batchable simplifies this process by automating order handling the batching process.
 
 ## 2. How to Run the Software
-See the [developer installation and start-up instructions](./DEVELOPER_DOCUMENTATION.md#3-how-to-build-and-run-the-software). Once start-up is complete, you should be able to use the product at http://localhost:5173.
+Visit [batchable.org](https://batchable.org) and create an account. This will create a new restaurant associated with your account, which you can then configure and use for delivery batching. 
 
 ## 3. How to Use the Software
 
