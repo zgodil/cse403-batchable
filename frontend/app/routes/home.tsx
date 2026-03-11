@@ -8,6 +8,7 @@ import Loading from '~/components/Loading';
 import {useModal} from '~/components/Modal';
 import OrderRefreshProvider from '~/components/OrderRefreshProvider';
 import {useEffect} from 'react';
+import UnconfiguredRestaurantModal from '~/components/UnconfiguredRestaurantModal';
 
 function Home() {
   const {isAuthenticated, isLoading, user, logout} = useAuth0();
@@ -73,6 +74,7 @@ function Home() {
         </div>
 
         <AddOrderModal modal={addOrderModal} />
+        <UnconfiguredRestaurantModal />
       </div>
     </OrderRefreshProvider>
   );
