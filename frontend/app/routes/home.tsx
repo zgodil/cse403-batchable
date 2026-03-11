@@ -7,10 +7,15 @@ import Button from '~/components/Button';
 import Loading from '~/components/Loading';
 import {useModal} from '~/components/Modal';
 import OrderRefreshProvider from '~/components/OrderRefreshProvider';
+import {useEffect} from 'react';
 
 function Home() {
   const {isAuthenticated, isLoading, user, logout} = useAuth0();
   const addOrderModal = useModal();
+
+  useEffect(() => {
+    document.title = 'Batchable';
+  }, []);
 
   if (isLoading) {
     return <Loading>Loading...</Loading>;
