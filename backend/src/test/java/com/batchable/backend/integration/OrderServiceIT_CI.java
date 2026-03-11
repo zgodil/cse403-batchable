@@ -27,10 +27,10 @@ import org.mockito.MockitoAnnotations;
 /**
  * Integration tests for OrderService using real Postgres (Testcontainers) and real DAOs. This test
  * verifies that OrderService correctly: - Persists orders and updates via the database. - Enforces
- * domain rules (lifecycle transitions, invariants). - Sends SMS notifications via
- * TwilioManager (mocked). - Delegates to BatchingManager
+ * domain rules (lifecycle transitions, invariants). - Publishes SSE updates via
+ * SsePublisher (with mocked SseController). - Delegates to BatchingManager
  * (mocked) where appropriate. The database is cleaned before each test, and all dependencies except
- * the messaging template are real.
+ * the event publisher are real.
  */
 public class OrderServiceIT_CI extends PostgresTestBase {
 
