@@ -20,4 +20,10 @@ Features:
 - Ability to add orders, mark orders as remakes, and cancel orders.
 - Ability to modify restaurant details, including adding/editing drivers and menu items.
 - Robust and efficient batching logic that edits and assigns batched orders to drivers in real-time (with orders rebatched based on new information/order changes).
-- A public URL: [batchable.org](https://batchable.org)
+- A public URL: [batchable.org](https://batchable.org).
+
+## AI credit
+We used various genAIs to assist in creating this project.
+- DeepSeek for refactoring the Batching Manager and Batching Algorithm, and creating/fixing additional corresponding tests.
+- Codex for code reviews on the front-end.
+- Cursor integrating Auth0 and Twilio.
