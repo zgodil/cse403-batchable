@@ -25,5 +25,5 @@ Features:
 ## AI credit
 We used various genAIs to assist in creating this project.
 - DeepSeek for refactoring the Batching Manager and Batching Algorithm, and creating/fixing additional corresponding tests.
-- Codex for code reviews on the front-end.
+- Codex for generating, debugging, and reviewing Tailwind CSS code on the front-end. 
 - Cursor integrating Auth0 and Twilio.
