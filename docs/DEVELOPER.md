@@ -90,18 +90,15 @@ Then, while still in the root, execute the following in an **sh-compatible** ter
 
 ```bash
 # in project root
-./build.sh
-./run.sh
+./build.sh && ./run.sh
 ```
 
 Then, visit http://localhost:5173.
 
 **Note for Mac and Linux:** The above may not work, as you need to give permissions to the build scripts. This can be done as follows:
 ```bash
-# mac & linux only
-chmod +x ./vars.env
-chmod +x ./run.sh
-chmod +x ./build.sh
+# in project root (mac & linux only)
+chmod +x ./vars.env ./run.sh ./build.sh
 ```
 After giving permissions, retry running the build scripts.
 
@@ -117,7 +114,13 @@ To get a prettier view of the testing infrastructure, run `npm test -- --ui` ins
 If you want to manually experiment with the front-end without creating a production build (`./build.sh`), you can run `npm run dev` in the `frontend/` folder to see the UI wrapped around a lightweight mock of the back-end.
 
 ### Back-End
-To run the backend tests/code coverage, first ensure Docker says "engine is running" and there is a container named `cse403-batchable`. If there is no container, do `./build.sh` and `./run.sh` from the root to run the server, then once it starts, stop it with `ctrl-c`. This should create the container. Once Docker is running with the necessary container, navigate to the backend directory (`cd backend` from root). Make sure the terminal has the context of the secret variables. This can be achieved by taking each line of vars.env, copying it into the terminal, prepending it with "EXPORT ", and entering it. Finally, to run the tests, do `./mvnw clean test`. To view the backend code coverage, do `./mvnw clean verify` and look for coverage results in `backend/target/site/jacoco/index.html`.
+To run the backend tests/code coverage, first ensure Docker says "engine is running" and there is a container named `cse403-batchable`. If there is no container, do `./build.sh` and `./run.sh` from the root to run the server, then once it starts, stop it with `ctrl-c`. This should create the container. Once Docker is running with the necessary container, navigate to the backend directory (`cd backend` from root). To run the tests, execute `./test.sh` in an sh-compatible shell. To view the back-end code coverage, execute `./verify.sh` similarly and look for coverage results in `backend/target/site/jacoco/index.html`. 
+
+**Note**: If these fail on Mac or Linux, you may need to give them permissions with:
+```bash
+# in /backend/ (mac & linux only)
+chmod +x ./test.sh ./verify.sh
+```
 
 To see test results (and code coverage information) in the GitHub CI, look into the CI run details for the "Frontend CI / Build", and look under the step "Run Tests". This will show the code coverage report, or test failure reasons. PRs with under 70% branch and statement coverage for the front end should not be merged (unless those branches can be reasonably be shown to be impossible but required by the style guide), and new features need to adhere to these guidelines.
 
