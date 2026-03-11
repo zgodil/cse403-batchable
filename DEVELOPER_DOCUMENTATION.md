@@ -32,7 +32,7 @@ The `backend/` directory contains the server-side application implemented in Jav
 ## 3. How to Build and Run the Software
 
 ### Prerequisites
-First, ensure that the prerequisite software is installed on your system. Then ensure that Docker is currently running: running `docker` in a terminal should indicate this.
+First, ensure that the prerequisite software is installed on your system. Then ensure that Docker is currently running: Running `docker` in a terminal indicate that Docker is active.
 * Maven
 * Java 17
 * Node.js 22+
@@ -45,7 +45,11 @@ If this is your first time building the code, you will need to complete the foll
   ```bash
   git clone https://www.github.com/zgodil/cse403-batchable.git
   ```
-2. Place your `vars.env` file in the root of the cloned project. *Important: do not place your environment variables in the file called `.env`. To succesfullly complete setup, both `.env` and `vars.env` should be present in the project's root directory*.
+2. If a `vars.env` file is not provided, create a file named `vars.env` in the root of the cloned project and place the provided credentials inside it. Otherwise, simply place the provided `vars.env` file in the root of the project. *Important: do not place your environment variables in the file called `.env`. To successfully complete setup, both `.env` and `vars.env` should be present in the project's root directory*.
+
+### vars.env Credentials
+
+The values required in `vars.env` will be **provided by the development team** for the purposes of running the system. 
 
 The structure of `vars.env` should be as follows:
 ```sh
@@ -65,7 +69,7 @@ The Twilio variables configure SMS notifications for drivers:
 * `TWILIO_ACCOUNT_SID` – Twilio account SID
 * `TWILIO_AUTH_TOKEN` – Twilio auth token
 * `TWILIO_PHONE_NUMBER` – the number Twilio will use as the sender
-* `TWILIO_DRIVER_PHONE_NUMBER` – the phone number that receives all driver SMS notifications. Because the system uses a Twilio trial account, messages can only be sent to verified numbers, so this value must correspond to a verified phone number in the Twilio console.
+* `TWILIO_DRIVER_PHONE_NUMBER` – the phone number used during development and testing to receive SMS notifications. Because the system uses a Twilio trial account, messages are sent only to this verified number rather than to the individual driver phone numbers entered in the system.
 
 The Google variable configures routing calculations:
 * `GOOGLE_ROUTES_API_KEY` – Google Routes API key for delivery route optimization and distance calculations
@@ -106,7 +110,7 @@ To get a prettier view of the testing infrastructure, run `npm test -- --ui` ins
 If you want to manually experiment with the front-end without creating a production build (`./build.sh`), you can run `npm run dev` in the `frontend/` folder to see the UI wrapped around a lightweight mock of the back-end.
 
 ### Back-End
-To run the backend tests/code coverage, first ensure Docker says "engine is running" and there is a container named `cse403-batchable`. If there is no container, do `./build.sh` and `./run.sh` from the root to run the server, then once it starts, stop it with `ctrl-c`. This should create the container. Once Docker is running with the necessary container, navigate to the backend directory (`cd backend` from root). Make sure the terminal has the context of the secret variables. This can be achieved by copy and pasting the contents of `vars.env` into the terminal. Finally, to run the tests, do `./mvnw clean test`. To view the backend code coverage, do `./mvnw clean verify` and look for coverage results in `backend/target/site/jacoco/index.html`.
+To run the backend tests/code coverage, first ensure Docker says "engine is running" and there is a container named `cse403-batchable`. If there is no container, do `./build.sh` and `./run.sh` from the root to run the server, then once it starts, stop it with `ctrl-c`. This should create the container. Once Docker is running with the necessary container, navigate to the backend directory (`cd backend` from root). Make sure the terminal has the context of the secret variables. This can be achieved by taking each line of vars.env, copying it into the terminal, prepending it with "EXPORT ", and entering it. Finally, to run the tests, do `./mvnw clean test`. To view the backend code coverage, do `./mvnw clean verify` and look for coverage results in `backend/target/site/jacoco/index.html`.
 
 To see test results (and code coverage information) in the GitHub CI, look into the CI run details for the "Frontend CI / Build", and look under the step "Run Tests". This will show the code coverage report, or test failure reasons. PRs with under 70% branch and statement coverage for the front end should not be merged (unless those branches can be reasonably be shown to be impossible but required by the style guide), and new features need to adhere to these guidelines.
 
@@ -155,18 +159,52 @@ Prior to packaging the release, update the version in the documentation.
 
 ### Deployment
 Once the code for the new version is on main, you can deploy the new code using the following steps:
-1. Run `ssh root@batchable.org`, and enter the password
+1. Run `ssh root@batchable.org`, and enter the password.
 2. `cd server/cse403-batchable`
 3. `chmod +x ./deploy.sh && ./deploy.sh`
 4. You're done! This may take a few minutes before the server finishes restarting. You can view the result at [batchable.org](https://batchable.org)
 
-## 7. SMS Notifications (Twilio Integration)
-SMS notifications are sent when a new delivery batch is assigned to a driver.
+## 7. Accessing the Twilio Virtual Phone (Testing SMS)
+
+Because the system currently uses a **Twilio trial account**, SMS messages cannot be sent to arbitrary phone numbers. Instead, all driver SMS notifications are delivered to a **Twilio virtual phone interface** that can be viewed in the Twilio console.
+
+To view incoming SMS messages, follow these steps:
+
+1. Navigate to the Twilio login page:  
+   https://www.twilio.com/login
+
+2. Log in using the Twilio credentials provided by the development team.
+
+3. After entering the username and password, you will be prompted for **two-factor authentication**.
+
+4. Select **“Try another method”** and enter the **one-time login code** provided by the development team.  
+   - This code changes each time a new login occurs.
+   - A new code will be generated after logging in and should be stored for the next login session.
+
+5. After successfully logging in, you will see the **Twilio Console dashboard**.
+
+6. In the left navigation panel:
+   - Click **Messaging**
+   - Then click **Virtual Phone**
+
+<img src="twilioExp.png" height="400">
+
+Alternatively, you can navigate directly to the page:
+https://console.twilio.com/us1/develop/sms/virtual-phone
+
+7. On the Virtual Phone page, locate the **phone number selector** near the top right of the interface.
+
+8. Click the dropdown menu and select the **available phone number** (there is currently only one configured number).
+
+Once selected, the interface will display all SMS messages sent by the Batchable system. When a new delivery batch is assigned to a driver, the system will send a message that appears here.
 
 ### Message Format
-The SMS message is formatted in `TwilioManager.handleNewBatch()` and contains:
+
+The SMS message is formatted in the following order:
 - Driver name
 - Batch ID
 - A link to the driver's route page
 
-Example: Driver <name> (id <id>) you have been assigned a new batch. View here <link>
+Example: Driver John (id 42) you have been assigned a new batch. View here ___
+
+
