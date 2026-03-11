@@ -35,7 +35,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
  * timestamp updates. - Validation of cooked time updates. - Remake and removal logic (domain
  * restrictions). - Retrieval methods (getOrder, getBatch, getBatchOrders). - Batch assignment
  * (setOrderBatchId) with checks for existence and state. - Proper handling of SQLException
- * (wrapping into RuntimeException). - WebSocket publisher invocations after successful
+ * (wrapping into RuntimeException). - SMS publisher invocations after successful
  * modifications.
  */
 @ExtendWith(MockitoExtension.class)
@@ -121,7 +121,7 @@ public class OrderServiceTest {
 
   /**
    * Verifies that a valid order is created with state forced to COOKING, the correct ID is
-   * returned, and a WebSocket refresh is published.
+   * returned, and an SMS refresh is published.
    */
   @Test
   void createOrder_happyPath_setsStateCooking_returnsId_andRefreshes() throws Exception {
@@ -145,7 +145,7 @@ public class OrderServiceTest {
 
   /**
    * Verifies that a SQLException from the DAO is wrapped in a RuntimeException and that no
-   * WebSocket publish occurs.
+   * SMS publish occurs.
    */
   @Test
   void createOrder_sqlException_wrapped_andNoRefresh() throws Exception {
@@ -212,7 +212,7 @@ public class OrderServiceTest {
   }
 
   /**
-   * Verifies that advancing from COOKING to COOKED updates the state and publishes a WebSocket
+   * Verifies that advancing from COOKING to COOKED updates the state and publishes an SMS
    * refresh.
    */
   @Test
@@ -307,7 +307,7 @@ public class OrderServiceTest {
   }
 
   /**
-   * Verifies that a valid cooked time update succeeds and triggers a WebSocket refresh.
+   * Verifies that a valid cooked time update succeeds and triggers an SMS refresh.
    */
   @Test
   void updateOrderCookedTime_happyPath_updates_andRefreshes() throws Exception {
@@ -510,7 +510,7 @@ public class OrderServiceTest {
   }
 
   /**
-   * Verifies that a valid batch assignment succeeds, updates the order, and publishes a WebSocket
+   * Verifies that a valid batch assignment succeeds, updates the order, and publishes an SMS
    * refresh.
    */
   @Test
@@ -599,7 +599,7 @@ public class OrderServiceTest {
     verifyNoInteractions(publisher, batchDAO);
   }
 
-  /** Verifies that a valid delivery time update succeeds and triggers a WebSocket refresh. */
+  /** Verifies that a valid delivery time update succeeds and triggers an SMS refresh. */
   @Test
   void updateOrderDeliveryTime_happyPath_updates_andRefreshes() throws Exception {
     Instant t0 = Instant.parse("2026-02-16T00:00:00Z");
@@ -705,7 +705,7 @@ public class OrderServiceTest {
     assertEquals(99L, id);
 
     verify(batchDAO).createBatch(7L, "polyline", dispatch, completion);
-    // No WebSocket refresh expected for batch creation (not in code)
+    // No SMS refresh expected for batch creation (not in code)
     verifyNoInteractions(publisher);
   }
 

@@ -120,7 +120,7 @@ public class DbOrderService {
     try {
       orderDAO.updateOrderState(orderId, next);
 
-      // Push update to frontend via WebSocket
+      // Push update to frontend via SMS
       publisher.refreshOrderData(order.restaurantId);
 
     } catch (SQLException e) {
@@ -173,7 +173,7 @@ public class DbOrderService {
     try {
       orderDAO.updateOrderCookedTime(orderId, cookedTime);
 
-      // Push update to frontend via WebSocket
+      // Push update to frontend via SMS
       publisher.refreshOrderData(order.restaurantId);
 
     } catch (SQLException e) {
@@ -212,7 +212,7 @@ public class DbOrderService {
     try {
       orderDAO.updateOrderDeliveryTime(orderId, deliveryTime);
 
-      // Push update to frontend via WebSocket
+      // Push update to frontend via SMS
       publisher.refreshOrderData(order.restaurantId);
 
     } catch (SQLException e) {
@@ -253,7 +253,7 @@ public class DbOrderService {
     try {
       orderDAO.remakeOrder(orderId, Order.State.COOKING, newInitialTime, newDeliveryTime,
           newCookedTime, true);
-      // Push update to frontend via WebSocket
+      // Push update to frontend via SMS
       publisher.refreshOrderData(order.restaurantId);
 
     } catch (SQLException e) {
@@ -397,7 +397,7 @@ public class DbOrderService {
     try {
       orderDAO.deleteOrder(orderId);
 
-      // Push update to frontend via WebSocket
+      // Push update to frontend via SMS
       publisher.refreshOrderData(order.restaurantId);
     } catch (SQLException e) {
       throw new RuntimeException("Failed to remove order", e);
@@ -442,7 +442,7 @@ public class DbOrderService {
         throw new IllegalArgumentException("Order not found: " + orderId);
 
 
-      // Push update to frontend via WebSocket
+      // Push update to frontend via SMS
       publisher.refreshOrderData(order.restaurantId);
 
     } catch (SQLException e) {
