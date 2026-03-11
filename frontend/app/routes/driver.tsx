@@ -4,6 +4,9 @@ import DriverPage from '~/components/driver/DriverPage';
 import {DriverTokenContext} from '~/components/DriverTokenContext';
 import {ConfettiProvider} from '~/components/ConfettiProvider';
 
+/**
+ * A wrapper around {@link DriverPage} which surrounds it in important React contexts.
+ */
 export default function Route({params: {token}}: Route.ComponentProps) {
   return (
     <DriverTokenContext value={token}>

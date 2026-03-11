@@ -22,6 +22,11 @@ class RestaurantApi extends CrudApi<Restaurant> {
     }
   }
 
+  /**
+   * Returns all drivers associated with a given restaurant
+   * @param id The id of the restaurant
+   * @returns A list of all the drivers, or null if it fails
+   */
   async getDrivers({id}: Restaurant['id']) {
     try {
       const drivers: json.JSONDomainObject<Driver>[] = await fetchJSON(
@@ -34,6 +39,12 @@ class RestaurantApi extends CrudApi<Restaurant> {
       return null;
     }
   }
+
+  /**
+   * Returns all orders associated with a given restaurant
+   * @param id The id of the restaurant
+   * @returns A list of all the orders, or null if it fails
+   */
   async getOrders({id}: Restaurant['id']) {
     try {
       const orders: json.JSONDomainObject<Order>[] = await fetchJSON(
@@ -46,6 +57,12 @@ class RestaurantApi extends CrudApi<Restaurant> {
       return null;
     }
   }
+
+  /**
+   * Returns all menu items associated with a given restaurant
+   * @param id The id of the restaurant
+   * @returns A list of all the menu items, or null if it fails
+   */
   async getMenuItems({id}: Restaurant['id']) {
     try {
       const menuItems: json.JSONDomainObject<MenuItem>[] = await fetchJSON(

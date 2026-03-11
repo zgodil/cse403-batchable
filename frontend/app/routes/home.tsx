@@ -8,6 +8,9 @@ import Loading from '~/components/Loading';
 import {useModal} from '~/components/Modal';
 import OrderRefreshProvider from '~/components/OrderRefreshProvider';
 
+/**
+ * The order dashboard page for Batchable. This can be used to view and manage orders and drivers.
+ */
 function Home() {
   const {isAuthenticated, isLoading, user, logout} = useAuth0();
   const addOrderModal = useModal();

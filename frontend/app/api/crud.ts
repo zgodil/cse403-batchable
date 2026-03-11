@@ -6,9 +6,14 @@ import * as json from '~/domain/json';
  * Represents a base class for performing CRUD operations on domain objects of a given type.
  * Thanks to MSW, this works both in production and development!
  */
-export class CrudApi<T extends DomainObject> {
+export abstract class CrudApi<T extends DomainObject> {
   private static DELAY = 300;
 
+  /**
+   * Creates a new CrudApi of a given type
+   * @param resource The base url for the associated resource, i.e. '/driver' for the driverApi.
+   * @param parserPair The JSON parser pair associated with the domain object, to serialize and deserialize network data
+   */
   constructor(
     protected resource: Resource,
     protected parserPair: json.JSONParserPair<T>,
@@ -18,10 +23,16 @@ export class CrudApi<T extends DomainObject> {
     return new Promise(resolve => setTimeout(resolve, CrudApi.DELAY));
   }
 
+  /** Prints an error message. Exists to be mocked. */
   protected error(message: string, ...info: unknown[]) {
     console.error(message, ...info);
   }
 
+  /**
+   * Creates a new domain object, with the structure provided by a given skeleton object.
+   * @param domainObject The new domain object to create. The `id` field must be one acquired from `fakeId`, to match with the back-end's expectations
+   * @returns The id of the newly created object, or null if creation fails
+   */
   async create(domainObject: T) {
     try {
       await this.delay();
@@ -37,6 +48,11 @@ export class CrudApi<T extends DomainObject> {
     }
   }
 
+  /**
+   * Reads a domain object based on a given id.
+   * @param id The id of the object to fetch
+   * @returns The content of the object, or null if it couldn't be found
+   */
   async read({id}: T['id']) {
     try {
       await this.delay();
@@ -49,6 +65,11 @@ export class CrudApi<T extends DomainObject> {
     }
   }
 
+  /**
+   * Checks the existence of a given object.
+   * @param id The id of the object to check the existence of
+   * @returns true iff an object with that id exists
+   */
   async exists({id}: T['id']) {
     try {
       await this.delay();
@@ -59,6 +80,11 @@ export class CrudApi<T extends DomainObject> {
     }
   }
 
+  /**
+   * Updates the fields of a given domain object.
+   * @param domainObject The object to update. The id field will be used to identify which object to change, and the remaining fields will determine the update.
+   * @returns true iff the object was successfully updated
+   */
   async update(domainObject: T) {
     try {
       await this.delay();
@@ -77,6 +103,11 @@ export class CrudApi<T extends DomainObject> {
     }
   }
 
+  /**
+   * Deletes a given domain object.
+   * @param id The id of the object to remove
+   * @returns true iff the object was present and then succesfully deleted
+   */
   async delete({id}: T['id']) {
     try {
       await this.delay();

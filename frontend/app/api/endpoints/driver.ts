@@ -3,10 +3,18 @@ import {CrudApi} from '../crud';
 import type {Batch, Driver, Order} from '~/domain/objects';
 import {fetchEndpoint, fetchJSON} from '../common';
 
+/**
+ * A wrapper around the Driver API.
+ */
 class DriverApi extends CrudApi<Driver> {
   constructor() {
     super('/driver', json.driver);
   }
+  /**
+   * Returns the {@link Driver}, {@link Order}s, and Google Maps link associated with a driver. This method does not require any authorization beyond a driver token.
+   * @param token The token for the driver
+   * @returns An object containing all of the route information, or null if it fails
+   */
   async getRouteInfo(token: string) {
     try {
       const routeInfo: {
@@ -27,6 +35,11 @@ class DriverApi extends CrudApi<Driver> {
       return null;
     }
   }
+  /**
+   * Marks a driver as having returned to the restaurant. This method does not require any authorization beyond a driver token.
+   * @param token The token for the driver
+   * @returns true iff they were successfully marked as returned
+   */
   async markReturned(token: string) {
     try {
       await fetchEndpoint(
@@ -41,18 +54,11 @@ class DriverApi extends CrudApi<Driver> {
       return false;
     }
   }
-  async setOnShift({id}: Driver['id'], onShift: boolean) {
-    try {
-      await fetchEndpoint(
-        'PUT',
-        `${this.resource}/${id}/shift?onShift=${onShift}`,
-      );
-      return true;
-    } catch (err) {
-      this.error(`Failed to change driver shift; id=${id}`, err);
-      return false;
-    }
-  }
+  /**
+   * Returns the batch assigned to a given driver.
+   * @param id The id of the driver to retrieve the batch for
+   * @returns The batch object assigned to the driver, or null if there is no assigned batch (or if the request fails)
+   */
   async getBatch({id}: Driver['id']) {
     try {
       const batch: json.JSONDomainObject<Batch> | null = await fetchJSON(
