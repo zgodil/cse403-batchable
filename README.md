@@ -6,10 +6,10 @@ Try it at [batchable.org](https://batchable.org)!
 A link to our requirements and plan can be found here: [Batchable](https://docs.google.com/document/d/1lBQPrSYdc8PdP-THlGFKEYEQGw-icpVO-P4352XmHsA/edit?usp=sharing)
 
 ## Developer Guidelines
-See [`DEVELOPER_DOCUMENTATION.md`](./DEVELOPER_DOCUMENTATION.md) for details on how to install, run, test, and contribute to Batchable.
+See [`docs/DEVELOPER.md`](./docs/DEVELOPER.md) for details on how to install, run, test, and contribute to Batchable.
 
 ## User Documentation
-If you are a Batchable user, documentation of the product's features can be found in [`USER_DOCUMENTATION.md`](./USER_DOCUMENTATION.md).
+If you are a Batchable user, documentation of the product's features and use can be found in [`docs/USER.md`](./docs/USER.md).
 
 ## Final Release
 Final Release Tag: `final`

@@ -13,7 +13,7 @@ Restaurant dispatching often requires balancing:
 Batchable simplifies this process by automating order handling the batching process.
 
 ## 2. How to Run the Software
-Visit [batchable.org](https://batchable.org) and create an account. This will create a new restaurant associated with your account, which you can then configure and use for delivery batching. 
+Visit [batchable.org](https://batchable.org) and create an account. This will create a new restaurant associated with your account, which you can then configure and use for delivery batching.
 
 **Hint**: Read how to use the software (below) first. There are some important notes that are paramount for avoiding basic errors.
 
@@ -34,7 +34,9 @@ Within the Manage Restaurant section, you can update your restaurant’s name an
 To create a new order, click the Add New Order button. Enter the delivery address for the order.. Once submitted, the system will process the order and determine how it should be dispatched, assigning it to an available driver. 
 
 ### Acting as a Driver
-Once a driver is assigned to a batch, the system sends a text message notification containing a link to the driver route page. This message includes the driver name, batch ID, and a link that opens the driver route interface where the driver can view their assigned batch, see the list of delivery stops, mark orders as delivered, and indicate that they have returned to the restaurant. Drivers must press **Complete Route** after finishing their deliveries in order to be eligible for assignment to another batch. The route page is driver-specific and can be reused across multiple batches. Because the system currently uses a Twilio trial account, SMS messages are sent only to the configured virtual phone number rather than to the individual phone numbers entered for drivers.
+Once a driver is assigned to a batch, the system sends a text message notification containing a link to the driver route page. This message includes the driver name, batch ID, and a link that opens the driver route interface where the driver can view their assigned batch, see the list of delivery stops, mark orders as delivered, and indicate that they have returned to the restaurant. Drivers must press **Complete Route** after finishing their deliveries in order to be eligible for assignment to another batch. The route page is driver-specific and can be reused across multiple batches.
+
+Because the system currently uses a Twilio trial account, SMS messages are sent only to the configured virtual phone number rather than to the individual phone numbers entered for drivers. To access the virtual phone, follow the steps in the [developer documentation](./DEVELOPER.md#7-accessing-the-twilio-virtual-phone-testing-sms).
 
 ## 4. How to Report a Bug
 If you encounter an issue, please open an issue in the [GitHub
