@@ -104,9 +104,6 @@ public class RestaurantService {
       if (!restaurantDAO.restaurantExists(restaurantId))
         throw new IllegalArgumentException("Restaurant not found: " + restaurantId);
 
-      if (restaurantDAO.restaurantExistsByNameExcludingId(restaurantId, restaurant.name))
-        throw new IllegalStateException("Another restaurant already uses that name");
-
       boolean ok =
           restaurantDAO.updateRestaurant(restaurantId, restaurant.name, restaurant.location);
       if (!ok)

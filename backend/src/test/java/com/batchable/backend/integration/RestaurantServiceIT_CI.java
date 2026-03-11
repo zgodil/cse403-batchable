@@ -131,17 +131,12 @@ public class RestaurantServiceIT_CI extends PostgresTestBase {
   }
 
   /**
-   * Tests that updating a restaurant works and that the name‑uniqueness constraint is enforced
-   * while excluding the current restaurant from the check.
+   * Tests that updating a restaurant works
    */
   @Test
-  void updateRestaurant_updatesRow_andNameUniquenessExcludingIdWorks() {
+  void updateRestaurant_updatesRow() {
     long r1 = createRestaurant("R1", "Seattle");
     long r2 = createRestaurant("R2", "Bellevue");
-
-    // Trying to rename r1 to r2's name should fail
-    assertThrows(IllegalStateException.class,
-        () -> restaurantService.updateRestaurant(new Restaurant(r1, "R2", "Seattle")));
 
     // Valid update
     restaurantService.updateRestaurant(new Restaurant(r1, "R1-new", "Seattle-new"));

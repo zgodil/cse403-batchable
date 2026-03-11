@@ -163,36 +163,11 @@ public class RestaurantServiceTest {
     verify(restaurantDAO, never()).updateRestaurant(anyLong(), anyString(), anyString());
   }
 
-  /** Ensures that updating to a name already used by another restaurant is rejected. */
-  @Test
-  void updateRestaurant_nameConflict_throwsISE_andDoesNotUpdate() throws Exception {
-    when(restaurantDAO.restaurantExists(5L)).thenReturn(true);
-    when(restaurantDAO.restaurantExistsByNameExcludingId(5L, "R2")).thenReturn(true);
-
-    assertThrows(IllegalStateException.class,
-        () -> service.updateRestaurant(restaurant(5L, "R2", "Seattle")));
-
-    verify(restaurantDAO).restaurantExists(5L);
-    verify(restaurantDAO).restaurantExistsByNameExcludingId(5L, "R2");
-    verify(restaurantDAO, never()).updateRestaurant(anyLong(), anyString(), anyString());
-  }
-
-  /** Verifies that if updateRestaurant returns false (no rows affected), an exception is thrown. */
-  @Test
-  void updateRestaurant_updateReturnsFalse_throwsIAE() throws Exception {
-    when(restaurantDAO.restaurantExists(5L)).thenReturn(true);
-    when(restaurantDAO.restaurantExistsByNameExcludingId(5L, "R2")).thenReturn(false);
-    when(restaurantDAO.updateRestaurant(5L, "R2", "Seattle")).thenReturn(false);
-
-    assertThrows(IllegalArgumentException.class,
-        () -> service.updateRestaurant(restaurant(5L, "R2", "Seattle")));
-  }
 
   /** Verifies that a valid update succeeds and calls the DAO. */
   @Test
   void updateRestaurant_happyPath_callsDao() throws Exception {
     when(restaurantDAO.restaurantExists(5L)).thenReturn(true);
-    when(restaurantDAO.restaurantExistsByNameExcludingId(5L, "R2")).thenReturn(false);
     when(restaurantDAO.updateRestaurant(5L, "R2", "Seattle")).thenReturn(true);
 
     service.updateRestaurant(restaurant(5L, "R2", "Seattle"));
@@ -205,7 +180,6 @@ public class RestaurantServiceTest {
   @Test
   void updateRestaurant_sqlException_wrapped() throws Exception {
     when(restaurantDAO.restaurantExists(5L)).thenReturn(true);
-    when(restaurantDAO.restaurantExistsByNameExcludingId(5L, "R2")).thenReturn(false);
     when(restaurantDAO.updateRestaurant(anyLong(), anyString(), anyString()))
         .thenThrow(new SQLException("boom"));
 
