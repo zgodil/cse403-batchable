@@ -46,7 +46,7 @@ export const initialRestaurant: Restaurant = {
   id: restaurantId,
   name: 'Batchable Kitchen',
   location: {
-    address: 'Address not set', //'3820 Rainier Ave S, Seattle, WA 98118',
+    address: '3820 Rainier Ave S, Seattle, WA 98118',
   },
 };
 

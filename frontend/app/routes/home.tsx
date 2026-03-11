@@ -15,7 +15,7 @@ function Home() {
   const addOrderModal = useModal();
 
   useEffect(() => {
-    document.title = 'Batchable';
+    document.title = 'Batchable Dashboard';
   }, []);
 
   if (isLoading) {
