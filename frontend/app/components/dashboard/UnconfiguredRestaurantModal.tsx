@@ -1,8 +1,8 @@
 import {useLoader} from '~/util/query';
-import Button from './Button';
-import Modal, {useModal} from './Modal';
+import Button from '../Button';
+import Modal, {useModal} from '../Modal';
 import {useContext} from 'react';
-import {RestaurantContext} from './RestaurantProvider';
+import {RestaurantContext} from '../RestaurantProvider';
 import {restaurantApi} from '~/api/endpoints/restaurant';
 
 /**

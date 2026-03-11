@@ -8,7 +8,7 @@ import Loading from '~/components/Loading';
 import {useModal} from '~/components/Modal';
 import OrderRefreshProvider from '~/components/OrderRefreshProvider';
 import {useEffect} from 'react';
-import UnconfiguredRestaurantModal from '~/components/UnconfiguredRestaurantModal';
+import UnconfiguredRestaurantModal from '~/components/dashboard/UnconfiguredRestaurantModal';
 
 function Home() {
   const {isAuthenticated, isLoading, user, logout} = useAuth0();
