@@ -11,7 +11,11 @@ To contribute to the source code in a similar manner to the existing codebase, p
 $ git config --global core.autocrlf false
 ```
 
-## 2. The Directory Structure
+## 2. The Project Structure
+### Architecture Diagram
+<img src="./architecture.png">
+
+### Directories
 The repository is organized into three primary components: `infra/`, `frontend/`, and `backend/`. Each component has a clearly defined responsibility within the system architecture.
 
 In short, their functions are as follows:
