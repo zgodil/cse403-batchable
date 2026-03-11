@@ -26,7 +26,7 @@
 // import com.batchable.backend.service.RestaurantService;
 // import com.batchable.backend.service.RouteService;
 // import com.batchable.backend.service.internal.RestaurantBatchingManager;
-// import com.batchable.backend.websocket.OrderWebSocketPublisher;
+// import com.batchable.backend.EventSource.SsePublisher;
 
 // /**
 //  * Unit tests for BatchingManager using Mockito.
@@ -42,7 +42,7 @@
 // class BatchingManagerTest {
 
 //   @Mock
-//   private OrderWebSocketPublisher publisher;
+//   private SsePublisher publisher;
 //   @Mock
 //   private BatchingAlgorithm batchingAlgorithm;
 //   @Mock

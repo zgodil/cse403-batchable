@@ -27,10 +27,10 @@ import org.mockito.MockitoAnnotations;
 /**
  * Integration tests for OrderService using real Postgres (Testcontainers) and real DAOs. This test
  * verifies that OrderService correctly: - Persists orders and updates via the database. - Enforces
- * domain rules (lifecycle transitions, invariants). - Publishes WebSocket messages via
- * OrderWebSocketPublisher (with mocked SimpMessagingTemplate). - Delegates to BatchingManager
+ * domain rules (lifecycle transitions, invariants). - Publishes server‑sent events via
+ * SsePublisher (with mocked SseController). - Delegates to BatchingManager
  * (mocked) where appropriate. The database is cleaned before each test, and all dependencies except
- * the messaging template are real.
+ * the controller are real.
  */
 public class OrderServiceIT_CI extends PostgresTestBase {
 
@@ -134,7 +134,7 @@ public class OrderServiceIT_CI extends PostgresTestBase {
   // ---------- tests ----------
 
   /**
-   * Verifies that a valid order is persisted correctly and a WebSocket message is published.
+   * Verifies that a valid order is persisted correctly and an SSE event is published.
    */
   @Test
   void createOrder_happyPath_persists_andPublishes() throws Exception {
@@ -158,7 +158,7 @@ public class OrderServiceIT_CI extends PostgresTestBase {
 
   /**
    * Tests the full order lifecycle (COOKING → COOKED → DRIVING → DELIVERED). Verifies that the
-   * state advances correctly and a WebSocket message is published at each step.
+   * state advances correctly and an SSE event is published at each step.
    */
   @Test
   void advanceOrderState_movesAlongLifecycle_andPublishesEachTime() throws Exception {
@@ -180,7 +180,7 @@ public class OrderServiceIT_CI extends PostgresTestBase {
   }
 
   /**
-   * Verifies that updating the cooked time works and triggers a WebSocket notification.
+   * Verifies that updating the cooked time works and triggers an SSE notification.
    */
   @Test
   void updateOrderCookedTime_setsCookedTime_andPublishes() throws Exception {
@@ -195,7 +195,7 @@ public class OrderServiceIT_CI extends PostgresTestBase {
   }
 
   /**
-   * Verifies that an order can be remade (reset to COOKING, high priority) and that a WebSocket
+   * Verifies that an order can be remade (reset to COOKING, high priority) and that an SSE
    * message is published.
    */
   @Test
@@ -216,7 +216,7 @@ public class OrderServiceIT_CI extends PostgresTestBase {
   }
 
   /**
-   * Verifies that an order can be removed (deleted) and that a WebSocket message is published.
+   * Verifies that an order can be removed (deleted) and that an SSE event is published.
    */
   @Test
   void removeOrder_deletes_andPublishes() throws Exception {
@@ -230,7 +230,7 @@ public class OrderServiceIT_CI extends PostgresTestBase {
   }
 
   /**
-   * Verifies that an order can be assigned to a batch and that a WebSocket message is published.
+   * Verifies that an order can be assigned to a batch and that an SSE event is published.
    */
   @Test
   void setOrderBatchId_assignsBatch_andPublishes() throws Exception {

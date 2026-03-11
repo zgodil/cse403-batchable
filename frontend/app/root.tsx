@@ -53,8 +53,8 @@ export function Layout({children}: {children: React.ReactNode}) {
       </head>
       <body>
         <Auth0Provider
-          domain="dev-3qj8cn8ady6wwlng.us.auth0.com"
-          clientId="WV9iiESgd8Uc56V35K5XZFEd7wbQYsoU"
+          domain={import.meta.env.VITE_AUTH0_DOMAIN ?? "dev-3qj8cn8ady6wwlng.us.auth0.com"}
+          clientId={import.meta.env.VITE_AUTH0_CLIENT_ID ?? "WV9iiESgd8Uc56V35K5XZFEd7wbQYsoU"}
           authorizationParams={{
             redirect_uri: redirectUri,
             ...(audience ? {audience} : {}),
