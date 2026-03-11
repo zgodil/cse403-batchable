@@ -65,9 +65,6 @@ public class RestaurantService {
       throw new IllegalStateException("restaurant.id must be <= 0 (database-generated)");
 
     try {
-      if (restaurantDAO.restaurantExistsByName(restaurant.name))
-        throw new IllegalStateException("Restaurant already exists: " + restaurant.name);
-
       long restaurantId = restaurantDAO.createRestaurant(restaurant.name, restaurant.location);
       return restaurantId;
 

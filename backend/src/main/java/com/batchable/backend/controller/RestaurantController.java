@@ -1,17 +1,20 @@
 package com.batchable.backend.controller;
 
+import com.batchable.backend.db.dao.RestaurantDAO;
 import com.batchable.backend.db.models.Driver;
 import com.batchable.backend.db.models.MenuItem;
 import com.batchable.backend.db.models.Order;
 import com.batchable.backend.db.models.Restaurant;
 import com.batchable.backend.service.BatchingManager;
 import com.batchable.backend.service.RestaurantService;
+import java.sql.SQLException;
 import java.util.List;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -23,6 +26,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/restaurant")
 public class RestaurantController {
 
+  private final RestaurantDAO restaurantDAO;
   private final RestaurantService restaurantService;
   private final BatchingManager batchingManager;
 
@@ -30,24 +34,43 @@ public class RestaurantController {
    * Constructor injection: Spring automatically provides a RestaurantService instance because it is
    * annotated with @Service
    */
-  public RestaurantController(RestaurantService restaurantService, BatchingManager batchingManager) {
+  public RestaurantController(RestaurantService restaurantService, BatchingManager batchingManager, RestaurantDAO restaurantDAO) {
     this.restaurantService = restaurantService;
     this.batchingManager = batchingManager;
+    this.restaurantDAO = restaurantDAO;
   }
 
   /**
-   * Create a new restaurant.
+   * Get the current user's restaurant id (from JWT sub). Creates one if none exists.
    *
-   * POST /restaurant
-   *
-   * @param restaurant the Restaurant object to create
+   * GET /restaurant/me
    */
-  @PostMapping
-  @ResponseStatus(HttpStatus.CREATED)
-  public long createRestaurant(@RequestBody Restaurant restaurant) {
-    long id = restaurantService.createRestaurant(restaurant);
-    batchingManager.addManager(id);
-    return id;
+  @GetMapping("/me")
+  @ResponseStatus(HttpStatus.OK)
+  public long getMyRestaurantId(@AuthenticationPrincipal Jwt jwt) {
+    String auth0UserId = jwt == null ? null : jwt.getSubject();
+
+    if (auth0UserId == null || auth0UserId.isBlank())
+      throw new IllegalArgumentException("auth0UserId is required");
+
+    try {
+      return restaurantDAO.getRestaurantByAuth0UserId(auth0UserId)
+          .map(restaurant -> restaurant.id)
+          .orElseGet(() -> {
+            try {
+              long restaurantId = restaurantDAO.createRestaurant(
+                  "My Restaurant",
+                  "Address not set",
+                  auth0UserId);
+              batchingManager.addManager(restaurantId);
+              return restaurantId;
+            } catch (SQLException e) {
+              throw new RuntimeException("Failed to create restaurant for user", e);
+            }
+          });
+    } catch (SQLException e) {
+      throw new RuntimeException("Failed to get restaurant for user", e);
+    }
   }
 
   /**
