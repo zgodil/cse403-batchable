@@ -14,6 +14,7 @@ import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import org.springframework.stereotype.Service;
+import com.batchable.backend.config.ServerLocationConfig;
 
 /**
  * Twilio-backed implementation of {@link TwilioManager}.
@@ -40,10 +41,11 @@ public class TwilioManager {
   /** Twilio configuration (e.g., "from" phone number). */
   private final TwilioConfig config;
 
-  private final String driverLinkPrefix = "http://localhost:5173/route/";
+  private final ServerLocationConfig locationConfig;
 
-  public TwilioManager(TwilioConfig config, DbOrderService dbOrderService,
-      DriverService driverService, DriverSsePublisher driverSsePublisher) {
+  public TwilioManager(TwilioConfig config, ServerLocationConfig locationConfig,
+      DbOrderService dbOrderService, DriverService driverService, DriverSsePublisher driverSsePublisher) {
+    this.locationConfig = locationConfig;
     this.config = config;
     this.dbOrderService = dbOrderService;
     this.driverService = driverService;
@@ -73,7 +75,7 @@ public class TwilioManager {
     Driver driver = driverService.getDriver(batch.driverId);
     String driverPhoneNumber = config.getDriverPhoneNumber();
     String message = "Driver " + driver.name + " (id " + driver.id + 
-        ") you have been assigned a new batch. View here " + driverLinkPrefix + driverService.getDriverToken(driver.id);
+        ") you have been assigned a new batch. View here " + locationConfig.getUrl() + "/route/" + driverService.getDriverToken(driver.id);
     
     sendMessage(driverPhoneNumber, message);
     System.out.println("SENT TWILIO MESSAGE: " + message);
