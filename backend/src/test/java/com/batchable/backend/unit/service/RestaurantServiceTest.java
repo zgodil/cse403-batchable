@@ -93,30 +93,15 @@ public class RestaurantServiceTest {
     verifyNoInteractions(restaurantDAO, orderDAO, driverDAO, menuItemDAO);
   }
 
-  /** Ensures that a duplicate restaurant name causes an exception and no insert is attempted. */
-  @Test
-  void createRestaurant_duplicateName_throwsISE_andDoesNotCreate() throws Exception {
-    Restaurant r = restaurant(0, "R1", "Seattle");
-    when(restaurantDAO.restaurantExistsByName("R1")).thenReturn(true);
-
-    assertThrows(IllegalStateException.class, () -> service.createRestaurant(r));
-
-    verify(restaurantDAO).restaurantExistsByName("R1");
-    verify(restaurantDAO, never()).createRestaurant(anyString(), anyString());
-    verifyNoInteractions(orderDAO, driverDAO, menuItemDAO);
-  }
-
   /** Verifies that a valid restaurant is created and the generated ID is returned. */
   @Test
   void createRestaurant_happyPath_returnsId() throws Exception {
     Restaurant r = restaurant(0, "R1", "Seattle");
-    when(restaurantDAO.restaurantExistsByName("R1")).thenReturn(false);
     when(restaurantDAO.createRestaurant("R1", "Seattle")).thenReturn(42L);
 
     long id = service.createRestaurant(r);
     assertEquals(42L, id);
 
-    verify(restaurantDAO).restaurantExistsByName("R1");
     verify(restaurantDAO).createRestaurant("R1", "Seattle");
     verifyNoInteractions(orderDAO, driverDAO, menuItemDAO);
   }
@@ -125,7 +110,6 @@ public class RestaurantServiceTest {
   @Test
   void createRestaurant_sqlException_wrapped() throws Exception {
     Restaurant r = restaurant(0, "R1", "Seattle");
-    when(restaurantDAO.restaurantExistsByName("R1")).thenReturn(false);
     when(restaurantDAO.createRestaurant(anyString(), anyString()))
         .thenThrow(new SQLException("boom"));
 

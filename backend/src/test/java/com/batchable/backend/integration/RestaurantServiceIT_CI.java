@@ -130,13 +130,6 @@ public class RestaurantServiceIT_CI extends PostgresTestBase {
     assertEquals("Seattle", got.location);
   }
 
-  /** Ensures that creating a restaurant with a duplicate name is rejected. */
-  @Test
-  void createRestaurant_duplicateName_blocked() {
-    createRestaurant("R1", "Seattle");
-    assertThrows(IllegalStateException.class, () -> createRestaurant("R1", "Bellevue"));
-  }
-
   /**
    * Tests that updating a restaurant works and that the name‑uniqueness constraint is enforced
    * while excluding the current restaurant from the check.
