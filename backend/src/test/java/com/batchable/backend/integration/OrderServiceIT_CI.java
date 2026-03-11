@@ -134,7 +134,7 @@ public class OrderServiceIT_CI extends PostgresTestBase {
   // ---------- tests ----------
 
   /**
-   * Verifies that a valid order is persisted correctly and an SMS notification is sent.
+   * Verifies that a valid order is persisted correctly and an SSE refresh is triggered
    */
   @Test
   void createOrder_happyPath_persists_andPublishes() throws Exception {
@@ -180,7 +180,7 @@ public class OrderServiceIT_CI extends PostgresTestBase {
   }
 
   /**
-   * Verifies that updating the cooked time works and triggers an SMS notification.
+   * Verifies that updating the cooked time works and triggers an SSE refresh.
    */
   @Test
   void updateOrderCookedTime_setsCookedTime_andPublishes() throws Exception {
@@ -195,8 +195,8 @@ public class OrderServiceIT_CI extends PostgresTestBase {
   }
 
   /**
-   * Verifies that an order can be remade (reset to COOKING, high priority) and that an SMS
-   * message is published.
+   * Verifies that an order can be remade (reset to COOKING, high priority)
+   * and that an SSE refresh is triggered.
    */
   @Test
   void remakeOrder_resetsState_andPublishes() throws Exception {
@@ -216,7 +216,7 @@ public class OrderServiceIT_CI extends PostgresTestBase {
   }
 
   /**
-   * Verifies that an order can be removed (deleted) and that an SMS notification is sent.
+   * Verifies that an order can be removed (deleted) and that an SSE refresh is triggered.
    */
   @Test
   void removeOrder_deletes_andPublishes() throws Exception {
@@ -230,7 +230,7 @@ public class OrderServiceIT_CI extends PostgresTestBase {
   }
 
   /**
-   * Verifies that an order can be assigned to a batch and that an SMS notification is sent.
+   * Verifies that an order can be assigned to a batch and that an SSE refresh is triggered.
    */
   @Test
   void setOrderBatchId_assignsBatch_andPublishes() throws Exception {
